@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { imageApi, ImageResponse, ImageQueryParams } from "@/lib/api";
 import { useToast } from "@/app/context/ToastContext";
 import { 
-  getOptimizedImageUrl,
-  imagePresets,
+  getImageUrl,
   formatFileSize, 
   extractData, 
   extractPaginationData,

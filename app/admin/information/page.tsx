@@ -3,16 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ImageField } from "@/app/components/admin";
-import { informationApi, Information, ImagePreview } from "@/lib/api";
+import { informationApi, Information } from "@/lib/api";
 import { generateSlug } from "@/lib/utils/slug";
 import { apiFetch } from "@/lib/utils/apiHelper";
-
-// Helper to extract image URL
-const getImageUrl = (image?: string | ImagePreview): string => {
-  if (!image) return "";
-  if (typeof image === "string") return image;
-  return image.cloudinaryUrl || "";
-};
+import { getImageUrl } from "@/lib/utils";
+import type { InformationFormData } from "@/lib/types/form.types";
 
 export default function InformationPage() {
   const [allCategories, setAllCategories] = useState<Information[]>([]);
@@ -23,14 +18,16 @@ export default function InformationPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<InformationFormData>({
     name: "",
     name_en: "",
     slug: "",
-    parentId: "",
+    parentId: null,
     description: "",
     description_en: "",
     image: "",
+    order: 0,
+    isActive: true,
   });
   
   const [categoryLanguage, setCategoryLanguage] = useState<"vi" | "en">("en");
@@ -56,7 +53,7 @@ export default function InformationPage() {
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
-  
+
   const handleOpenModal = (category?: Information) => {
     if (category) {
       setModalMode("edit");
@@ -66,10 +63,12 @@ export default function InformationPage() {
         name: category.name,
         name_en: category.name_en || "",
         slug: category.slug,
-        parentId: category.parentId || "",
+        parentId: category.parentId || null,
         description: category.description || "",
         description_en: category.description_en || "",
         image: imageUrl,
+        order: 0,
+        isActive: true,
       });
     } else {
       setModalMode("create");
@@ -78,10 +77,12 @@ export default function InformationPage() {
         name: "",
         name_en: "",
         slug: "",
-        parentId: selectedParentId || "",
+        parentId: selectedParentId || null,
         description: "",
         description_en: "",
         image: "",
+        order: 0,
+        isActive: true,
       });
     }
     setShowModal(true);
@@ -94,10 +95,12 @@ export default function InformationPage() {
       name: "",
       name_en: "",
       slug: "",
-      parentId: "",
+      parentId: null,
       description: "",
       description_en: "",
       image: "",
+      order: 0,
+      isActive: true,
     });
   };
 
@@ -273,10 +276,12 @@ export default function InformationPage() {
                 name: "",
                 name_en: "",
                 slug: "",
-                parentId: "",
+                parentId: null,
                 description: "",
                 description_en: "",
                 image: "",
+                order: 0,
+                isActive: true,
               });
               setShowModal(true);
             }}
@@ -416,6 +421,8 @@ export default function InformationPage() {
                     description: "",
                     description_en: "",
                     image: "",
+                    order: 0,
+                    isActive: true,
                   });
                   setShowModal(true);
                 }}

@@ -12,7 +12,8 @@ export * from "./error-handler"; // Primary error handler (includes AppError cla
 export * from "./format";
 export * from "./slug";
 export * from "./i18n";
-export * from "./response.utils"; // Response extraction, pagination, image URLs
+export * from "./response.utils"; // Response extraction, pagination helpers
+export * from "./image"; // Image URL extraction and Cloudinary transformations
 export * from "./apiHelper"; // API call wrapper, validation helpers
 export * from "./auth"; // Token management
 export * from "./cloudinary"; // Cloudinary utilities

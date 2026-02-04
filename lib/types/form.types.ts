@@ -51,6 +51,7 @@ export interface ImageUploadFormData {
 export interface InformationFormData {
     name: string;
     name_en: string;
+    slug: string;
     description?: string;
     description_en?: string;
     image?: string;

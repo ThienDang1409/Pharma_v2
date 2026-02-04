@@ -72,40 +72,6 @@ export function buildQueryString(params: Record<string, any>): string {
 }
 
 /**
- * Get image URL with transformation
- */
-export function getImageUrl(
-  url: string,
-  transformation?: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    format?: string;
-  }
-): string {
-  if (!url) return '';
-  
-  // If Cloudinary URL, apply transformations
-  if (url.includes('cloudinary.com')) {
-    const parts = url.split('/upload/');
-    if (parts.length === 2) {
-      const transforms: string[] = [];
-      
-      if (transformation?.width) transforms.push(`w_${transformation.width}`);
-      if (transformation?.height) transforms.push(`h_${transformation.height}`);
-      if (transformation?.quality) transforms.push(`q_${transformation.quality}`);
-      if (transformation?.format) transforms.push(`f_${transformation.format}`);
-      
-      if (transforms.length > 0) {
-        return `${parts[0]}/upload/${transforms.join(',')}/${parts[1]}`;
-      }
-    }
-  }
-  
-  return url;
-}
-
-/**
  * Format file size
  */
 export function formatFileSize(bytes: number): string {
