@@ -4,54 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { getLocalizedText } from "@/lib/utils/i18n";
-
-interface BlogSection {
-  title: string;
-  title_en?: string;
-  slug: string;
-  type: string;
-  content: string;
-  content_en?: string;
-}
-
-interface BlogInformation {
-  _id: string;
-  name: string;
-  name_en?: string;
-  slug: string;
-}
-
-interface Blog {
-  _id: string;
-  title: string;
-  title_en?: string;
-  slug: string;
-  author: string;
-  image: string;
-  informationId: BlogInformation;
-  tags: string[];
-  sections: BlogSection[];
-  isProduct: boolean;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Product {
-  _id: string;
-  title: string;
-  title_en?: string;
-  slug: string;
-  image: string;
-  sections?: any[];
-  informationId?: {
-    _id: string;
-    name: string;
-    name_en?: string;
-    slug: string;
-  } | string;
-}
+import { getLocalizedText } from "@/lib/utils/string/i18n";
+import { formatDateLong } from "@/lib/utils/string/format";
+import { blogApi, type Blog } from "@/lib/api";
+import { apiFetch } from "@/lib/utils/api/apiHelper";
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -61,7 +17,7 @@ export default function BlogDetailPage() {
 
   const [blog, setBlog] = useState<Blog | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>("");
   const [isNavSticky, setIsNavSticky] = useState(false);
@@ -155,72 +111,75 @@ export default function BlogDetailPage() {
   }, []);
 
   const fetchBlogBySlug = async () => {
-    try {
-      setLoading(true);
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+    setLoading(true);
 
-      // Fetch all blogs and find by slug
-      const response = await fetch(`${apiUrl}/blog?status=published`);
-      if (!response.ok) throw new Error("Failed to fetch blogs");
+    // Fetch current blog by slug
+    await apiFetch(
+      () => blogApi.getBySlug(slug),
+      {
+        onSuccess: async (data) => {
+          const currentBlog = data?.blog;
+          
+          if (!currentBlog) {
+            router.push("/blog");
+            return;
+          }
 
-      const responseData = await response.json();
-      // Handle both paginated and non-paginated responses
-      const blogs: Blog[] = 'data' in responseData ? responseData.data : responseData;
-      const currentBlog = blogs.find((b) => b.slug === slug);
+          setBlog(currentBlog);
+          setIsProductCategory(currentBlog.isProduct || false);
 
-      if (!currentBlog) {
-        router.push("/blog");
-        return;
-      }
+          // Fetch all published blogs for related content
+          await apiFetch(
+            () => blogApi.getAll({ status: 'published' }),
+            {
+              onSuccess: (paginationData) => {
+                const allBlogs = paginationData?.items || [];
+                
+                // Get related blogs (non-product blogs, excluding current)
+                const related = allBlogs
+                  .filter(
+                    (b) =>
+                      b.isProduct === false &&
+                      b.id !== currentBlog.id
+                  )
+                  .slice(0, 3);
+                setRelatedBlogs(related);
 
-      setBlog(currentBlog);
-
-      // Use isProduct field from blog data
-      setIsProductCategory(currentBlog.isProduct || false);
-
-      // Get related blogs from same category
-      const related = blogs
-        .filter(
-          (b) =>
-            b.isProduct === false &&
-            b._id !== currentBlog._id
-          // &&
-          // b.informationId?._id === currentBlog.informationId?._id
-        )
-        .slice(0, 3);
-      setRelatedBlogs(related);
-
-      // If this is a product blog, fetch related products from same category
-      if (currentBlog.isProduct && currentBlog.informationId?._id) {
-        try {
-          // Fetch all products (blogs marked as isProduct) from same category
-          const allProducts = blogs.filter(
-            (b) =>
-              b.isProduct === true &&
-              b._id !== currentBlog._id &&
-              b.informationId?._id === currentBlog.informationId?._id
+                // If this is a product blog, fetch related products from same category
+                if (currentBlog.isProduct && currentBlog.informationId) {
+                  const categoryId = typeof currentBlog.informationId === 'string' 
+                    ? currentBlog.informationId 
+                    : currentBlog.informationId._id;
+                  
+                  const relatedProductsList = allBlogs.filter(
+                    (b) =>
+                      b.isProduct === true &&
+                      b.id !== currentBlog.id &&
+                      (typeof b.informationId === 'string' 
+                        ? b.informationId === categoryId
+                        : b.informationId?._id === categoryId)
+                  );
+                  setRelatedProducts(relatedProductsList.slice(0, 4));
+                }
+              },
+              onError: () => {
+                setRelatedBlogs([]);
+                setRelatedProducts([]);
+              },
+            }
           );
-          setRelatedProducts(allProducts.slice(0, 4));
-        } catch (error) {
-          console.error("Error fetching products:", error);
-        }
+        },
+        onError: () => {
+          router.push("/blog");
+        },
       }
-    } catch (error) {
-      console.error("Error fetching blog:", error);
-      router.push("/blog");
-    } finally {
-      setLoading(false);
-    }
+    );
+
+    setLoading(false);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const formatDate = (dateInput: string | Date) => {
+    return formatDateLong(dateInput, language === "vi" ? "vi-VN" : "en-US");
   };
 
   if (loading) {
@@ -241,14 +200,14 @@ export default function BlogDetailPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Banner with Title */}
-      {blog.image && (<div className="relative w-full h-[600px] bg-gray-100 overflow-hidden">
-
-        <img
-          src={blog.image}
-          alt={blog.title}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-white/40" />
+      {blog.image?.cloudinaryUrl && (
+        <div className="relative w-full h-[600px] bg-gray-100 overflow-hidden">
+          <img
+            src={blog.image.cloudinaryUrl}
+            alt={blog.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-white/40" />
 
         {/* Title */}
         <div className="absolute inset-0 flex items-center">
@@ -457,9 +416,9 @@ export default function BlogDetailPage() {
                             className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                           >
                             <div className="relative h-48 bg-gray-50 overflow-hidden flex items-center justify-center p-4">
-                              {product.image ? (
+                              {product.image?.cloudinaryUrl ? (
                                 <img
-                                  src={product.image}
+                                  src={product.image.cloudinaryUrl}
                                   alt={getLocalizedText(product.title, product.title_en, language)}
                                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                 />

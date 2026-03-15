@@ -8,10 +8,8 @@ import { useToast } from "@/app/context/ToastContext";
 import {
   formatFileSize,
   getImageUrl,
-  extractData,
-  extractPaginationData,
-  isPaginationResult,
-  extractErrorMessage
+  apiFetch,
+  apiMultiple,
 } from "@/lib/utils";
 
 export default function AdminImagesPage() {
@@ -32,124 +30,146 @@ export default function AdminImagesPage() {
   const toast = useToast();
 
   const fetchImages = useCallback(async () => {
-    try {
-      setLoading(true);
+    setLoading(true);
+    const params: ImageQueryParams = {
+      page: pagination.page,
+      limit: pagination.limit,
+    };
 
-      const params: ImageQueryParams = {
-        page: pagination.page,
-        limit: pagination.limit,
-      };
+    if (searchQuery) params.search = searchQuery;
+    if (filterFolder) params.folder = filterFolder;
+    if (filterUnused) params.unusedOnly = true;
 
-      if (searchQuery) params.search = searchQuery;
-      if (filterFolder) params.folder = filterFolder;
-      if (filterUnused) params.unusedOnly = true;
-
-      const response = await imageApi.getAll(params);
-      const data = extractData(response);
-
-      if (data && isPaginationResult(data)) {
-        const extracted = extractPaginationData<ImageResponse>(data);
-        setImages(extracted.items);
-        setPagination(extracted.pagination);
-      } else {
-        setImages([]);
+    await apiFetch(
+      () => imageApi.getAll(params),
+      {
+        onSuccess: (data) => {
+          if (data?.items) {
+            setImages(data.items);
+            setPagination((prev) => ({
+              ...prev,
+              total: data.total || 0,
+              totalPages: data.totalPages || 0,
+            }));
+          }
+        },
+        onError: (error) => {
+          console.error("Error fetching images:", error);
+        },
       }
-    } catch (error) {
-      toast.error(extractErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, searchQuery, filterFolder, filterUnused, toast]);
+    );
+    setLoading(false);
+  }, [pagination.page, pagination.limit, searchQuery, filterFolder, filterUnused]);
 
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
 
-  const handleFileUpload = async (files: FileList) => {
+  const handleFileUpload = useCallback(async (files: FileList) => {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    const fileArray = Array.from(files);
+
     try {
-      const fileArray = Array.from(files);
-
       if (fileArray.length === 1) {
-        const response = await imageApi.upload(fileArray[0], {
-          folder: IMAGE_FOLDERS.UPLOADS,
-        });
-
-        if (response.data?.image) {
-          toast.success("Image uploaded successfully!");
-          fetchImages();
-        }
+        await apiFetch(
+          () => imageApi.upload(fileArray[0], { folder: IMAGE_FOLDERS.UPLOADS }),
+          {
+            onSuccess: () => {
+              toast.success("Image uploaded successfully!");
+              fetchImages();
+            },
+            onError: (error) => {
+              toast.error(error);
+            },
+          }
+        );
       } else {
-        const response = await imageApi.uploadMultiple(fileArray, {
-          folder: IMAGE_FOLDERS.UPLOADS,
-        });
-
-        if (response.data?.images) {
-          toast.success(`${fileArray.length} images uploaded successfully!`);
-          fetchImages();
-        }
+        await apiFetch(
+          () => imageApi.uploadMultiple(fileArray, { folder: IMAGE_FOLDERS.UPLOADS }),
+          {
+            onSuccess: () => {
+              toast.success(`${fileArray.length} images uploaded successfully!`);
+              fetchImages();
+            },
+            onError: (error) => {
+              toast.error(error);
+            },
+          }
+        );
       }
-    } catch (error) {
-      toast.error(extractErrorMessage(error));
     } finally {
       setUploading(false);
     }
-  };
+  }, [fetchImages, toast]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Are you sure you want to delete this image?")) return;
 
-    try {
-      await imageApi.delete(id);
-      toast.success("Image deleted successfully!");
-      fetchImages();
-    } catch (error) {
-      toast.error(extractErrorMessage(error));
-    }
-  };
+    await apiFetch(
+      () => imageApi.delete(id),
+      {
+        onSuccess: () => {
+          toast.success("Image deleted successfully!");
+          fetchImages();
+        },
+        onError: (error) => {
+          toast.error(error);
+        },
+      }
+    );
+  }, [fetchImages, toast]);
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     if (selectedImages.length === 0) return;
     if (!confirm(`Delete ${selectedImages.length} selected images?`)) return;
 
-    try {
-      await Promise.all(selectedImages.map((id) => imageApi.delete(id)));
-      toast.success(`${selectedImages.length} images deleted successfully!`);
-      setSelectedImages([]);
-      fetchImages();
-    } catch (error) {
-      toast.error(extractErrorMessage(error));
-    }
-  };
+    await apiMultiple(
+      selectedImages.map((id) => () => imageApi.delete(id)),
+      {
+        onAllSuccess: () => {
+          toast.success(`${selectedImages.length} images deleted successfully!`);
+          setSelectedImages([]);
+          fetchImages();
+        },
+        onAnyError: (error) => {
+          console.error("Delete error:", error);
+        },
+      }
+    );
+  }, [selectedImages, fetchImages, toast]);
 
-  const handleCleanupUnused = async () => {
+  const handleCleanupUnused = useCallback(async () => {
     if (!confirm("Delete all unused images? This cannot be undone.")) return;
 
-    try {
-      const response = await imageApi.cleanupUnused();
-      const data = extractData(response);
-      toast.success(`Deleted ${data?.deletedCount || 0} unused images`);
-      fetchImages();
-    } catch (error) {
-      toast.error(extractErrorMessage(error));
-    }
-  };
+    await apiFetch(
+      () => imageApi.cleanupUnused(),
+      {
+        onSuccess: (data) => {
+          toast.success(`Deleted ${data?.deletedCount || 0} unused images`);
+          fetchImages();
+        },
+        onError: (error) => {
+          toast.error(error);
+        },
+      }
+    );
+  }, [fetchImages, toast]);
 
-  const toggleImageSelection = (id: string) => {
+  const toggleImageSelection = useCallback((id: string) => {
     setSelectedImages((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
-  };
+  }, []);
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     if (selectedImages.length === images.length) {
       setSelectedImages([]);
     } else {
       setSelectedImages(images.map((img) => img._id));
     }
-  };
+  }, [selectedImages.length, images]);
 
   return (
     <div className="space-y-6">

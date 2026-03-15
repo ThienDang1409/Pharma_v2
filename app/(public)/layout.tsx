@@ -1,6 +1,6 @@
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import BackToTop from "../components/BackToTop";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
+import BackToTop from "../components/layout/BackToTop";
 
 export default function PublicLayout({
   children,

@@ -3,9 +3,13 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { useToast } from "@/app/context/ToastContext";
+import { apiSubmit } from "@/lib/utils/api/apiHelper";
+import { ChangePasswordSchema } from "@/lib/validators";
 import { authApi } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
+import { z } from "zod";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
 
@@ -18,11 +22,11 @@ function ResetPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { language } = useLanguage();
+  const toast = useToast();
   const t = translations[language];
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -31,41 +35,46 @@ function ResetPasswordPageContent() {
   useEffect(() => {
     const resetToken = searchParams.get("token");
     if (!resetToken) {
-      setError("Invalid reset token");
+      toast.error("Invalid reset token");
     } else {
       setToken(resetToken);
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setSuccess(false);
 
+    // Validate password match
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      toast.error("Mật khẩu không khớp");
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      await authApi.resetPassword(token, password);
-      setSuccess(true);
+    // Simple reset password schema (no currentPassword needed)
+    const ResetPasswordSchema = z.object({
+      newPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    });
 
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    const result = await apiSubmit(
+      ResetPasswordSchema,
+      { newPassword: password },
+      () => authApi.resetPassword(token, password),
+      {
+        toast: toast.addToast,
+        successMsg: 'Đặt lại mật khẩu thành công!',
+        onSuccess: () => {
+          setSuccess(true);
+          setTimeout(() => {
+            router.push("/auth/login");
+          }, 2000);
+        },
+      }
+    );
+
+    setIsLoading(false);
   };
 
   return (
@@ -90,12 +99,6 @@ function ResetPasswordPageContent() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-lg" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
 
           {success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative">
@@ -105,7 +108,8 @@ function ResetPasswordPageContent() {
             </div>
           )}
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <div className="space-y-4">
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">

@@ -5,6 +5,6 @@
 
 export * from "./api";
 export * from "./constants/api";
-export * from "./http";
+export * from "./services";
 export * from "./utils";
 export * from "./validators";

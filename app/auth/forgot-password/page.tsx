@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { useToast } from "@/app/context/ToastContext";
+import { apiFetch } from "@/lib/utils/api/apiHelper";
 import { authApi } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,28 +17,33 @@ const translations = {
 
 export default function ForgotPasswordPage() {
   const { language } = useLanguage();
+  const toast = useToast();
   const t = translations[language];
 
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setSuccess(false);
     setIsLoading(true);
 
-    try {
-      await authApi.forgotPassword(email);
-      setSuccess(true);
-      setEmail("");
-    } catch (err: any) {
-      setError(err.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
-    } finally {
-      setIsLoading(false);
-    }
+    const result = await apiFetch(
+      () => authApi.forgotPassword(email),
+      {
+        onSuccess: () => {
+          setSuccess(true);
+          setEmail("");
+          toast.success("Email đặt lại mật khẩu đã được gửi!");
+        },
+        onError: () => {
+          toast.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        }
+      }
+    );
+
+    setIsLoading(false);
   };
 
   return (
@@ -64,12 +71,6 @@ export default function ForgotPasswordPage() {
 
         {/* Form */}
         <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-lg" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-
           {success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative">
               <span className="block sm:inline">

@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { getLocalizedText } from "@/lib/utils/i18n";
+import { getLocalizedText } from "@/lib/utils/string/i18n";
 import { informationApi, blogApi, Blog, Information } from "@/lib/api";
 import { BLOG_STATUS } from "@/lib/constants/api";
-import NewsCard from "@/app/components/NewsCard";
+import { extractImageUrl, withFallbackImage } from "@/lib/utils";
+import { formatDateLong } from "@/lib/utils/string/format";
+import NewsCard from "@/app/components/cards/NewsCard";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
-import ProductCard from "@/app/components/ProductCard";
+import ProductCard from "@/app/components/cards/ProductCard";
 
 const translations = {
   en: enTranslations,
@@ -173,15 +175,8 @@ export default function CategoryPage() {
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
-  };
+  const formatDate = (dateInput?: string | Date) =>
+    formatDateLong(dateInput, language === "vi" ? "vi-VN" : "en-US");
 
   if (loading) {
     return (
@@ -213,7 +208,7 @@ export default function CategoryPage() {
       <div className="relative w-full h-[600px] bg-gray-100 overflow-hidden">
         {category.image && (
           <img
-            src={category.image}
+            src={extractImageUrl(category.image)}
             alt={getLocalizedText(category.name, category.name_en, language)}
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -339,7 +334,7 @@ export default function CategoryPage() {
                     <div className="relative h-100 bg-gray-100">
                       {currentProducts[0].image ? (
                         <img
-                          src={currentProducts[0].image}
+                          src={withFallbackImage(currentProducts[0].image, "/images/placeholder.jpg")}
                           alt={currentProducts[0].title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -353,11 +348,7 @@ export default function CategoryPage() {
                     </div>
                     <div className="p-6 md:p-8 flex flex-col justify-center">
                       <p className="text-gray-700 text-sm mb-2">
-                        {new Date((currentProducts[0] as any).createdAt || Date.now()).toLocaleDateString('en-US', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          year: 'numeric' 
-                        })}
+                        {formatDate(currentProducts[0].createdAt)}
                       </p>
                       <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 group-hover:text-primary-600 transition-colors">
                         {currentProducts[0].title}
@@ -389,7 +380,7 @@ export default function CategoryPage() {
                     isNewsCategory && !hasSubcategories ? (
                       <NewsCard 
                         key={product._id} 
-                        article={product as any} 
+                        article={product}
                         formatDate={formatDate}
                       />
                     ) : (

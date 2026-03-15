@@ -1,16 +1,16 @@
 "use client";
 
-import TiptapEditor from "@/app/components/TiptapEditor";
-import { ImageField } from "@/app/components/admin";
+import TiptapEditor from "@/app/components/admin/editor/TiptapEditor";
+import { ImageField } from "@/app/components/admin/image";
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { blogApi, informationApi, imageApi, Information, ImageResponse } from "@/lib/api";
 import { IMAGE_FOLDERS } from "@/lib/constants/api";
-import { generateSlug } from "@/lib/utils/slug";
+import { generateSlug } from "@/lib/utils/string/slug";
 import { useToast } from "@/app/context/ToastContext";
 import { CreateBlogSchema, type CreateBlogInput } from "@/lib/validators";
-import { handleFormSubmit, silentApiCall } from "@/lib/utils/apiHelper_backup";
+import { apiFetch, apiSubmit } from "@/lib/utils/api/apiHelper";
 
 interface BlogSection {
   type: string;
@@ -66,13 +66,13 @@ function AdminAddNewsPageContent() {
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
-      const result = await silentApiCall(
+      await apiFetch(
         () => informationApi.getAll(),
         {
           onSuccess: (response) => {
-            const data = response?.data?.items || [];
+            const data = response?.items || [];
             setCategories(Array.isArray(data) ? data : []);
-          }
+          },
         }
       );
     };
@@ -293,10 +293,6 @@ function AdminAddNewsPageContent() {
       tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
-
-  // Initialize form submit handler with validation
-  const submitBlog = handleFormSubmit<CreateBlogInput, any>(CreateBlogSchema, toast);
-
   const handleSubmit = async (
     e: React.FormEvent,
     publishStatus: "draft" | "published"
@@ -306,17 +302,19 @@ function AdminAddNewsPageContent() {
 
     const submitData = { ...formData, status: publishStatus };
 
-    // Remove informationId if empty (backend doesn't accept empty string for ObjectId)
-    if (!submitData.informationId || submitData.informationId === "") {
-      delete (submitData as any).informationId;
-    }
+    const payload: Omit<BlogFormData, "informationId"> & { informationId?: string } = {
+      ...submitData,
+      ...(submitData.informationId ? { informationId: submitData.informationId } : {}),
+    };
 
     // Use API helper with automatic validation and toast
-    const result = await submitBlog(
-      submitData,
+    const result = await apiSubmit<any, unknown>(
+      CreateBlogSchema,
+      payload,
       (validatedData) => blogApi.create(validatedData),
       {
-        successMessage:
+        toast,
+        successMsg:
           publishStatus === "published"
             ? "Xuất bản bài viết thành công!"
             : "Lưu nháp thành công!",

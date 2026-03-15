@@ -3,7 +3,6 @@
  */
 
 export * from './locales';
-export * from './admin-i18n';
 
 // Routes
 export const ROUTES = {

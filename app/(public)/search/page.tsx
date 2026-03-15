@@ -1,12 +1,13 @@
 "use client";
 
-import Layout from "@/app/components/Layout";
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { blogApi, Blog, ImagePreview } from "@/lib/api";
+import { blogApi, Blog } from "@/lib/api";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { getLocalizedText } from "@/lib/utils/i18n";
+import { getLocalizedText } from "@/lib/utils/string/i18n";
+import { extractImageUrl, getApiErrorFeedback } from "@/lib/utils";
+import { formatDateIntl as formatDateUtil } from "@/lib/utils/string/format";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
 
@@ -16,13 +17,6 @@ const translations = {
 };
 
 type FilterType = "all" | "products" | "news";
-
-// Helper function to get image URL
-const getImageUrl = (image?: string | ImagePreview): string => {
-  if (!image) return "";
-  if (typeof image === "string") return image;
-  return image.cloudinaryUrl || "";
-};
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -54,28 +48,13 @@ function SearchPageContent() {
           status: "published",
         });
         
-        // Handle response - extract data array
-        let blogsArray: any[] = [];
-        if ('data' in response && response.data) {
-          const responseData = response.data as any;
-          if ('items' in responseData) {
-            blogsArray = responseData.items;
-          } else if (Array.isArray(responseData)) {
-            blogsArray = responseData;
-          }
-        } else {
-          const responseAny = response as any;
-          if ('items' in responseAny) {
-            blogsArray = responseAny.items;
-          } else if (Array.isArray(responseAny)) {
-            blogsArray = responseAny;
-          }
-        }
+        const blogsArray = response.data?.items || [];
         
         setBlogs(blogsArray);
         setFilteredBlogs(blogsArray);
       } catch (error) {
-        console.error("Failed to fetch search results:", error);
+        const feedback = getApiErrorFeedback(error);
+        console.error("Failed to fetch search results:", feedback.message, error);
         setBlogs([]);
         setFilteredBlogs([]);
       } finally {
@@ -103,15 +82,6 @@ function SearchPageContent() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentBlogs = filteredBlogs.slice(startIndex, endIndex);
-
-  const formatDate = (dateString: string | Date) => {
-    const date = typeof dateString === "string" ? new Date(dateString) : dateString;
-    return date.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
 
   const getExcerpt = (blog: Blog) => {
     const firstSection = blog.sections?.[0];
@@ -260,7 +230,7 @@ function SearchPageContent() {
                     <div className="relative h-56 overflow-hidden bg-linear-to-br from-gray-100 to-gray-200">
                       {blog.image ? (
                         <img
-                          src={getImageUrl(blog.image)}
+                          src={extractImageUrl(blog.image)}
                           alt={getLocalizedText(blog.title, blog.title_en, language)}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -309,7 +279,7 @@ function SearchPageContent() {
                           </span>
                         )}
                         <span className="text-xs text-gray-500">
-                          {blog.createdAt && formatDate(blog.createdAt)}
+                          {blog.createdAt && formatDateUtil(blog.createdAt, "vi-VN")}
                         </span>
                       </div>
 

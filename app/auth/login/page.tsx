@@ -2,32 +2,38 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
+import { useToast } from "@/app/context/ToastContext";
+import { apiSubmit } from "@/lib/utils/api/apiHelper";
+import { LoginSchema, type LoginInput } from "@/lib/validators";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const toast = useToast();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginInput>({
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
-    try {
-      await login(formData.email, formData.password);
-    } catch (err: any) {
-      setError(err.message || "Đăng nhập thất bại. Vui lòng thử lại.");
-    } finally {
-      setIsLoading(false);
-    }
+    const result = await apiSubmit(
+      LoginSchema,
+      formData,
+      () => login(formData.email, formData.password),
+      {
+        toast: toast.addToast,
+        successMsg: 'Đăng nhập thành công!',
+      }
+    );
+
+    setIsLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,12 +68,6 @@ export default function LoginPage() {
 
         {/* Form */}
         <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-lg" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-
           <div className="space-y-4">
             {/* Email */}
             <div>

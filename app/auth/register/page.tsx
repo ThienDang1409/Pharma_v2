@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
+import { useToast } from "@/app/context/ToastContext";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { apiSubmit } from "@/lib/utils/api/apiHelper";
+import { RegisterSchema, type RegisterInput } from "@/lib/validators";
 import Link from "next/link";
 import Image from "next/image";
 import enTranslations from "@/locales/en.json";
@@ -15,49 +18,47 @@ const translations = {
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const toast = useToast();
   const { language } = useLanguage();
   const t = translations[language];
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterInput>({
     name: "",
     email: "",
     phone: "",
     password: "",
-    confirmPassword: "",
   });
-  const [error, setError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu không khớp");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự");
+    // Check password confirmation
+    if (formData.password !== confirmPassword) {
+      toast.error("Mật khẩu không khớp");
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      await register(
+    const result = await apiSubmit(
+      RegisterSchema,
+      formData,
+      () => register(
         formData.email,
         formData.password,
         formData.name,
         formData.phone
-      );
-    } catch (err: any) {
-      setError(err.message || "Đăng ký không thành công. Vui lòng thử lại.");
-    } finally {
-      setIsLoading(false);
-    }
+      ),
+      {
+        toast: toast.addToast,
+        successMsg: 'Đăng ký thành công!',
+      }
+    );
+
+    setIsLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,12 +93,6 @@ export default function RegisterPage() {
           className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-lg"
           onSubmit={handleSubmit}
         >
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-
           <div className="space-y-4">
             {/* Name */}
             <div>
@@ -237,8 +232,8 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
                 required
-                value={formData.confirmPassword}
-                onChange={handleChange}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 placeholder="Nhập lại mật khẩu"
               />

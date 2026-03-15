@@ -332,14 +332,14 @@ export const UserQuerySchemaI18n = (lang: I18nLanguage = 'vi') =>
 
 export const CreateInformationSchemaI18n = (lang: I18nLanguage = 'vi') =>
   z.object({
-    title: z
-      .string({ message: getMessage('information.title.required', lang) })
-      .min(3, getMessage('information.title.minLength', lang))
-      .max(200, getMessage('information.title.maxLength', lang)),
-    title_en: z
+    name: z
+      .string({ message: getMessage('information.name.required', lang) })
+      .min(2, getMessage('information.name.minLength', lang))
+      .max(200, getMessage('information.name.maxLength', lang)),
+    name_en: z
       .string()
-      .min(3, getMessage('information.title.minLength', lang))
-      .max(200, getMessage('information.title.maxLength', lang))
+      .min(2, getMessage('information.name.minLength', lang))
+      .max(200, getMessage('information.name.maxLength', lang))
       .optional(),
     description: z
       .string()
@@ -433,6 +433,67 @@ export const TransformImageSchemaI18n = (lang: I18nLanguage = 'vi') =>
   });
 
 // ==================== EXPORTS ====================
+
+// ==================== NAMED EXPORTS (Default Language: Vietnamese) ====================
+// Auth Schemas
+export const RegisterSchema = RegisterSchemaI18n('vi');
+export const LoginSchema = LoginSchemaI18n('vi');
+export const UpdateProfileSchema = UpdateProfileSchemaI18n('vi');
+export const ChangePasswordSchema = ChangePasswordSchemaI18n('vi');
+
+// Auth Types
+export type RegisterInput = z.infer<typeof RegisterSchema>;
+export type LoginInput = z.infer<typeof LoginSchema>;
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
+
+// Blog Schemas
+export const CreateBlogSchema = CreateBlogSchemaI18n('vi');
+export const UpdateBlogSchema = UpdateBlogSchemaI18n('vi');
+export const BlogSectionSchema = BlogSectionSchemaI18n('vi');
+export const BlogQuerySchema = BlogQuerySchemaI18n('vi');
+
+// Blog Types
+export type CreateBlogInput = z.infer<typeof CreateBlogSchema>;
+export type UpdateBlogInput = z.infer<typeof UpdateBlogSchema>;
+export type BlogSectionInput = z.infer<typeof BlogSectionSchema>;
+export type BlogQueryInput = z.infer<typeof BlogQuerySchema>;
+
+// User Schemas
+export const UpdateUserSchema = UpdateUserSchemaI18n('vi');
+export const UserQuerySchema = UserQuerySchemaI18n('vi');
+
+// User Types
+export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
+export type UserQueryInput = z.infer<typeof UserQuerySchema>;
+
+// Information Schemas
+export const CreateInformationSchema = CreateInformationSchemaI18n('vi');
+export const UpdateInformationSchema = UpdateInformationSchemaI18n('vi');
+export const InformationQuerySchema = InformationQuerySchemaI18n('vi');
+export const ReorderInformationSchema = ReorderInformationSchemaI18n('vi');
+
+// Information Types
+export type CreateInformationInput = z.infer<typeof CreateInformationSchema>;
+export type UpdateInformationInput = z.infer<typeof UpdateInformationSchema>;
+export type InformationQueryInput = z.infer<typeof InformationQuerySchema>;
+export type ReorderInformationInput = z.infer<typeof ReorderInformationSchema>;
+
+// Image Schemas
+export const UploadImageSchema = UploadImageSchemaI18n('vi');
+export const UpdateImageSchema = UpdateImageSchemaI18n('vi');
+export const ImageQuerySchema = ImageQuerySchemaI18n('vi');
+export const AddReferenceSchema = AddReferenceSchemaI18n('vi');
+export const RemoveReferenceSchema = RemoveReferenceSchemaI18n('vi');
+export const TransformImageSchema = TransformImageSchemaI18n('vi');
+
+// Image Types
+export type UploadImageInput = z.infer<typeof UploadImageSchema>;
+export type UpdateImageInput = z.infer<typeof UpdateImageSchema>;
+export type ImageQueryInput = z.infer<typeof ImageQuerySchema>;
+export type AddReferenceInput = z.infer<typeof AddReferenceSchema>;
+export type RemoveReferenceInput = z.infer<typeof RemoveReferenceSchema>;
+export type TransformImageInput = z.infer<typeof TransformImageSchema>;
 
 // Get all schemas for a language
 export const getValidatorsForLang = (lang: I18nLanguage = 'vi') => ({

@@ -2,14 +2,191 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { ImageField } from "@/app/components/admin";
-import { informationApi, Information } from "@/lib/api";
-import { generateSlug } from "@/lib/utils/slug";
-import { apiFetch } from "@/lib/utils/apiHelper";
+import { ImageField } from "@/app/components/admin/image";
+import { informationApi, Information, ImagePreview } from "@/lib/api";
+import { generateSlug } from "@/lib/utils/string/slug";
+import { apiFetch, apiSubmit } from "@/lib/utils/api/apiHelper";
 import { getImageUrl } from "@/lib/utils";
+import { useLanguage } from "@/app/context/LanguageContext";
+import { useToast } from "@/app/context/ToastContext";
+import { CreateInformationSchemaI18n, UpdateInformationSchemaI18n } from "@/lib/validators";
 import type { InformationFormData } from "@/lib/types/form.types";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Category Card Component
+interface SortableCategoryCardProps {
+  category: Information;
+  currentLevel: number;
+  childCount: number;
+  canViewChildren: boolean;
+  deleteConfirm: string | null;
+  onViewChildren: (id: string) => void;
+  onEdit: (category: Information) => void;
+  onDelete: (id: string) => void;
+  onAddChild: (parentId: string) => void;
+  getImageUrl: (
+    image?: string | ImagePreview,
+    transformation?: {
+      width?: number;
+      height?: number;
+      quality?: number;
+      format?: string;
+    }
+  ) => string;
+}
+
+function SortableCategoryCard({
+  category,
+  currentLevel,
+  childCount,
+  canViewChildren,
+  deleteConfirm,
+  onViewChildren,
+  onEdit,
+  onDelete,
+  onAddChild,
+  getImageUrl,
+}: SortableCategoryCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category._id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all border-2 border-gray-200 hover:border-primary-400"
+    >
+      <div className="flex items-start gap-4 p-4">
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="shrink-0 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing bg-linear-to-br from-gray-100 to-gray-200 hover:from-primary-100 hover:to-primary-200 rounded-lg p-3 transition-all group border border-gray-300"
+        >
+          <svg className="w-6 h-6 text-gray-500 group-hover:text-primary-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+          </svg>
+          <span className="text-xs font-medium text-gray-500 group-hover:text-primary-600 mt-1">Kéo</span>
+        </div>
+
+        {/* Image */}
+        {category.image && (
+          <div className="shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+            <img
+              src={getImageUrl(category.image)}
+              alt={category.name_en || category.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Info Section */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex-1 min-w-0">
+              {/* Level Badge */}
+              <div className="inline-block px-2 py-1 bg-secondary-100 text-secondary-700 rounded text-xs font-semibold mb-2">
+                Cấp {currentLevel}
+              </div>
+              
+              <h3 className="text-lg font-bold text-gray-800 mb-1 truncate">
+                {category.name_en || category.name}
+              </h3>
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {category.description_en || category.description || "No description"}
+              </p>
+            </div>
+
+            {/* Child Count Badge */}
+            {childCount > 0 && (
+              <div className="shrink-0 px-3 py-2 bg-secondary-50 rounded-lg border border-secondary-200">
+                <p className="text-xs text-secondary-700 font-medium whitespace-nowrap">
+                  📁 {childCount} con
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions Section */}
+        <div className="shrink-0 flex flex-wrap gap-2">
+          {canViewChildren && (
+            <button
+              type="button"
+              onClick={() => onViewChildren(category._id)}
+              className="px-3 py-2 bg-secondary-100 text-secondary-700 rounded font-semibold text-sm hover:bg-secondary-200 transition-colors border border-secondary-200 whitespace-nowrap"
+            >
+              📁 Xem con
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onEdit(category)}
+            className="px-3 py-2 bg-primary-100 text-primary-700 rounded font-semibold text-sm hover:bg-primary-200 transition-colors border border-primary-200"
+          >
+            ✏️ Sửa
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(category._id)}
+            className={`px-3 py-2 rounded font-semibold text-sm transition-colors whitespace-nowrap ${
+              deleteConfirm === category._id
+                ? "bg-red-700 text-white"
+                : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
+            }`}
+          >
+            {deleteConfirm === category._id ? "⚠️ Xác nhận?" : "🗑️ Xóa"}
+          </button>
+          <Link
+            href={`/admin/blogs/add?categoryId=${category._id}`}
+            className="px-3 py-2 bg-third-100 text-third-800 rounded font-semibold text-sm hover:bg-third-200 transition-colors border border-third-200 text-center"
+          >
+            📝 Viết bài
+          </Link>
+          <button
+            type="button"
+            onClick={() => onAddChild(category._id)}
+            className="px-3 py-2 bg-green-100 text-green-700 rounded font-semibold text-sm hover:bg-green-200 transition-colors border border-green-200 whitespace-nowrap"
+          >
+            ➕ Tạo con
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function InformationPage() {
+  const { language } = useLanguage();
+  const toast = useToast();
   const [allCategories, setAllCategories] = useState<Information[]>([]);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -136,36 +313,38 @@ export default function InformationPage() {
       parentId: formData.parentId || undefined,
     };
 
+    const schema = editingCategory 
+      ? UpdateInformationSchemaI18n(language) 
+      : CreateInformationSchemaI18n(language);
+
     if (editingCategory) {
-      await apiFetch(
+      await apiSubmit(
+        schema,
+        submitData,
         () => informationApi.update(editingCategory._id, submitData),
         {
+          toast,
           onSuccess: async () => {
             await fetchCategories();
             handleCloseModal();
-          },
-          onError: (error) => {
-            console.error("Error updating category:", error);
-            alert("Lỗi cập nhật danh mục");
           },
         }
       );
     } else {
-      await apiFetch(
+      await apiSubmit(
+        schema,
+        submitData,
         () => informationApi.create(submitData),
         {
+          toast,
           onSuccess: async () => {
             await fetchCategories();
             handleCloseModal();
           },
-          onError: (error) => {
-            console.error("Error creating category:", error);
-            alert("Lỗi tạo danh mục");
-          },
         }
       );
     }
-  }, [editingCategory, formData, fetchCategories]);
+  }, [editingCategory, formData, fetchCategories, toast]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (deleteConfirm !== id) {
@@ -227,6 +406,53 @@ export default function InformationPage() {
 
   const breadcrumbPath = getBreadcrumbPath();
   const currentLevel = breadcrumbPath.length + 1;
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = currentLevelCategories.findIndex(cat => cat._id === active.id);
+    const newIndex = currentLevelCategories.findIndex(cat => cat._id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Optimistic update
+    const newOrder = arrayMove(currentLevelCategories, oldIndex, newIndex);
+    
+    // Map to reorder dto
+    const items = newOrder.map((cat, index) => ({
+      id: cat._id,
+      order: index
+    }));
+
+    await apiFetch(
+      () => informationApi.reorder(items),
+      {
+        onSuccess: async () => {
+          await fetchCategories();
+          toast?.success('Đã thay đổi vị trí danh mục');
+        },
+        onError: (error) => {
+          console.error("Error reordering:", error);
+          toast?.error('Lỗi thay đổi vị trí');
+          // Revert on error
+          fetchCategories();
+        },
+      }
+    );
+  }, [currentLevelCategories, fetchCategories, toast]);
 
   // Get category level (1, 2, or 3)
   const getCategoryLevel = useCallback((category: Information): number => {
@@ -331,115 +557,61 @@ export default function InformationPage() {
       </div>
 
       {/* Categories List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentLevelCategories.map((category) => {
-          const childCount = getChildren(category._id).length;
-          const canViewChildren = childCount > 0; // Bỏ giới hạn level, cho phép xem vô hạn cấp
+      {currentLevelCategories.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={currentLevelCategories.map(cat => cat._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {currentLevelCategories.map((category) => {
+                const childCount = getChildren(category._id).length;
+                const canViewChildren = childCount > 0;
 
-          return (
-            <div
-              key={category._id}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200 hover:border-primary-300"
-            >
-              {/* Image */}
-              {category.image && (
-                <div className="mb-4 rounded-lg overflow-hidden bg-gray-100 h-32 border border-gray-200">
-                  <img
-                    src={getImageUrl(category.image)}
-                    alt={category.name_en || category.name}
-                    className="w-full h-full object-cover"
+                return (
+                  <SortableCategoryCard
+                    key={category._id}
+                    category={category}
+                    currentLevel={currentLevel}
+                    childCount={childCount}
+                    canViewChildren={canViewChildren}
+                    deleteConfirm={deleteConfirm}
+                    onViewChildren={setSelectedParentId}
+                    onEdit={handleOpenModal}
+                    onDelete={handleDelete}
+                    onAddChild={(parentId) => {
+                      setModalMode("create");
+                      setEditingCategory(null);
+                      setFormData({
+                        name: "",
+                        name_en: "",
+                        slug: "",
+                        parentId,
+                        description: "",
+                        description_en: "",
+                        image: "",
+                        order: 0,
+                        isActive: true,
+                      });
+                      setShowModal(true);
+                    }}
+                    getImageUrl={getImageUrl}
                   />
-                </div>
-              )}
-
-              {/* Level Badge */}
-              <div className="inline-block px-2 py-1 bg-secondary-100 text-secondary-700 rounded text-xs font-semibold mb-2">
-                Cấp {currentLevel}
-              </div>
-
-              {/* Info */}
-              <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
-                {category.name_en || category.name}
-              </h3>
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                {category.description_en || category.description || "No description"}
-              </p>
-
-              {/* Child Count */}
-              {childCount > 0 && (
-                <div className="mb-4 p-3 bg-secondary-50 rounded-lg border border-secondary-200">
-                  <p className="text-xs text-secondary-700 font-medium">
-                    📁 {childCount} danh mục con
-                  </p>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                {canViewChildren && (
-                  <button
-                    onClick={() => setSelectedParentId(category._id)}
-                    className="px-3 py-2 bg-secondary-100 text-secondary-700 rounded font-semibold text-sm hover:bg-secondary-200 transition-colors border border-secondary-200"
-                  >
-                    📁 Xem con
-                  </button>
-                )}
-                <button
-                  onClick={() => handleOpenModal(category)}
-                  className="px-3 py-2 bg-primary-100 text-primary-700 rounded font-semibold text-sm hover:bg-primary-200 transition-colors border border-primary-200"
-                >
-                  ✏️ Sửa
-                </button>
-                <button
-                  onClick={() => handleDelete(category._id)}
-                  className={`px-3 py-2 rounded font-semibold text-sm transition-colors ${
-                    deleteConfirm === category._id
-                      ? "bg-red-700 text-white"
-                      : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
-                  }`}
-                >
-                  {deleteConfirm === category._id ? "⚠️ Xác nhận?" : "🗑️ Xóa"}
-                </button>
-                <Link
-                  href={`/admin/blogs/add?categoryId=${category._id}`}
-                  className="px-3 py-2 bg-third-100 text-third-800 rounded font-semibold text-sm hover:bg-third-200 transition-colors border border-third-200 text-center"
-                >
-                  📝 Viết bài
-                </Link>
-              </div>
-
-              {/* Add child button */}
-              <button
-                onClick={() => {
-                  setModalMode("create");
-                  setEditingCategory(null);
-                  setFormData({
-                    name: "",
-                    name_en: "",
-                    slug: "",
-                    parentId: category._id,
-                    description: "",
-                    description_en: "",
-                    image: "",
-                    order: 0,
-                    isActive: true,
-                  });
-                  setShowModal(true);
-                }}
-                className="w-full mt-2 px-3 py-2 bg-third-100 text-third-800 rounded font-semibold text-sm hover:bg-third-200 transition-colors border border-third-200"
-              >
-                ➕ Tạo con
-              </button>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
-
-      {currentLevelCategories.length === 0 && (
+          </SortableContext>
+        </DndContext>
+      ) : (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
           <div className="text-5xl mb-3">📁</div>
           <p className="text-gray-600 mb-4">Không có danh mục nào ở cấp này</p>
           <button
+            type="button"
             onClick={() => handleOpenModal()}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold shadow-md"
           >

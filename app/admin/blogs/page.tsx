@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { blogApi, informationApi, Blog, Information } from "@/lib/api";
+import { blogApi, informationApi } from "@/lib/api";
+import type { Blog, Information, BlogQueryParams, InformationPreviewDto } from "@/lib/types";
 import { BLOG_STATUS } from "@/lib/constants/api";
-import Pagination from "@/app/components/Pagination";
+import { getApiErrorFeedback } from "@/lib/utils";
+import Pagination from "@/app/components/common/Pagination";
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -32,7 +34,7 @@ export default function AdminBlogsPage() {
       setLoading(true);
       
       // Build query params
-      const params: any = {
+      const params: BlogQueryParams = {
         page: currentPage,
         limit: 10,
       };
@@ -50,7 +52,7 @@ export default function AdminBlogsPage() {
         blogApi.getAll(params),
         informationApi.getAll(),
       ]);
-      
+
       // Extract blogs from response
       const blogs = blogsResponse.data?.items || [];
       setBlogs(blogs);
@@ -61,9 +63,9 @@ export default function AdminBlogsPage() {
         total: blogsResponse.data?.total || 0,
         totalPages: blogsResponse.data?.totalPages || 0,
       });
-      
+
       // Extract categories data
-      const categories = categoriesResponse.data?.items || [];
+      const categories = categoriesResponse.data || [];
       setAllCategories(Array.isArray(categories) ? categories : []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -120,11 +122,11 @@ export default function AdminBlogsPage() {
       setDeleteConfirm(null);
     } catch (error) {
       console.error("Error deleting blog:", error);
-      alert("Lỗi xóa bài viết");
+      alert(getApiErrorFeedback(error).message || "Lỗi xóa bài viết");
     }
   };
 
-  const getCategory = (infoId?: string | Information) => {
+  const getCategory = (infoId?: string | Information | InformationPreviewDto) => {
     if (!infoId) return null;
     // If it's already a populated object, return it
     if (typeof infoId === "object" && "name" in infoId) {

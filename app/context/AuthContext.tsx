@@ -2,10 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { http } from "@/lib/http";
+import { http } from "@/lib/api";
 import { authApi } from "@/lib/api";
+import { getApiErrorFeedback } from "@/lib/utils";
 import type { User as ApiUser } from "@/lib/types";
-import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "@/lib/utils/auth";
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "@/lib/utils/auth/auth";
 
 interface User {
   id: string;
@@ -95,8 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         clearAuthData();
       }
-    } catch (error: any) {
-      if (error.status === 401) {
+    } catch (error: unknown) {
+      // Check if it's a 401 error
+      const isUnauthorized = error && typeof error === 'object' && 'status' in error && error.status === 401;
+      
+      if (isUnauthorized) {
         // Token expired, try refresh
         await tryRefreshToken();
       } else {
@@ -116,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const response = await authApi.refreshToken(storedRefreshToken);
-      const newAccessToken = response.data?.token;
+      const newAccessToken = response.data?.accessToken;
       const newRefreshToken = response.data?.refreshToken;
 
       if (newAccessToken) {
@@ -189,8 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         router.push("/");
       }
-    } catch (error: any) {
-      throw new Error(error.message || "Login failed");
+    } catch (error: unknown) {
+      const message = getApiErrorFeedback(error).message;
+      throw new Error(message || "Login failed");
     }
   };
 
@@ -222,8 +227,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       http.setAuthToken(accessToken);
 
       router.push("/");
-    } catch (error: any) {
-      throw new Error(error.message || "Registration failed");
+    } catch (error: unknown) {
+      const message = getApiErrorFeedback(error).message;
+      throw new Error(message || "Registration failed");
     }
   };
 
@@ -254,8 +260,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(localUser);
         localStorage.setItem(USER_KEY, JSON.stringify(localUser));
       }
-    } catch (error: any) {
-      throw new Error(error.message || "Update failed");
+    } catch (error: unknown) {
+      const message = getApiErrorFeedback(error).message;
+      throw new Error(message || "Update failed");
     }
   };
 
@@ -265,8 +272,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!accessToken) throw new Error("Not authenticated");
 
       await authApi.changePassword(currentPassword, newPassword);
-    } catch (error: any) {
-      throw new Error(error.message || "Password change failed");
+    } catch (error: unknown) {
+      const message = getApiErrorFeedback(error).message;
+      throw new Error(message || "Password change failed");
     }
   };
 

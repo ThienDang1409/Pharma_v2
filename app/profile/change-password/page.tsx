@@ -6,7 +6,7 @@ import { useLanguage } from "@/app/context/LanguageContext";
 import { useToast } from "@/app/context/ToastContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { validateAndCall } from "@/lib/utils/apiHelper_backup";
+import { apiSubmit } from "@/lib/utils/api/apiHelper";
 import { ChangePasswordSchemaI18n } from "@/lib/validators/i18n.validator";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
@@ -43,7 +43,7 @@ export default function ChangePasswordPage() {
 
     const schema = ChangePasswordSchemaI18n(language as 'vi' | 'en');
 
-    const result = await validateAndCall(
+    const result = await apiSubmit(
       schema,
       {
         currentPassword: formData.currentPassword,
@@ -54,10 +54,8 @@ export default function ChangePasswordPage() {
         changePassword(validatedData.currentPassword, validatedData.newPassword),
       {
         toast: addToast,
-        successMessage:
+        successMsg:
           language === "vi" ? "Đổi mật khẩu thành công!" : "Password changed successfully!",
-        showSuccessToast: true,
-        showErrorToast: true,
         onSuccess: () => {
           // Reset form
           setFormData({

@@ -6,7 +6,7 @@ import { useLanguage } from "@/app/context/LanguageContext";
 import { useToast } from "@/app/context/ToastContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { validateAndCall } from "@/lib/utils/apiHelper_backup";
+import { apiSubmit } from "@/lib/utils/api/apiHelper";
 import { UpdateProfileSchemaI18n } from "@/lib/validators";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
@@ -50,21 +50,19 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await validateAndCall(
+    const result = await apiSubmit(
       UpdateProfileSchemaI18n(language as 'vi' | 'en'),
       {
         name: formData.name || undefined,
         phone: formData.phone || undefined,
-        address: formData.avatar || undefined, // Use avatar as address proxy
+        address: formData.avatar || undefined,
       },
       (validatedData) => updateProfile(formData),
       {
         toast: addToast,
-        successMessage: language === "vi" 
+        successMsg: language === "vi" 
           ? "Cập nhật thông tin thành công!" 
           : "Profile updated successfully!",
-        showSuccessToast: true,
-        showErrorToast: true,
         onSuccess: () => {
           setIsEditing(false);
         },
@@ -105,7 +103,7 @@ export default function ProfilePage() {
           {/* User Info Header */}
           <div className="px-6 py-8 border-b border-gray-200">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {user.avatar ? (
                   <img
                     src={user.avatar}

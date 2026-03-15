@@ -1,6 +1,5 @@
 "use client";
 
-import Layout from "@/app/components/Layout";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -141,11 +140,11 @@ export default function EventsPage() {
   const currentEvents = activeTab === "upcoming" ? upcomingEvents : pastEvents;
 
   return (
-    <Layout>
+    <>
       {/* Hero Section */}
-      <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="relative h-64 bg-linear-to-br from-gray-100 to-gray-200">
         <div className="absolute inset-0 opacity-10">
-          <div className="w-full h-full bg-[radial-gradient(circle_at_center,_#9ca3af_1px,_transparent_1px)] bg-[size:20px_20px]"></div>
+          <div className="w-full h-full bg-[radial-gradient(circle_at_center,#9ca3af_1px,transparent_1px)] bg-size-[20px_20px]"></div>
         </div>
         <div className="container mx-auto px-4 h-full flex items-center justify-center">
           <h1 className="text-5xl font-bold text-gray-800">Events</h1>
@@ -153,7 +152,7 @@ export default function EventsPage() {
       </div>
 
       {/* Yellow Separator Bar */}
-      <div className="h-4 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-400"></div>
+      <div className="h-4 bg-linear-to-r from-yellow-400 via-yellow-500 to-orange-400"></div>
 
       {/* Events Content Section */}
       <section className="py-16 bg-white">
@@ -322,6 +321,6 @@ export default function EventsPage() {
           )}
         </div>
       </section>
-    </Layout>
+    </>
   );
 }

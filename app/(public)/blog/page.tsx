@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { getLocalizedText, stripHtmlTags } from "@/lib/utils/i18n";
-import { formatDate } from "@/lib/utils/format";
-import { apiFetch } from "@/lib/utils/apiHelper";
+import { getLocalizedText, stripHtmlTags } from "@/lib/utils/string/i18n";
+import { formatDate } from "@/lib/utils/string/format";
+import { apiFetch } from "@/lib/utils/api/apiHelper";
 import { blogApi, Blog, Information } from "@/lib/api";
 import { BLOG_STATUS } from "@/lib/constants/api";
-import type { ApiResponse, PaginationResult } from "@/lib/types";
+import type { PaginationResult } from "@/lib/types";
 
 export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -22,15 +22,15 @@ export default function BlogPage() {
   const fetchBlogs = useCallback(async () => {
     setLoading(true);
     
-    const data = await apiFetch(
+    await apiFetch(
       () => blogApi.getAll({
         search: searchQuery,
         informationId: selectedCategory,
         status: BLOG_STATUS.PUBLISHED,
       }),
       {
-        onSuccess: (response: ApiResponse<PaginationResult<Blog>>) => {
-          const blogs = response.data?.items || [];
+        onSuccess: (payload: PaginationResult<Blog> | undefined) => {
+          const blogs = payload?.items || [];
           setBlogs(blogs);
 
           // Extract unique categories from blogs

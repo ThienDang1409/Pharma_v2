@@ -1,13 +1,14 @@
 "use client";
 
-import TiptapEditor from "@/app/components/TiptapEditor";
-import { ImageField } from "@/app/components/admin";
+import TiptapEditor from "@/app/components/admin/editor/TiptapEditor";
+import { ImageField } from "@/app/components/admin/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { blogApi, informationApi, imageApi, Information } from "@/lib/api";
+import { blogApi, informationApi, imageApi, Information, Blog } from "@/lib/api";
 import { IMAGE_FOLDERS } from "@/lib/constants/api";
-import { generateSlug } from "@/lib/utils/slug";
+import { generateSlug } from "@/lib/utils/string/slug";
+import { extractImageUrl, getApiErrorFeedback } from "@/lib/utils";
 
 interface BlogSection {
   type: string;
@@ -74,11 +75,16 @@ export default function AdminEditBlogPage() {
 
         // Fetch blog data
         const blogResponse = await blogApi.getById(blogId);
-        const blogData = blogResponse?.data?.blog || (blogResponse as any)?.blog || blogResponse;
+        const blogData: Blog | undefined = blogResponse?.data?.blog;
+
+        if (!blogData) {
+          throw new Error("Blog data not found");
+        }
 
         // Extract informationId (handle both string and populated object)
-        const categoryId: string = typeof blogData.informationId === "object" && blogData.informationId?._id
-          ? (blogData.informationId as any)?._id
+        const categoryId: string =
+          typeof blogData.informationId === "object" && blogData.informationId?._id
+          ? blogData.informationId._id
           : (blogData.informationId as string) || "";
 
         setFormData({
@@ -90,7 +96,7 @@ export default function AdminEditBlogPage() {
           sections: blogData.sections || [],
           author: blogData.author || "",
           informationId: categoryId,
-          image: blogData.image || "",
+          image: extractImageUrl(blogData.image),
           tags: blogData.tags || [],
           isProduct: blogData.isProduct || false,
           status: blogData.status || "draft",
@@ -326,9 +332,10 @@ export default function AdminEditBlogPage() {
       const submitData = { ...formData, status: publishStatus };
 
       // Remove informationId if empty (backend doesn't accept empty string for ObjectId)
-      if (!submitData.informationId || submitData.informationId === "") {
-        delete (submitData as any).informationId;
-      }
+      const payload =
+        !submitData.informationId || submitData.informationId === ""
+          ? (({ informationId, ...rest }) => rest)(submitData)
+          : submitData;
 
       // Validate required fields
       if (!submitData.title || !submitData.slug || !submitData.author) {
@@ -353,7 +360,7 @@ export default function AdminEditBlogPage() {
       //   }
       // }
 
-      await blogApi.update(blogId, submitData);
+      await blogApi.update(blogId, payload);
 
       alert(
         publishStatus === "published"
@@ -362,10 +369,9 @@ export default function AdminEditBlogPage() {
       );
 
       router.push("/admin");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating blog:", error);
-      const errorMessage =
-        error.response?.data?.message || "Không thể cập nhật bài viết";
+      const errorMessage = getApiErrorFeedback(error).message || "Không thể cập nhật bài viết";
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);

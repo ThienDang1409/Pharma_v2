@@ -263,6 +263,10 @@ export interface UpdateInformationDto {
   isActive?: boolean;
 }
 
+export interface ReorderInformationDto {
+  items: Array<{ id: string; order: number }>;
+}
+
 export interface InformationQueryDto {
   page?: number;
   limit?: number;
@@ -361,6 +365,12 @@ export interface RegisterData extends RegisterDto {}
 
 export interface AuthResponseDto {
   user: UserResponseDto;
+  accessToken: string;
+  refreshToken: string;
+}
+
+// Refresh token response (without user field)
+export interface RefreshTokenResponseDto {
   accessToken: string;
   refreshToken: string;
 }

@@ -82,25 +82,36 @@ export const VALIDATION_RULES = {
 // API Endpoints (relative)
 export const API_ENDPOINTS = {
   HEALTH: '/',
+  // Blog endpoints
   BLOGS: '/blog',
   BLOG_BY_ID: '/blog/:id',
   BLOG_BY_SLUG: '/blog/slug/:slug',
   BLOGS_SEARCH: '/blog/search',
+  // Information/Category endpoints
   INFORMATION: '/informations',
   INFORMATION_BY_ID: '/informations/:id',
   INFORMATION_BY_SLUG: '/informations/slug/:slug',
-  IMAGES: '/image',
-  IMAGE_BY_ID: '/image/:id',
-  IMAGE_UPLOAD: '/image/upload',
-  IMAGE_UPLOAD_MULTIPLE: '/image/upload-multiple',
+  INFORMATION_BY_PARENT: '/informations/parent/:parentId',
+  INFORMATION_REORDER: '/informations/reorder',
+  // Image endpoints
+  IMAGES: '/images',
+  IMAGE_BY_ID: '/images/:id',
+  IMAGE_UPLOAD: '/images/upload',
+  IMAGE_UPLOAD_MULTIPLE: '/images/upload-multiple',
+  IMAGE_BY_ENTITY: '/images/entity/:entityType/:entityId',
+  IMAGE_REFERENCE: '/images/:id/reference',
+  IMAGE_TRANSFORM: '/images/:id/transform',
+  IMAGE_CLEANUP: '/images/cleanup',
+  // Authentication endpoints
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
   AUTH_ME: '/auth/me',
   AUTH_LOGOUT: '/auth/logout',
-  AUTH_REFRESH: '/auth/refresh',
+  AUTH_REFRESH_TOKEN: '/auth/refresh-token',
   AUTH_FORGOT_PASSWORD: '/auth/forgot-password',
   AUTH_RESET_PASSWORD: '/auth/reset-password',
   AUTH_CHANGE_PASSWORD: '/auth/change-password',
+  AUTH_PROFILE: '/auth/profile',
 } as const;
 
 // HTTP Status Codes

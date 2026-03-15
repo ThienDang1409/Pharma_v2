@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { informationApi, blogApi, imageApi, Information, ImageQueryParams } from "@/lib/api";
 import { BLOG_STATUS } from "@/lib/constants/api";
+import { getApiErrorFeedback } from "@/lib/utils";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -62,7 +63,8 @@ export default function AdminDashboard() {
         unusedImages: unusedImagePagination?.total || 0,
       });
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      const feedback = getApiErrorFeedback(error);
+      console.error("Error fetching stats:", feedback.message, error);
     } finally {
       setLoading(false);
     }
