@@ -4,13 +4,27 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { imageApi, ImageResponse, ImageQueryParams } from "@/lib/api";
 import { IMAGE_FOLDERS } from "@/lib/constants/api";
-import { useToast } from "@/app/context/ToastContext";
+import {
+  Upload,
+  Search,
+  Trash2,
+  RefreshCw,
+  Image as LucideImage,
+  Check,
+  ExternalLink,
+  Filter,
+  Layers,
+  CheckCircle2,
+  Trash
+} from "lucide-react";
 import {
   formatFileSize,
   getImageUrl,
   apiFetch,
   apiMultiple,
 } from "@/lib/utils";
+import { useToast } from "@/app/context/ToastContext";
+import CustomSelect from "@/app/components/admin/CustomSelect";
 
 export default function AdminImagesPage() {
   const [images, setImages] = useState<ImageResponse[]>([]);
@@ -172,22 +186,12 @@ export default function AdminImagesPage() {
   }, [selectedImages.length, images]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Image Management</h1>
-          <p className="text-gray-600 mt-1">
-            Upload and manage images for your content
-          </p>
-        </div>
-
-        {/* Upload Button */}
-        <label className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold cursor-pointer transition-colors inline-flex items-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Upload Images
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header Section */}
+      <div className="admin-card border border-gray-200/80 rounded-3xl p-5 md:p-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-center gap-6">
+          <label className="flex items-center gap-2 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 active:scale-95 cursor-pointer">
+          <Upload size={16} /> Tải ảnh lên
           <input
             type="file"
             multiple
@@ -196,228 +200,234 @@ export default function AdminImagesPage() {
             className="hidden"
             disabled={uploading}
           />
-        </label>
+          </label>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-          <p className="text-gray-600 text-sm font-medium">Total Images</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">{pagination.total}</p>
+      {/* Stats Quick Status */}
+      <div className="admin-card border border-gray-200/80 rounded-3xl p-4 md:p-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="admin-card p-6 border-l-4 border-primary-900">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tổng số ảnh</p>
+          <p className="text-2xl font-black text-gray-900 tracking-tighter">{pagination.total}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-          <p className="text-gray-600 text-sm font-medium">Selected</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">{selectedImages.length}</p>
+        <div className="admin-card p-6 border-l-4 border-gray-900">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Đang chọn</p>
+          <p className="text-2xl font-black text-gray-900 tracking-tighter">{selectedImages.length}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
-          <p className="text-gray-600 text-sm font-medium">Current Page</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">
-            {pagination.page} / {pagination.totalPages}
+        <div className="admin-card p-6 border-l-4 border-gray-200">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Trang hiện tại</p>
+          <p className="text-2xl font-black text-gray-900 tracking-tighter">
+            {pagination.page} <span className="text-sm text-gray-400 font-bold">/ {pagination.totalPages}</span>
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <div className="admin-card p-6 bg-gray-50 flex items-center justify-center">
           <button
             onClick={handleCleanupUnused}
-            className="text-sm text-orange-600 hover:text-orange-800 font-semibold"
+            className="flex items-center gap-2 text-[10px] font-black text-orange-600 uppercase tracking-widest hover:text-orange-900 transition-colors"
           >
-            🗑️ Cleanup Unused
+            <RefreshCw size={14} /> Dọn dẹp rác
           </button>
+        </div>
         </div>
       </div>
 
-      {/* Filters & Actions */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Filters Bar */}
+      <div className="admin-card p-6 border border-gray-200/80">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           {/* Search */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-5 relative group">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none">
+              <Search size={18} />
+            </div>
             <input
               type="text"
-              placeholder="Search images..."
+              placeholder="Tìm kiếm tài nguyên..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="admin-input pl-14 h-12"
             />
           </div>
 
           {/* Folder Filter */}
-          <div>
-            <select
+          <div className="md:col-span-3 relative group">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none z-10">
+              <Layers size={18} />
+            </div>
+            <CustomSelect
+              options={[
+                { label: "Tất cả thư mục", value: "" },
+                { label: "Tải lên", value: "uploads" },
+                { label: "Bài viết", value: "blogs" },
+                { label: "Danh mục", value: "categories" },
+                { label: "Sản phẩm", value: "products" },
+              ]}
               value={filterFolder}
-              onChange={(e) => setFilterFolder(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">All Folders</option>
-              <option value="uploads">Uploads</option>
-              <option value="blogs">Blogs</option>
-              <option value="categories">Categories</option>
-              <option value="products">Products</option>
-            </select>
+              onChange={(value) => setFilterFolder(value as string)}
+              placeholder="Chọn thư mục..."
+              className="pl-14"
+            />
           </div>
 
-          {/* Unused Filter */}
-          <div className="flex items-center">
-            <label className="flex items-center gap-2 cursor-pointer">
+          {/* Configuration */}
+          <div className="md:col-span-4 flex items-center justify-between pl-4 border-l border-gray-200">
+            <label className="flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={filterUnused}
                 onChange={(e) => setFilterUnused(e.target.checked)}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                className="admin-checkbox !w-5 !h-5"
               />
-              <span className="text-sm text-gray-700">Unused Only</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-gray-900">Ảnh chưa dùng</span>
             </label>
+
+            {selectedImages.length > 0 && (
+              <div className="flex items-center gap-2 animate-in slide-in-from-right-4">
+                <button
+                  onClick={toggleSelectAll}
+                  className="text-[10px] font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest"
+                >
+                  {selectedImages.length === images.length ? "Bỏ chọn" : "Tất cả"}
+                </button>
+                <div className="w-[1px] h-4 bg-gray-200 mx-1" />
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                >
+                  <Trash size={12} /> Xóa {selectedImages.length}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Bulk Actions */}
-        {selectedImages.length > 0 && (
-          <div className="mt-4 flex items-center gap-4 pt-4 border-t">
-            <button
-              onClick={toggleSelectAll}
-              className="text-sm text-gray-600 hover:text-gray-800"
-            >
-              {selectedImages.length === images.length ? "Deselect All" : "Select All"}
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              className="text-sm text-red-600 hover:text-red-800 font-semibold"
-            >
-              Delete Selected ({selectedImages.length})
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Upload Progress */}
+      {/* Uploading Progress Overlay */}
       {uploading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <p className="text-blue-800">Uploading images...</p>
+        <div className="flex items-center gap-3 p-6 bg-primary-900 text-white rounded-2xl shadow-xl shadow-primary-900/20 animate-pulse">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          <p className="text-[10px] font-black uppercase tracking-widest">Đang tải tài nguyên lên hệ thống...</p>
+        </div>
+      )}
+
+      {/* Grid Section */}
+      {loading ? (
+        <div className="flex items-center justify-center py-40">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-900"></div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Đang kết nối thư viện...</p>
           </div>
         </div>
-      )}
-
-      {/* Image Grid */}
-      {loading ? (
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        </div>
       ) : images.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <svg
-            className="w-16 h-16 mx-auto text-gray-400 mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="text-gray-600 text-lg">No images found</p>
-          <p className="text-gray-500 text-sm mt-2">Upload your first image to get started</p>
+        <div className="admin-card p-40 flex flex-col items-center justify-center text-center">
+          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border border-gray-200">
+            <LucideImage size={40} className="text-gray-200" />
+          </div>
+          <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter">Thư viện trống</h3>
+          <p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">HÃY TẢI HÌNH ẢNH ĐẦU TIÊN LÊN</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {images.map((image) => (
-            <div
-              key={image._id}
-              className={`
-                bg-white rounded-lg shadow-md overflow-hidden cursor-pointer
-                transition-all hover:shadow-lg
-                ${selectedImages.includes(image._id) ? "ring-2 ring-primary-500" : ""}
-              `}
-            >
-              {/* Image Preview */}
-              <div className="relative aspect-square bg-gray-100">
-                <img
-                  src={getImageUrl(image.cloudinaryUrl, { width: 300, quality: 80 })}
-                  alt={image.fileName}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-
-                {/* Checkbox Overlay */}
-                <div className="absolute top-2 left-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedImages.includes(image._id)}
-                    onChange={() => toggleImageSelection(image._id)}
-                    className="w-5 h-5 text-primary-600 border-2 border-white rounded shadow-lg"
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {images.map((image) => {
+            const isSelected = selectedImages.includes(image._id);
+            return (
+              <div
+                key={image._id}
+                className={`
+                  admin-card p-0 overflow-hidden cursor-pointer group transition-all duration-300
+                  ${isSelected ? "ring-2 ring-primary-900 shadow-xl" : "hover:shadow-2xl hover:-translate-y-1"}
+                `}
+              >
+                {/* Media Container */}
+                <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                  <img
+                    src={getImageUrl(image.cloudinaryUrl, { width: 400, quality: 80 })}
+                    alt={image.fileName}
+                    className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${isSelected ? "opacity-75" : ""}`}
+                    loading="lazy"
                   />
-                </div>
 
-                {/* Usage Badge */}
-                {image.refCount > 0 && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                    Used {image.refCount}x
+                  {/* Multi-select overlay */}
+                  {/* Multi-select overlay */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleImageSelection(image._id)}
+                      className="admin-checkbox"
+                    />
                   </div>
-                )}
-              </div>
 
-              {/* Image Info */}
-              <div className="p-3">
-                <p className="text-sm font-medium text-gray-800 truncate" title={image.fileName}>
-                  {image.fileName}
-                </p>
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                  <span>{formatFileSize(image.fileSize)}</span>
-                  <span>
-                    {image.width} × {image.height}
-                  </span>
+                  {/* Badges */}
+                  <div className="absolute top-4 right-4 flex flex-col gap-2">
+                    {image.refCount > 0 && (
+                      <div className="bg-primary-900 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md shadow-lg">
+                        DÙNG {image.refCount}x
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hover Actions Bottom */}
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-linear-to-t from-black/60 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); window.open(image.cloudinaryUrl, "_blank"); }}
+                      className="flex-1 h-10 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white rounded-xl flex items-center justify-center transition-colors"
+                    >
+                      <ExternalLink size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(image._id); }}
+                      className="flex-1 h-10 bg-red-500/80 backdrop-blur-md hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-3">
-                  <button
-                    onClick={() => window.open(image.cloudinaryUrl, "_blank")}
-                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs py-1.5 rounded transition-colors"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => handleDelete(image._id)}
-                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded transition-colors"
-                  >
-                    Delete
-                  </button>
+                {/* Metadata Area */}
+                <div className="p-5">
+                  <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-tight truncate leading-tight group-hover:text-primary-900 transition-colors" title={image.fileName}>
+                    {image.fileName}
+                  </h4>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formatFileSize(image.fileSize)}</span>
+                    <span className="text-[10px] font-bold text-gray-400 tracking-widest">{image.width}×{image.height}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination Footer */}
       {pagination.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex items-center justify-center gap-3 pt-8 pb-12">
           <button
             onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
             disabled={pagination.page === 1}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-12 h-12 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-primary-900 hover:border-primary-900 transition-all disabled:opacity-30 disabled:pointer-events-none"
           >
-            Previous
+            ←
           </button>
 
           <div className="flex items-center gap-2">
             {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
               const page = i + 1;
+              const isActive = pagination.page === page;
               return (
                 <button
                   key={page}
                   onClick={() => setPagination((prev) => ({ ...prev, page }))}
                   className={`
-                    px-4 py-2 rounded-lg font-medium
-                    ${pagination.page === page
-                      ? "bg-primary-600 text-white"
-                      : "bg-white border border-gray-300 hover:bg-gray-50"
+                    w-12 h-12 rounded-xl text-[10px] font-black transition-all
+                    ${isActive
+                      ? "bg-primary-900 text-white shadow-xl shadow-primary-900/20"
+                      : "bg-white border border-gray-200 text-gray-400 hover:text-gray-900 hover:border-gray-900"
                     }
                   `}
                 >
-                  {page}
+                  {page.toString().padStart(2, '0')}
                 </button>
               );
             })}
@@ -426,9 +436,9 @@ export default function AdminImagesPage() {
           <button
             onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
             disabled={pagination.page === pagination.totalPages}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-12 h-12 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-primary-900 hover:border-primary-900 transition-all disabled:opacity-30 disabled:pointer-events-none"
           >
-            Next
+            →
           </button>
         </div>
       )}

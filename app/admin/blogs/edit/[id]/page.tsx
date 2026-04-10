@@ -2,13 +2,34 @@
 
 import TiptapEditor from "@/app/components/admin/editor/TiptapEditor";
 import { ImageField } from "@/app/components/admin/image";
+import CustomSelect from "@/app/components/admin/CustomSelect";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { blogApi, informationApi, imageApi, Information, Blog } from "@/lib/api";
+import { blogApi, informationApi, imageApi, Information, ImageResponse, Blog } from "@/lib/api";
 import { IMAGE_FOLDERS } from "@/lib/constants/api";
 import { generateSlug } from "@/lib/utils/string/slug";
-import { extractImageUrl, getApiErrorFeedback } from "@/lib/utils";
+import { translateText, translateHtmlPreservingMedia } from "@/lib/utils/string/translate";
+import { useToast } from "@/app/context/ToastContext";
+import { UpdateBlogSchema } from "@/lib/validators";
+import { apiFetch, apiSubmit } from "@/lib/utils/api/apiHelper";
+import {
+  Eye,
+  Settings,
+  Monitor,
+  Smartphone,
+  Save,
+  ChevronLeft,
+  Sparkles,
+  ArrowLeft,
+  User,
+  ImageIcon,
+  PlusCircle,
+  Newspaper,
+  LogOut,
+  FolderTree
+} from "lucide-react";
+import BlogPreview from "@/app/components/admin/editor-modern/BlogPreview";
 
 interface BlogSection {
   type: string;
@@ -33,11 +54,11 @@ interface BlogFormData {
   isProduct: boolean;
   status: "draft" | "published";
 }
-
-export default function AdminEditBlogPage() {
+function AdminEditNewsPageContent() {
   const router = useRouter();
   const params = useParams();
   const blogId = params.id as string;
+  const toast = useToast();
 
   const [formData, setFormData] = useState<BlogFormData>({
     title: "",
@@ -52,8 +73,8 @@ export default function AdminEditBlogPage() {
   });
 
   const [categories, setCategories] = useState<Information[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
@@ -61,31 +82,37 @@ export default function AdminEditBlogPage() {
   const [mainLanguage, setMainLanguage] = useState<"vi" | "en">("en");
   const [sectionLanguages, setSectionLanguages] = useState<{ [key: number]: "vi" | "en" }>({});
   const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<"edit" | "preview" | "split">("edit");
+  const [isPreviewMobile, setIsPreviewMobile] = useState(false);
+  const [isTranslatingMain, setIsTranslatingMain] = useState(false);
+  const [translatingSectionIndex, setTranslatingSectionIndex] = useState<number | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
 
-  // Fetch blog data and categories on mount
+  // Fetch categories and existing blog data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
 
-        // Fetch categories
-        const categoriesResponse = await informationApi.getAll();
-        const categoriesData = categoriesResponse?.data?.items || [];
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        const categoriesData = await apiFetch(
+          () => informationApi.getAll(),
+          { onError: () => setCategories([]) }
+        );
+        setCategories(Array.isArray(categoriesData?.items) ? categoriesData.items : []);
 
-        // Fetch blog data
         const blogResponse = await blogApi.getById(blogId);
         const blogData: Blog | undefined = blogResponse?.data?.blog;
 
         if (!blogData) {
-          throw new Error("Blog data not found");
+          toast.error("Không tìm thấy dữ liệu bài viết");
+          router.push("/admin/blogs");
+          return;
         }
 
-        // Extract informationId (handle both string and populated object)
         const categoryId: string =
           typeof blogData.informationId === "object" && blogData.informationId?._id
-          ? blogData.informationId._id
-          : (blogData.informationId as string) || "";
+            ? blogData.informationId._id
+            : (blogData.informationId as string) || "";
 
         setFormData({
           title: blogData.title || "",
@@ -96,15 +123,24 @@ export default function AdminEditBlogPage() {
           sections: blogData.sections || [],
           author: blogData.author || "",
           informationId: categoryId,
-          image: extractImageUrl(blogData.image),
+          image:
+            typeof blogData.image === "string"
+              ? blogData.image
+              : blogData.image?._id || "",
           tags: blogData.tags || [],
           isProduct: blogData.isProduct || false,
           status: blogData.status || "draft",
         });
+
+        setPreviewImageUrl(
+          typeof blogData.image === "string"
+            ? ""
+            : blogData.image?.cloudinaryUrl || ""
+        );
       } catch (error) {
-        console.error("Error fetching data:", error);
-        alert("Không thể tải dữ liệu bài viết");
-        router.push("/admin");
+        console.error("Error fetching blog data:", error);
+        toast.error("Không thể tải dữ liệu bài viết");
+        router.push("/admin/blogs");
       } finally {
         setIsLoading(false);
       }
@@ -113,7 +149,16 @@ export default function AdminEditBlogPage() {
     if (blogId) {
       fetchData();
     }
-  }, [blogId, router]);
+  }, [blogId, router, toast]);
+
+  // Auto-generate slug from English title (preferred) or Vietnamese title
+  useEffect(() => {
+    const titleForSlug = formData.title_en || formData.title;
+    if (titleForSlug) {
+      const slug = generateSlug(titleForSlug);
+      setFormData((prev) => ({ ...prev, slug }));
+    }
+  }, [formData.title_en, formData.title]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -194,14 +239,11 @@ export default function AdminEditBlogPage() {
   };
 
   const handleSectionTitleChange = (index: number, title: string) => {
-    const slug = generateSlug(title);
-
     setFormData((prev) => {
       const updatedSections = [...prev.sections];
       updatedSections[index] = {
         ...updatedSections[index],
         title,
-        slug,
       };
       return { ...prev, sections: updatedSections };
     });
@@ -218,6 +260,144 @@ export default function AdminEditBlogPage() {
       };
       return { ...prev, sections: updatedSections };
     });
+  };
+
+  const copyToVietnamese = (index: number) => {
+    setFormData((prev) => {
+      const updatedSections = [...prev.sections];
+      updatedSections[index] = {
+        ...updatedSections[index],
+        title: updatedSections[index].title_en || updatedSections[index].title,
+        content: updatedSections[index].content_en || updatedSections[index].content,
+      };
+      return { ...prev, sections: updatedSections };
+    });
+  };
+
+  const handleTranslateMainToEnglish = async () => {
+    if (!formData.title?.trim() && !formData.excerpt?.trim()) {
+      toast.error("Vui lòng nhập tiêu đề hoặc mô tả tiếng Việt trước");
+      return;
+    }
+
+    setIsTranslatingMain(true);
+    try {
+      const [titleEn, excerptEn] = await Promise.all([
+        formData.title?.trim() ? translateText(formData.title, { from: "vi", to: "en" }) : Promise.resolve(""),
+        formData.excerpt?.trim() ? translateText(formData.excerpt, { from: "vi", to: "en" }) : Promise.resolve(""),
+      ]);
+
+      setFormData((prev) => ({
+        ...prev,
+        title_en: titleEn || prev.title_en,
+        excerpt_en: excerptEn || prev.excerpt_en,
+      }));
+
+      toast.success("Đã dịch thông tin cơ bản sang tiếng Anh");
+    } catch (error) {
+      console.error("Main translation error:", error);
+      toast.error("Không thể dịch tự động. Kiểm tra API key hoặc kết nối.");
+    } finally {
+      setIsTranslatingMain(false);
+    }
+  };
+
+  const handleTranslateMainToVietnamese = async () => {
+    if (!formData.title_en?.trim() && !formData.excerpt_en?.trim()) {
+      toast.error("Vui lòng nhập tiêu đề hoặc mô tả tiếng Anh trước");
+      return;
+    }
+
+    setIsTranslatingMain(true);
+    try {
+      const [titleVi, excerptVi] = await Promise.all([
+        formData.title_en?.trim() ? translateText(formData.title_en, { from: "en", to: "vi" }) : Promise.resolve(""),
+        formData.excerpt_en?.trim() ? translateText(formData.excerpt_en, { from: "en", to: "vi" }) : Promise.resolve(""),
+      ]);
+
+      setFormData((prev) => ({
+        ...prev,
+        title: titleVi || prev.title,
+        excerpt: excerptVi || prev.excerpt,
+      }));
+
+      toast.success("Đã dịch thông tin cơ bản sang tiếng Việt");
+    } catch (error) {
+      console.error("Main reverse translation error:", error);
+      toast.error("Không thể dịch tự động. Kiểm tra API key hoặc kết nối.");
+    } finally {
+      setIsTranslatingMain(false);
+    }
+  };
+
+  const handleTranslateSectionToEnglish = async (index: number) => {
+    const section = formData.sections[index];
+    if (!section?.title?.trim() && !section?.content?.trim()) {
+      toast.error("Vui lòng nhập tiêu đề hoặc nội dung tiếng Việt trước");
+      return;
+    }
+
+    setTranslatingSectionIndex(index);
+    try {
+      const [translatedTitle, translatedContent] = await Promise.all([
+        section.title?.trim() ? translateText(section.title, { from: "vi", to: "en" }) : Promise.resolve(""),
+        section.content?.trim()
+          ? translateHtmlPreservingMedia(section.content, { from: "vi", to: "en" })
+          : Promise.resolve(""),
+      ]);
+
+      setFormData((prev) => {
+        const updated = [...prev.sections];
+        updated[index] = {
+          ...updated[index],
+          title_en: translatedTitle || updated[index].title_en,
+          content_en: translatedContent || updated[index].content_en,
+        };
+        return { ...prev, sections: updated };
+      });
+
+      toast.success(`Đã dịch phần ${index + 1} sang tiếng Anh`);
+    } catch (error) {
+      console.error("Section translation error:", error);
+      toast.error("Không thể dịch phần nội dung. Vui lòng thử lại.");
+    } finally {
+      setTranslatingSectionIndex(null);
+    }
+  };
+
+  const handleTranslateSectionToVietnamese = async (index: number) => {
+    const section = formData.sections[index];
+    if (!section?.title_en?.trim() && !section?.content_en?.trim()) {
+      toast.error("Vui lòng nhập tiêu đề hoặc nội dung tiếng Anh trước");
+      return;
+    }
+
+    setTranslatingSectionIndex(index);
+    try {
+      const [translatedTitle, translatedContent] = await Promise.all([
+        section.title_en?.trim() ? translateText(section.title_en, { from: "en", to: "vi" }) : Promise.resolve(""),
+        section.content_en?.trim()
+          ? translateHtmlPreservingMedia(section.content_en, { from: "en", to: "vi" })
+          : Promise.resolve(""),
+      ]);
+
+      setFormData((prev) => {
+        const updated = [...prev.sections];
+        updated[index] = {
+          ...updated[index],
+          title: translatedTitle || updated[index].title,
+          content: translatedContent || updated[index].content,
+        };
+        return { ...prev, sections: updated };
+      });
+
+      toast.success(`Đã dịch phần ${index + 1} sang tiếng Việt`);
+    } catch (error) {
+      console.error("Section reverse translation error:", error);
+      toast.error("Không thể dịch phần nội dung. Vui lòng thử lại.");
+    } finally {
+      setTranslatingSectionIndex(null);
+    }
   };
 
   // Toggle section collapse
@@ -320,7 +500,6 @@ export default function AdminEditBlogPage() {
       tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
-
   const handleSubmit = async (
     e: React.FormEvent,
     publishStatus: "draft" | "published"
@@ -328,854 +507,663 @@ export default function AdminEditBlogPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      const submitData = { ...formData, status: publishStatus };
+    const submitData = { ...formData, status: publishStatus };
 
-      // Remove informationId if empty (backend doesn't accept empty string for ObjectId)
-      const payload =
-        !submitData.informationId || submitData.informationId === ""
-          ? (({ informationId, ...rest }) => rest)(submitData)
-          : submitData;
+    const payload: Omit<BlogFormData, "informationId"> & { informationId?: string } = {
+      ...submitData,
+      ...(submitData.informationId ? { informationId: submitData.informationId } : {}),
+    };
 
-      // Validate required fields
-      if (!submitData.title || !submitData.slug || !submitData.author) {
-        alert("Please fill in all required fields");
-        setIsSubmitting(false);
-        return;
+    // Use API helper with automatic validation and toast
+    const result = await apiSubmit<any, unknown>(
+      UpdateBlogSchema,
+      payload,
+      (validatedData) => blogApi.update(blogId, validatedData),
+      {
+        toast,
+        successMsg:
+          publishStatus === "published"
+            ? "Cập nhật và xuất bản thành công!"
+            : "Cập nhật bản nháp thành công!",
+        onSuccess: () => {
+          setTimeout(() => {
+            window.location.href = "/admin/blogs";
+          }, 800);
+        },
       }
+    );
 
-      if (submitData.sections.length === 0) {
-        alert("Vui lòng thêm ít nhất một phần nội dung");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Validate sections
-      // for (let i = 0; i < submitData.sections.length; i++) {
-      //   const section = submitData.sections[i];
-      //   if (!section.title || !section.slug || !section.content) {
-      //     alert(`Phần ${i + 1} chưa hoàn chỉnh. Vui lòng điền đầy đủ.`);
-      //     setIsSubmitting(false);
-      //     return;
-      //   }
-      // }
-
-      await blogApi.update(blogId, payload);
-
-      alert(
-        publishStatus === "published"
-          ? "Cập nhật và xuất bản thành công!"
-          : "Cập nhật bản nháp thành công!"
-      );
-
-      router.push("/admin");
-    } catch (error: unknown) {
-      console.error("Error updating blog:", error);
-      const errorMessage = getApiErrorFeedback(error).message || "Không thể cập nhật bài viết";
-      alert(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(false);
+    return result;
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <svg
-            className="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <p className="text-gray-600 font-medium">Đang tải dữ liệu...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-600"></div>
       </div>
     );
   }
 
+
   return (
-    <div className="min-h-screen  space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Sửa bài viết </h1>
-          <p className="text-gray-600 mt-1">Sửa blog/news cho website</p>
-        </div>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* View Mode Switcher - Floating Pill */}
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center bg-white/90 backdrop-blur-xl p-1.5 rounded-3xl shadow-premium border border-white">
+        <button
+          type="button"
+          onClick={() => setViewMode("edit")}
+          className={`px-6 py-3 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all rounded-2xl ${viewMode === 'edit' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+        >
+          <Settings size={14} /> Soạn thảo
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("preview")}
+          className={`px-6 py-3 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all rounded-2xl ${viewMode === 'preview' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+        >
+          <Eye size={14} /> Xem thử
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("split")}
+          className={`hidden lg:flex px-6 py-3 text-xs font-black uppercase tracking-widest items-center gap-2 transition-all rounded-2xl ${viewMode === 'split' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+        >
+          <Monitor size={14} /> Chia hai
+        </button>
       </div>
 
-      {/* Main Content */}
-      <main className="container mx-auto py-8">
-        <form className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar - Metadata */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Publish Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg
-                  className="w-5 h-5 text-primary-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <h3 className="font-semibold text-gray-800">Xuất bản</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">
-                    Trạng thái
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-600 transition-all text-sm text-black"
-                  >
-                    <option value="draft">Nháp</option>
-                    <option value="published">Xuất bản</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="isProduct"
-                      checked={formData.isProduct}
-                      onChange={(e) => setFormData(prev => ({ ...prev, isProduct: e.target.checked }))}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Đây là sản phẩm
-                    </span>
-                  </label>
-                  <p className="text-xs text-gray-500 mt-1 ml-6">
-                    Đánh dấu nếu đây là bài viết về sản phẩm
-                  </p>
-                </div>
-
-                <div className="pt-2 space-y-2">
-                  {isSubmitting && (
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
-                      <svg className="w-5 h-5 text-yellow-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span className="text-sm font-medium text-yellow-800">Đang xử lý...</span>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => handleSubmit(e, "published")}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-linear-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg
-                          className="animate-spin h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Đang cập nhật...
-                      </span>
-                    ) : (
-                      "💾 Cập nhật & xuất bản"
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleSubmit(e, "draft")}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    💾 Lưu nháp
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Author Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg
-                  className="w-5 h-5 text-secondary-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <h3 className="font-semibold text-gray-800">Tác giả <span className="text-red-600">*</span></h3>
-              </div>
-              <input
-                type="text"
-                id="author"
-                name="author"
-                value={formData.author}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-secondary-600 transition-all text-sm text-black"
-                placeholder="Tên tác giả"
-              />
-            </div>
-
-            {/* Category Card - Hierarchical Selector */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg
-                  className="w-5 h-5 text-primary-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                  />
-                </svg>
-                <h3 className="font-semibold text-gray-800">Danh mục <span className="text-red-600">*</span></h3>
-              </div>
-
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary-600 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className={formData.informationId ? "text-gray-900 font-medium" : "text-gray-500"}>
-                    {formData.informationId ? getCategoryPath(formData.informationId) : "Chọn danh mục..."}
-                  </span>
-                  <svg
-                    className={`w-5 h-5 text-gray-400 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {showCategoryDropdown && (
-                  <div className="absolute z-50 w-full mt-2 bg-white border-2 border-primary-300 rounded-lg shadow-xl max-h-96 overflow-y-auto">
-                    {renderCategoryTree()}
-                  </div>
-                )}
-              </div>
-
-              {formData.informationId && (
-                <p className="mt-3 text-sm text-secondary-700 bg-secondary-50 px-3 py-2 rounded border-l-4 border-secondary-500">
-                  📁 Đã chọn: <strong>{getCategoryPath(formData.informationId)}</strong>
-                </p>
-              )}
-            </div>
-
-            {/* Featured Image Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg
-                  className="w-5 h-5 text-third-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <h3 className="font-semibold text-gray-800">Hình đại diện</h3>
-              </div>
-              <ImageField
-                label="Chọn hình ảnh đại diện"
-                value={formData.image}
-                onChange={(imageUrl) => setFormData((prev) => ({ ...prev, image: imageUrl || "" }))}
-                required
-              />
-            </div>
-
-            {/* Tags Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg
-                  className="w-5 h-5 text-secondary-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-                  />
-                </svg>
-                <h3 className="font-semibold text-gray-800">Tags</h3>
-              </div>
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-secondary-600 text-sm text-black"
-                  placeholder="Nhập tag..."
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="px-4 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors text-sm font-medium"
-                >
-                  Thêm
-                </button>
-              </div>
-              {formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1.5 bg-secondary-100 text-secondary-800 rounded-full text-xs font-medium flex items-center gap-2 border border-secondary-300"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="text-secondary-700 hover:text-secondary-900 font-bold"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Blog Title & Slug with i18n */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="space-y-4">
-                {/* Language Toggle */}
-                <div className="flex items-center justify-between border-b pb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">Thông tin cơ bản</h3>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setMainLanguage("vi")}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${mainLanguage === "vi"
-                          ? "bg-primary-600 text-white shadow-sm"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
-                    >
-                      🇻🇳 Tiếng Việt
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMainLanguage("en")}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${mainLanguage === "en"
-                          ? "bg-primary-600 text-white shadow-sm"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
-                    >
-                      🇬🇧 English
-                      {formData.title_en && (
-                        <span className="ml-1 text-xs">✓</span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Vietnamese Title */}
-                {mainLanguage === "vi" && (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="title"
-                        className="block text-sm font-semibold text-gray-700 mb-2"
-                      >
-                        Tiêu đề (VI) *
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 text-xl font-medium border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black"
-                        placeholder="Nhập tiêu đề tiếng Việt..."
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="excerpt"
-                        className="block text-sm font-semibold text-gray-700 mb-2"
-                      >
-                        Mô tả ngắn (VI)
-                      </label>
-                      <textarea
-                        id="excerpt"
-                        name="excerpt"
-                        value={formData.excerpt || ""}
-                        onChange={handleInputChange}
-                        rows={3}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black resize-none"
-                        placeholder="Mô tả ngắn cho bài viết..."
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* English Title */}
-                {mainLanguage === "en" && (
-                  <>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label
-                          htmlFor="title_en"
-                          className="block text-sm font-semibold text-gray-700"
-                        >
-                          Title (EN)
-                        </label>
-                        {formData.title && (
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, title_en: prev.title }))}
-                            className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
-                          >
-                            📋 Copy từ VI
-                          </button>
-                        )}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Content Area */}
+        <main className={`flex-1 overflow-y-auto custom-scrollbar ${viewMode === 'preview' ? 'hidden' : viewMode === 'split' ? 'w-1/2' : 'w-full'}`}>
+          <div className={`${viewMode === 'split' ? 'w-full' : 'container mx-auto'} py-8 px-4`}>
+            <form className={`grid grid-cols-1 ${viewMode === 'split' ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-8`}>
+              {/* Left Sidebar - Metadata (Hidden in Split Mode) */}
+              {viewMode !== 'split' ? (
+                <div className="lg:col-span-1 space-y-6">
+                  {/* Publish Card */}
+                  <div className="admin-card p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-green-50 text-green-600 rounded-xl">
+                        <Save size={18} />
                       </div>
-                      <input
-                        type="text"
-                        id="title_en"
-                        name="title_en"
-                        value={formData.title_en || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 text-xl font-medium border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black"
-                        placeholder="Enter English title..."
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Optional - Falls back to Vietnamese if empty</p>
+                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-tighter">Cập nhật bài viết</h3>
                     </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label
-                          htmlFor="excerpt_en"
-                          className="block text-sm font-semibold text-gray-700"
-                        >
-                          Excerpt (EN)
-                        </label>
-                        {formData.excerpt && (
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, excerpt_en: prev.excerpt }))}
-                            className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
-                          >
-                            📋 Copy từ VI
-                          </button>
-                        )}
-                      </div>
-                      <textarea
-                        id="excerpt_en"
-                        name="excerpt_en"
-                        value={formData.excerpt_en || ""}
-                        onChange={handleInputChange}
-                        rows={3}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black resize-none"
-                        placeholder="Enter short description..."
-                      />
-                    </div>
-                  </>
-                )}
 
-                <div>
-                  <label
-                    htmlFor="slug"
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
-                    URL Slug *
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">/blog/</span>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="admin-label">Trạng thái</label>
+                        <CustomSelect
+                          options={[
+                            { label: "Bản nháp", value: "draft" },
+                            { label: "Công khai", value: "published" },
+                          ]}
+                          value={formData.status}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              status: value as "draft" | "published",
+                            }))
+                          }
+                          placeholder="Chọn trạng thái..."
+                          className="font-bold"
+                        />
+                      </div>
+
+                      <div className="p-4 bg-white rounded-2xl flex items-start gap-4 border border-gray-200 shadow-sm">
+                        <input
+                          type="checkbox"
+                          name="isProduct"
+                          id="isProduct"
+                          checked={formData.isProduct}
+                          onChange={(e) => setFormData(prev => ({ ...prev, isProduct: e.target.checked }))}
+                          className="admin-checkbox"
+                        />
+                        <label htmlFor="isProduct" className="flex flex-col cursor-pointer">
+                          <span className="text-sm font-black text-gray-900 leading-tight">Đây là sản phẩm</span>
+                          <span className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">Gắn thẻ bài viết sản phẩm</span>
+                        </label>
+                      </div>
+
+                      <div className="pt-2 space-y-3">
+                        {isSubmitting && (
+                          <div className="p-4 bg-primary-50 text-primary-900 rounded-2xl flex items-center gap-3 animate-pulse font-bold text-sm">
+                            <Sparkles size={18} className="animate-spin" />
+                            <span>Đang cập nhật dữ liệu...</span>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => handleSubmit(e, "published")}
+                          disabled={isSubmitting}
+                          className="w-full flex items-center justify-center gap-2 py-4 bg-primary-900 text-white font-black rounded-2xl hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 disabled:opacity-50"
+                        >
+                          <Monitor size={18} />
+                          {isSubmitting ? "Đang xử lý..." : "CẬP NHẬT & XUẤT BẢN"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleSubmit(e, "draft")}
+                          disabled={isSubmitting}
+                          className="w-full py-4 bg-white text-gray-600 font-black rounded-2xl border border-gray-200 hover:border-gray-900 hover:text-gray-900 transition-all shadow-sm disabled:opacity-50"
+                        >
+                          LƯU CẬP NHẬT BẢN NHÁP
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Author Card */}
+                  <div className="admin-card p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                        <User size={18} />
+                      </div>
+                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-tighter">Tác giả</h3>
+                    </div>
                     <input
                       type="text"
-                      id="slug"
-                      name="slug"
-                      value={formData.slug}
+                      id="author"
+                      name="author"
+                      value={formData.author}
                       onChange={handleInputChange}
                       required
-                      className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black"
-                      placeholder="auto-generated-slug"
+                      className="admin-input font-bold"
+                      placeholder="Tên tác giả..."
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1.5">
-                    Tự động tạo từ tiêu đề. Dùng trong URL.
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Sections */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  <svg
-                    className="w-6 h-6 text-primary-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Nội dung
-                  {formData.sections.length > 0 && (
-                    <span className="text-sm font-normal text-gray-500">
-                      ({formData.sections.length} phần)
-                    </span>
-                  )}
-                </h2>
-                <button
-                  type="button"
-                  onClick={handleAddSection}
-                  className="px-4 py-2.5 bg-linear-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Thêm phần
-                </button>
-              </div>
-
-              {formData.sections.length === 0 && (
-                <div className="bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-300 p-12 text-center">
-                  <svg
-                    className="w-16 h-16 text-gray-400 mx-auto mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Chưa có nội dung
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    Thêm phần nội dung đầu tiên
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleAddSection}
-                    className="px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                    Thêm phần đầu tiên
-                  </button>
-                </div>
-              )}
-
-              {formData.sections.map((section, index) => {
-                const sectionLang = sectionLanguages[index] || "vi";
-                const isCollapsed = collapsedSections.has(index);
-
-                return (
-                  <div
-                    key={index}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                  >
-                    {/* Section Header */}
-                    <div className="bg-linear-to-r from-primary-50 to-indigo-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center justify-center w-8 h-8 bg-linear-to-r from-primary-600 to-indigo-600 text-white font-bold rounded-lg text-sm">
-                          {index + 1}
-                        </span>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">
-                            {section.title || `Section ${index + 1}`}
-                          </h3>
-                          <div className="flex gap-2 mt-1">
-                            {section.title && (
-                              <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">
-                                🇻🇳 VI ✓
-                              </span>
-                            )}
-                            {section.title_en && (
-                              <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                                🇬🇧 EN ✓
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                  {/* Category Card */}
+                  <div className="admin-card p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <FolderTree size={18} />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => toggleSectionCollapse(index)}
-                          className="p-2 text-gray-600 hover:bg-white rounded-lg transition-colors"
-                          title={isCollapsed ? "Expand" : "Collapse"}
-                        >
-                          <svg
-                            className={`w-5 h-5 transition-transform ${isCollapsed ? "" : "rotate-180"}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSection(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Remove section"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-tighter">Danh mục</h3>
                     </div>
 
-                    {/* Section Content */}
-                    {!isCollapsed && (
-                      <div className="p-6 space-y-4">
-                        {/* Language Toggle for Section */}
-                        <div className="flex items-center justify-between pb-3 border-b">
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setSectionLanguages(prev => ({ ...prev, [index]: "vi" }))}
-                              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${sectionLang === "vi"
-                                  ? "bg-primary-600 text-white shadow-sm"
-                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                }`}
-                            >
-                              🇻🇳 VI
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSectionLanguages(prev => ({ ...prev, [index]: "en" }))}
-                              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${sectionLang === "en"
-                                  ? "bg-primary-600 text-white shadow-sm"
-                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                }`}
-                            >
-                              🇬🇧 EN
-                              {section.title_en && (
-                                <span className="ml-1 text-xs">✓</span>
-                              )}
-                            </button>
-                          </div>
-                          {sectionLang === "en" && (
-                            <button
-                              type="button"
-                              onClick={() => copyToEnglish(index)}
-                              className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                              Copy từ VI
-                            </button>
-                          )}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                        className="admin-input font-bold text-left flex items-center justify-between"
+                      >
+                        <span className={formData.informationId ? "text-gray-900" : "text-gray-400"}>
+                          {formData.informationId ? getCategoryPath(formData.informationId) : "Chọn danh mục..."}
+                        </span>
+                        <ChevronLeft className={`w-4 h-4 transition-transform ${showCategoryDropdown ? "-rotate-90" : "rotate-180"}`} />
+                      </button>
+
+                      {showCategoryDropdown && (
+                        <div className=" z-50 w-full mt-3 bg-white border border-gray-200 rounded-2xl shadow-premium max-h-80 overflow-y-auto p-2">
+                          {renderCategoryTree()}
                         </div>
+                      )}
+                    </div>
 
-                        {/* Vietnamese Fields */}
-                        {sectionLang === "vi" && (
-                          <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                  Tiêu đề phần (VI) *
-                                </label>
-                                <input
-                                  type="text"
-                                  value={section.title}
-                                  onChange={(e) =>
-                                    handleSectionTitleChange(index, e.target.value)
-                                  }
-                                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black"
-                                  placeholder="Nhập tiêu đề phần..."
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                  Slug
-                                </label>
-                                <input
-                                  type="text"
-                                  value={section.slug}
-                                  onChange={(e) =>
-                                    handleSectionChange(index, "slug", e.target.value)
-                                  }
-                                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 text-black"
-                                  placeholder="auto-generated"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Nội dung (VI) *
-                              </label>
-                              <TiptapEditor
-                                content={section.content}
-                                onChange={(content) =>
-                                  handleSectionChange(index, "content", content)
-                                }
-                                placeholder={`Nhập nội dung phần ${index + 1}...`}
-                                onImageUpload={handleTiptapImageUpload}
-                              />
-                            </div>
-                          </>
-                        )}
-
-                        {/* English Fields */}
-                        {sectionLang === "en" && (
-                          <>
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Title (EN)
-                              </label>
-                              <input
-                                type="text"
-                                value={section.title_en || ""}
-                                onChange={(e) =>
-                                  handleSectionChange(index, "title_en", e.target.value)
-                                }
-                                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-black"
-                                placeholder="Enter English title..."
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Optional - Falls back to Vietnamese if empty
-                              </p>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Content (EN)
-                              </label>
-                              <TiptapEditor
-                                content={section.content_en || ""}
-                                onChange={(content) =>
-                                  handleSectionChange(index, "content_en", content)
-                                }
-                                placeholder={`Enter English content for section ${index + 1}...`}
-                                onImageUpload={handleTiptapImageUpload}
-                              />
-                              <p className="text-xs text-gray-500 mt-2">
-                                Optional - Falls back to Vietnamese if empty
-                              </p>
-                            </div>
-                          </>
-                        )}
+                    {formData.informationId && (
+                      <div className="mt-4 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">Path</span>
+                        <span className="text-xs font-bold text-indigo-900">{getCategoryPath(formData.informationId)}</span>
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Featured Image Card */}
+                  <div className="admin-card p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-orange-50 text-orange-600 rounded-xl">
+                        <ImageIcon size={18} />
+                      </div>
+                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-tighter">Hình đại diện</h3>
+                    </div>
+                    <ImageField
+                      label="Kéo thả hoặc chọn ảnh"
+                      value={formData.image}
+                      onChange={(imageId, imageData) => {
+                        setFormData((prev) => ({ ...prev, image: imageId || "" }));
+                        setPreviewImageUrl(imageData?.cloudinaryUrl || "");
+                      }}
+                      required
+                    />
+                  </div>
+
+                  {/* Tags Card */}
+                  <div className="admin-card p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-teal-50 text-teal-600 rounded-xl">
+                        <Sparkles size={18} />
+                      </div>
+                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-tighter">Tags</h3>
+                    </div>
+                    <div className="flex gap-2 mb-4">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
+                        className="admin-input font-bold"
+                        placeholder="Nhập tag..."
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddTag}
+                        className="px-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase"
+                      >
+                        ADD
+                      </button>
+                    </div>
+                    {formData.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-4 py-2 bg-gray-50 text-gray-900 rounded-xl text-xs font-black uppercase border border-gray-200 flex items-center gap-2"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTag(tag)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Main Content Area */}
+              <div className={`${viewMode === 'split' ? 'lg:col-span-1' : 'lg:col-span-3'} space-y-8`}>
+                {/* Basic Info Card */}
+                <div className="admin-card p-10">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-8 mb-8">
+                    <div>
+                      <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">Thông tin cơ bản</h3>
+                      <p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-[0.2em]">TIÊU ĐỀ, MÔ TẢ VÀ URL</p>
+                    </div>
+                    <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+                      <button
+                        type="button"
+                        onClick={() => setMainLanguage("vi")}
+                        className={`px-5 py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${mainLanguage === "vi" ? "bg-white text-gray-900 shadow-md border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+                      >
+                        🇻🇳 Tiếng Việt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMainLanguage("en")}
+                        className={`px-5 py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${mainLanguage === "en" ? "bg-white text-gray-900 shadow-md border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+                      >
+                        🇬🇧 English
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    {mainLanguage === "vi" ? (
+                      <>
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleTranslateMainToVietnamese}
+                            disabled={isTranslatingMain}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${isTranslatingMain
+                              ? "bg-primary-100 text-primary-900 animate-pulse"
+                              : "bg-primary-50 text-primary-900 hover:bg-primary-100"
+                              }`}
+                          >
+                            <Sparkles size={12} className={isTranslatingMain ? "animate-spin" : ""} />
+                            {isTranslatingMain ? "Đang dịch..." : "Dịch từ EN"}
+                          </button>
+                        </div>
+                        <div>
+                          <label className="admin-label">Tiêu đề bài viết (VI)</label>
+                          <input
+                            type="text"
+                            name="title"
+                            value={formData.title}
+                            onChange={handleInputChange}
+                            required
+                            className="admin-input text-2xl font-black leading-tight py-6"
+                            placeholder="Nhập tiêu đề tiếng Việt..."
+                          />
+                        </div>
+                        <div>
+                          <label className="admin-label">Mô tả ngắn (VI)</label>
+                          <textarea
+                            name="excerpt"
+                            value={formData.excerpt || ""}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="admin-input font-bold resize-none"
+                            placeholder="Mô tả nội dung bài viết..."
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleTranslateMainToEnglish}
+                            disabled={isTranslatingMain}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${isTranslatingMain
+                              ? "bg-primary-100 text-primary-900 animate-pulse"
+                              : "bg-primary-50 text-primary-900 hover:bg-primary-100"
+                              }`}
+                          >
+                            <Sparkles size={12} className={isTranslatingMain ? "animate-spin" : ""} />
+                            {isTranslatingMain ? "Đang dịch..." : "Dịch từ VI"}
+                          </button>
+                        </div>
+                        <div>
+                          <label className="admin-label">Blog Title (EN)</label>
+                          <input
+                            type="text"
+                            name="title_en"
+                            value={formData.title_en || ""}
+                            onChange={handleInputChange}
+                            className="admin-input text-2xl font-black leading-tight py-6"
+                            placeholder="Enter English title..."
+                          />
+                        </div>
+                        <div>
+                          <label className="admin-label">Excerpt (EN)</label>
+                          <textarea
+                            name="excerpt_en"
+                            value={formData.excerpt_en || ""}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="admin-input font-bold resize-none"
+                            placeholder="Enter short description..."
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="pt-4 border-t border-gray-200">
+                      <label className="admin-label text-primary-900">URL Slug</label>
+                      <div className="flex items-center gap-3">
+                        <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-[10px] font-black text-gray-400 tracking-widest uppercase shadow-sm">/blog/</div>
+                        <input
+                          type="text"
+                          name="slug"
+                          value={formData.slug}
+                          onChange={handleInputChange}
+                          required
+                          className="admin-input font-black text-primary-900 border-primary-900/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Sections */}
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">Nội dung chi tiết</h2>
+                      {formData.sections.length > 0 && (
+                        <p className="text-[10px] font-black text-primary-900 mt-1 uppercase tracking-widest bg-primary-50 px-2 py-0.5 rounded-md inline-block">
+                          {formData.sections.length} PHẦN NỘI DUNG
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddSection}
+                      className="flex items-center gap-3 px-6 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-xl hover:bg-black transition-all transform hover:scale-[1.02] active:scale-95 text-sm"
+                    >
+                      <PlusCircle size={18} />
+                      THÊM PHẦN MỚI
+                    </button>
+                  </div>
+
+                  {formData.sections.length === 0 ? (
+                    <div className="admin-card p-20 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center">
+                      <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center text-gray-200 mb-6">
+                        <Newspaper size={40} />
+                      </div>
+                      <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-2">Bắt đầu tạo nội dung</h3>
+                      <p className="text-sm font-bold text-gray-400 mb-8 max-w-xs">Thêm các phần nội dung khác nhau để tạo nên bài viết chuyên sâu của bạn.</p>
+                      <button
+                        type="button"
+                        onClick={handleAddSection}
+                        className="px-10 py-4 bg-primary-900 text-white font-black rounded-2xl hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/10"
+                      >
+                        THÊM PHẦN NỘI DUNG ĐẦU TIÊN
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {formData.sections.map((section, index) => {
+                        const sectionLang = sectionLanguages[index] || "vi";
+                        const isCollapsed = collapsedSections.has(index);
+
+                        return (
+                          <div key={index} className="admin-card overflow-hidden group">
+                            {/* Section Header */}
+                            <div className="px-8 py-6 flex items-center justify-between border-b border-gray-200 bg-gray-50/50 group-hover:bg-gray-50 transition-colors">
+                              <div className="flex items-center gap-4">
+                                <span className="flex items-center justify-center w-10 h-10 bg-white border-2 border-primary-900/20 text-primary-900 font-black rounded-xl text-sm shadow-sm ring-4 ring-primary-50">
+                                  {index + 1}
+                                </span>
+                                <div>
+                                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">
+                                    {section.title || `PHẦN NỘI DUNG ${index + 1}`}
+                                  </h3>
+                                  <div className="flex gap-2 mt-1">
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${section.title ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>VI</span>
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${section.title_en ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>EN</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSectionCollapse(index)}
+                                  className="p-3 text-gray-400 hover:text-gray-900 hover:bg-white rounded-xl transition-all"
+                                >
+                                  <ChevronLeft size={18} className={`transition-transform duration-300 ${isCollapsed ? "-rotate-90" : "rotate-90"}`} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSection(index)}
+                                  className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                >
+                                  <LogOut size={18} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Section Content */}
+                            {!isCollapsed && (
+                              <div className="p-8 space-y-8 animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSectionLanguages(prev => ({ ...prev, [index]: "vi" }))}
+                                      className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${sectionLang === "vi" ? "bg-white text-gray-900 shadow-md border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+                                    >
+                                      VI Tiếng Việt
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSectionLanguages(prev => ({ ...prev, [index]: "en" }))}
+                                      className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${sectionLang === "en" ? "bg-white text-gray-900 shadow-md border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+                                    >
+                                      EN English
+                                    </button>
+                                  </div>
+                                  {sectionLang === "vi" && (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => copyToVietnamese(index)}
+                                        className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-primary-900 bg-primary-50 rounded-xl hover:bg-primary-100 transition-all uppercase tracking-widest"
+                                      >
+                                        <Newspaper size={14} /> COPY TỪ BẢN TIẾNG ANH
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleTranslateSectionToVietnamese(index)}
+                                        disabled={translatingSectionIndex === index}
+                                        className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${translatingSectionIndex === index
+                                          ? "bg-primary-100 text-primary-900 animate-pulse"
+                                          : "bg-green-50 text-green-700 hover:bg-green-100"
+                                          }`}
+                                      >
+                                        <Sparkles size={14} className={translatingSectionIndex === index ? "animate-spin" : ""} />
+                                        {translatingSectionIndex === index ? "ĐANG DỊCH..." : "DỊCH EN -> VI"}
+                                      </button>
+                                    </div>
+                                  )}
+                                  {sectionLang === "en" && (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => copyToEnglish(index)}
+                                        className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-primary-900 bg-primary-50 rounded-xl hover:bg-primary-100 transition-all uppercase tracking-widest"
+                                      >
+                                        <Newspaper size={14} /> COPY TỪ BẢN TIẾNG VIỆT
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleTranslateSectionToEnglish(index)}
+                                        disabled={translatingSectionIndex === index}
+                                        className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${translatingSectionIndex === index
+                                          ? "bg-primary-100 text-primary-900 animate-pulse"
+                                          : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                          }`}
+                                      >
+                                        <Sparkles size={14} className={translatingSectionIndex === index ? "animate-spin" : ""} />
+                                        {translatingSectionIndex === index ? "ĐANG DỊCH..." : "DỊCH VI -> EN"}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {sectionLang === "vi" ? (
+                                  <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                      <div>
+                                        <label className="admin-label">Tiêu đề phần (VI)</label>
+                                        <input
+                                          type="text"
+                                          value={section.title}
+                                          onChange={(e) => handleSectionTitleChange(index, e.target.value)}
+                                          className="admin-input font-bold"
+                                          placeholder="Tên phần nội dung..."
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="admin-label">Slug phần</label>
+                                        <input
+                                          type="text"
+                                          value={section.slug}
+                                          className="admin-input font-bold text-gray-400 cursor-not-allowed"
+                                          readOnly
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="admin-label">Nội dung chi tiết (VI)</label>
+                                      <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+                                        <TiptapEditor
+                                          content={section.content}
+                                          onChange={(content) => handleSectionChange(index, "content", content)}
+                                          placeholder={`Nhập nội dung cho phần ${index + 1}...`}
+                                          onImageUpload={handleTiptapImageUpload}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-6">
+                                    <div>
+                                      <label className="admin-label">Section Title (EN)</label>
+                                      <input
+                                        type="text"
+                                        value={section.title_en || ""}
+                                        onChange={(e) => handleSectionChange(index, "title_en", e.target.value)}
+                                        className="admin-input font-bold"
+                                        placeholder="Section title in English..."
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="admin-label">Section Content (EN)</label>
+                                      <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+                                        <TiptapEditor
+                                          content={section.content_en || ""}
+                                          onChange={(content) => handleSectionChange(index, "content_en", content)}
+                                          placeholder={`Enter content for section ${index + 1} in English...`}
+                                          onImageUpload={handleTiptapImageUpload}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </form>
           </div>
-        </form>
-      </main>
+        </main>
+
+
+        {/* Preview Area */}
+        {(viewMode === 'preview' || viewMode === 'split') && (
+          <section className={`flex-1 h-full bg-gray-100 relative overflow-y-auto custom-scrollbar border-l border-gray-200 ${viewMode === 'split' ? 'w-1/2' : 'w-full'}`}>
+            {/* Preview Controls */}
+            <div className="sticky top-10 right-10 z-30 flex justify-end px-10 pointer-events-none">
+              <div className="flex items-center bg-white/90 backdrop-blur-xl p-1.5 rounded-2xl shadow-premium border border-white pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewMobile(false)}
+                  className={`p-3 rounded-xl transition-all ${!isPreviewMobile ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                >
+                  <Monitor size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewMobile(true)}
+                  className={`p-3 rounded-xl transition-all ${isPreviewMobile ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                >
+                  <Smartphone size={18} />
+                </button>
+              </div>
+            </div>
+
+            <BlogPreview
+              content={formData.sections.map(s => (mainLanguage === 'en' ? s.content_en : s.content) || s.content).join('<div class="my-10 h-px bg-gray-100" />')}
+              title={mainLanguage === 'en' ? formData.title_en : formData.title}
+              author={formData.author}
+              image={previewImageUrl}
+              tags={formData.tags}
+              isMobile={isPreviewMobile}
+            />
+          </section>
+        )}
+      </div>
     </div>
   );
+}
+export default function AdminEditNewsPage() {
+  return <AdminEditNewsPageContent />;
 }

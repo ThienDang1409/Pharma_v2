@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ImageResponse, ImagePreview } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { imageApi, ImageResponse, ImagePreview } from "@/lib/api";
 import ImageSelector from "./ImageSelector";
 import { getOptimizedImageUrl, imagePresets } from "@/lib/utils";
 
@@ -33,11 +33,85 @@ export default function ImageField({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<ImageResponse | null>(null);
 
+  const isLikelyImageUrl = (input: string) => {
+    return input.startsWith("http://") || input.startsWith("https://") || input.startsWith("data:image/") || input.startsWith("/");
+  };
+
   // Convert value to ImagePreview format
-  const imagePreview: ImagePreview | null = value
-    ? typeof value === "string"
-      ? { _id: value, cloudinaryUrl: value, cloudinaryPublicId: "" }
-      : value
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveImageFromValue = async () => {
+      if (!value) {
+        if (!isCancelled) setCurrentImage(null);
+        return;
+      }
+
+      if (typeof value !== "string") {
+        if (!isCancelled) {
+          setCurrentImage({
+            ...value,
+            fileName: "",
+            fileSize: 0,
+            mimeType: "",
+            folder: "",
+            fileHash: "",
+            refCount: 0,
+            usedBy: [],
+            transformations: [],
+            uploadedBy: "",
+            createdAt: new Date(0),
+            updatedAt: new Date(0),
+          });
+        }
+        return;
+      }
+
+      if (isLikelyImageUrl(value)) {
+        if (!isCancelled) {
+          setCurrentImage({
+            _id: value,
+            cloudinaryUrl: value,
+            cloudinaryPublicId: "",
+            fileName: "",
+            fileSize: 0,
+            mimeType: "",
+            folder: "",
+            fileHash: "",
+            refCount: 0,
+            usedBy: [],
+            transformations: [],
+            uploadedBy: "",
+            createdAt: new Date(0),
+            updatedAt: new Date(0),
+          });
+        }
+        return;
+      }
+
+      try {
+        const result = await imageApi.getById(value);
+        if (!isCancelled) {
+          setCurrentImage(result.data?.image || null);
+        }
+      } catch {
+        if (!isCancelled) setCurrentImage(null);
+      }
+    };
+
+    resolveImageFromValue();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [value]);
+
+  const imagePreview: ImagePreview | null = currentImage
+    ? {
+        _id: currentImage._id,
+        cloudinaryUrl: currentImage.cloudinaryUrl,
+        cloudinaryPublicId: currentImage.cloudinaryPublicId,
+      }
     : null;
 
   const handleSelect = (image: ImageResponse) => {

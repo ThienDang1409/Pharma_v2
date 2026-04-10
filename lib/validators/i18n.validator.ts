@@ -32,6 +32,7 @@ export const i18nMessages = {
     'excerpt.maxLength': 'Trích dẫn không được vượt quá 500 ký tự',
     'excerpt_en.maxLength': 'Trích dẫn tiếng Anh không được vượt quá 500 ký tự',
     'content.required': 'Nội dung là bắt buộc',
+    'section.required': 'Phần nội dung là bắt buộc',
     'content.minLength': 'Nội dung phải có ít nhất 10 ký tự',
     'author.required': 'Tên tác giả là bắt buộc',
     'author.maxLength': 'Tên tác giả không được vượt quá 100 ký tự',
@@ -60,7 +61,7 @@ export const i18nMessages = {
     'newPassword.minLength': 'Mật khẩu mới phải có ít nhất 6 ký tự',
     'confirmPassword.required': 'Xác nhận mật khẩu là bắt buộc',
     'confirmPassword.notMatch': 'Mật khẩu xác nhận không khớp',
-    
+
     // Admin User Management
     'role.required': 'Vai trò là bắt buộc',
     'role.invalid': 'Vai trò không hợp lệ',
@@ -111,7 +112,7 @@ export const i18nMessages = {
     'slug.invalid': 'URL slug contains invalid characters',
     'excerpt.maxLength': 'Excerpt must not exceed 500 characters',
     'excerpt_en.maxLength': 'English excerpt must not exceed 500 characters',
-    'content.required': 'Content is required',
+    'section.required': 'Content section is required',
     'content.minLength': 'Content must be at least 10 characters',
     'author.required': 'Author name is required',
     'author.maxLength': 'Author name must not exceed 100 characters',
@@ -253,7 +254,9 @@ export const CreateBlogSchemaI18n = (lang: I18nLanguage = 'vi') =>
       .optional(),
     slug: z
       .string({ message: getMessage('slug.required', lang) })
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, getMessage('slug.invalid', lang)),
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, getMessage('slug.invalid', lang))
+      .optional()
+      .or(z.literal('')),
     excerpt: z
       .string()
       .max(500, getMessage('excerpt.maxLength', lang))
@@ -262,15 +265,17 @@ export const CreateBlogSchemaI18n = (lang: I18nLanguage = 'vi') =>
       .string()
       .max(500, getMessage('excerpt_en.maxLength', lang))
       .optional(),
-    content: z
-      .string({ message: getMessage('content.required', lang) })
-      .min(10, getMessage('content.minLength', lang)),
+    section: z
+      .array(BlogSectionSchemaI18n(lang), { message: getMessage('blog.sections.minItems', lang) })
+      .optional(),
+    // .array(BlogSectionSchemaI18n(lang))
+    // .min(1, getMessage('section.required', lang)),
     author: z
       .string({ message: getMessage('author.required', lang) })
       .max(100, getMessage('author.maxLength', lang)),
-    categoryId: z
-      .number({ message: getMessage('category.required', lang) })
-      .int(),
+    informationId: z
+      .string({ message: getMessage('category.required', lang) })
+      .optional(),
     tags: z.array(z.string()).optional(),
     published: z.boolean().optional(),
     publishedAt: z.string().datetime().optional(),
@@ -284,7 +289,7 @@ export const BlogSectionSchemaI18n = (lang: I18nLanguage = 'vi') =>
   z.object({
     title: z.string({ message: getMessage('blog.section.title.required', lang) }),
     title_en: z.string().optional(),
-    slug: z.string({ message: getMessage('blog.section.slug.required', lang) }),
+    slug: z.string({ message: getMessage('blog.section.slug.required', lang) }).optional().or(z.literal('')),
     type: z.string({ message: getMessage('blog.section.type.required', lang) }),
     content: z
       .string({ message: getMessage('content.required', lang) })

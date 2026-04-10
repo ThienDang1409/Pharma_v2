@@ -77,10 +77,9 @@ export default function ImageSelector({
             onClick={() => setActiveTab("gallery")}
             className={`
               flex-1 py-3 px-6 font-medium transition-colors
-              ${
-                activeTab === "gallery"
-                  ? "text-primary-600 border-b-2 border-primary-600"
-                  : "text-gray-600 hover:text-gray-800"
+              ${activeTab === "gallery"
+                ? "text-primary-600 border-b-2 border-primary-600"
+                : "text-gray-600 hover:text-gray-800"
               }
             `}
           >
@@ -100,10 +99,9 @@ export default function ImageSelector({
             onClick={() => setActiveTab("upload")}
             className={`
               flex-1 py-3 px-6 font-medium transition-colors
-              ${
-                activeTab === "upload"
-                  ? "text-primary-600 border-b-2 border-primary-600"
-                  : "text-gray-600 hover:text-gray-800"
+              ${activeTab === "upload"
+                ? "text-primary-600 border-b-2 border-primary-600"
+                : "text-gray-600 hover:text-gray-800"
               }
             `}
           >

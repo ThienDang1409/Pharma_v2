@@ -1,5 +1,5 @@
 /* Tiptap Editor Styles */
-.ProseMirror {
+/* .ProseMirror {
   outline: none;
   color: #000000;
 }
@@ -80,10 +80,10 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.5em;
-}
+} */
 
 /* Table Styles */
-.ProseMirror table {
+/* .ProseMirror table {
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -100,10 +100,10 @@
   box-sizing: border-box;
   position: relative;
   color: #000000;
-}
+} */
 
 /* Default border - can be overridden by inline styles */
-.ProseMirror table td:not([style*="border"]),
+/* .ProseMirror table td:not([style*="border"]),
 .ProseMirror table th:not([style*="border"]) {
   border: 2px solid #d1d5db;
 }
@@ -138,9 +138,257 @@
 
 .ProseMirror.resize-cursor {
   cursor: col-resize;
-}
+} */
 
 /* Support for merged cells */
+/* .ProseMirror table td[colspan],
+.ProseMirror table th[colspan] {
+  text-align: center;
+}
+
+.ProseMirror table td[rowspan],
+.ProseMirror table th[rowspan] {
+  vertical-align: middle;
+} */
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none;
+  color: #000000;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.ProseMirror p {
+  color: #000000;
+  margin: 0.5em 0;
+  line-height: 1.6;
+}
+
+.ProseMirror>*+* {
+  margin-top: 0.5em;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+  line-height: 1.3;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+  line-height: 1.3;
+}
+
+.ProseMirror h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  line-height: 1.3;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 2em;
+  margin: 1em 0;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.ProseMirror code {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.ProseMirror pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+}
+
+/* ─── Image Styles ─────────────────────────────────────────── */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5em;
+  display: block;
+  /* Prevent image from stretching in flex/grid context */
+  object-fit: contain;
+}
+
+/* Image inside table cell — constrain size, center it */
+.ProseMirror table td img,
+.ProseMirror table th img {
+  max-width: 100%;
+  max-height: 300px;
+  height: auto;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* ─── Table Wrapper — enables horizontal scroll on small screens ─── */
+.ProseMirror .tableWrapper,
+.ProseMirror>table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+  width: 100%;
+}
+
+/* ─── Table Core ────────────────────────────────────────────── */
+.ProseMirror table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+}
+
+.ProseMirror table td,
+.ProseMirror table th {
+  min-width: 80px;
+  /* Prevent cells from collapsing too small */
+  max-width: 400px;
+  /* Prevent a single cell from taking all space */
+  padding: 0.5em 0.75em;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  color: #000000;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Cells that hold only an image — center and tighten padding */
+.ProseMirror table td:has(> img:only-child),
+.ProseMirror table th:has(> img:only-child) {
+  padding: 0.5em;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* Mixed content: image + text inside same cell */
+.ProseMirror table td p,
+.ProseMirror table th p {
+  margin: 0 0 0.4em 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: #000000;
+}
+
+.ProseMirror table td p:last-child,
+.ProseMirror table th p:last-child {
+  margin-bottom: 0;
+}
+
+/* Headings inside cells — scale down to fit */
+.ProseMirror table td h1,
+.ProseMirror table th h1 {
+  font-size: 1.3em;
+  margin: 0.3em 0;
+}
+
+.ProseMirror table td h2,
+.ProseMirror table th h2 {
+  font-size: 1.15em;
+  margin: 0.3em 0;
+}
+
+.ProseMirror table td h3,
+.ProseMirror table th h3 {
+  font-size: 1em;
+  margin: 0.3em 0;
+}
+
+/* Lists inside cells */
+.ProseMirror table td ul,
+.ProseMirror table td ol,
+.ProseMirror table th ul,
+.ProseMirror table th ol {
+  padding-left: 1.4em;
+  margin: 0.3em 0;
+  font-size: 0.95em;
+}
+
+/* Default border */
+.ProseMirror table td:not([style*="border"]),
+.ProseMirror table th:not([style*="border"]) {
+  border: 2px solid #d1d5db;
+}
+
+.ProseMirror table th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f3f4f6;
+}
+
+/* ─── Selected cell overlay ─────────────────────────────────── */
+.ProseMirror table .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+}
+
+/* ─── Column resize handle ──────────────────────────────────── */
+.ProseMirror table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #3b82f6;
+  pointer-events: none;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+/* ─── Merged cells ──────────────────────────────────────────── */
 .ProseMirror table td[colspan],
 .ProseMirror table th[colspan] {
   text-align: center;
@@ -149,4 +397,43 @@
 .ProseMirror table td[rowspan],
 .ProseMirror table th[rowspan] {
   vertical-align: middle;
+}
+
+/* ─── Responsive adjustments ────────────────────────────────── */
+@media (max-width: 640px) {
+
+  .ProseMirror table td,
+  .ProseMirror table th {
+    padding: 0.4em 0.5em;
+    font-size: 0.9em;
+    min-width: 60px;
+  }
+
+  .ProseMirror table td img,
+  .ProseMirror table th img {
+    max-height: 150px;
+  }
+
+  .ProseMirror h1 {
+    font-size: 1.5em;
+  }
+
+  .ProseMirror h2 {
+    font-size: 1.25em;
+  }
+
+  .ProseMirror h3 {
+    font-size: 1.1em;
+  }
+}
+
+/* ─── Link styles ───────────────────────────────────────────── */
+.ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #1d4ed8;
 }

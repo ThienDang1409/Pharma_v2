@@ -7,6 +7,20 @@ import type { Blog, Information, BlogQueryParams, InformationPreviewDto } from "
 import { BLOG_STATUS } from "@/lib/constants/api";
 import { getApiErrorFeedback } from "@/lib/utils";
 import Pagination from "@/app/components/common/Pagination";
+import CustomSelect from "@/app/components/admin/CustomSelect";
+import {
+  Search,
+  Plus,
+  Filter,
+  ChevronRight,
+  Calendar,
+  CheckCircle2,
+  Edit3,
+  Trash2,
+  ArrowRight,
+  Folder,
+  Newspaper
+} from "lucide-react";
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -32,17 +46,17 @@ export default function AdminBlogsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Build query params
       const params: BlogQueryParams = {
         page: currentPage,
         limit: 10,
       };
-      
+
       if (statusFilter !== "all") {
         params.status = statusFilter;
       }
-      
+
       if (selectedCategoryPath.length > 0) {
         const selectedCategoryId = selectedCategoryPath[selectedCategoryPath.length - 1];
         params.informationId = selectedCategoryId;
@@ -65,7 +79,7 @@ export default function AdminBlogsPage() {
       });
 
       // Extract categories data
-      const categories = categoriesResponse.data || [];
+      const categories = categoriesResponse.data?.items || [];
       setAllCategories(Array.isArray(categories) ? categories : []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -91,7 +105,7 @@ export default function AdminBlogsPage() {
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = blogsData.filter(blog => 
+    const filtered = blogsData.filter(blog =>
       blog.title?.toLowerCase().includes(query) ||
       blog.title_en?.toLowerCase().includes(query) ||
       blog.slug?.toLowerCase().includes(query)
@@ -166,241 +180,251 @@ export default function AdminBlogsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Quản lý bài viết</h1>
-          <p className="text-gray-600 mt-1">
-            Quản lý tất cả blog/news của website
-            {searchQuery && (
-              <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full font-semibold">
-                🔍 {filteredBlogs.length} kết quả
-              </span>
-            )}
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header Section */}
+      <div className="admin-card border border-gray-200/80 rounded-3xl p-5 md:p-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-center gap-6">
+          <Link
+            href="/admin/blogs/add"
+            className="flex items-center gap-2 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 active:scale-95"
+          >
+            <Plus size={16} /> Thêm bài viết mới
+          </Link>
         </div>
-        <Link
-          href="/admin/blogs/add"
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold transition-colors shadow-md hover:shadow-lg"
-        >
-          ➕ Thêm bài viết mới
-        </Link>
       </div>
 
-      {/* Search Box */}
-      <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="shrink-0">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+      {/* Primary Filters Row */}
+      <div className="admin-card border border-gray-200/80 rounded-3xl p-4 md:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Search Input */}
+        <div className="lg:col-span-2 relative group">
+          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none">
+            <Search size={18} />
           </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder=" Tìm kiếm theo tiêu đề (VI/EN) hoặc slug..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-gray-900 placeholder-gray-500"
+            placeholder="Tìm theo tiêu đề, slug, hoặc nội dung..."
+            className="admin-input pl-14 h-14"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="shrink-0 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors font-semibold text-sm"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-300 hover:text-red-500 transition-colors"
             >
-              ✕ Xóa
+              <Trash2 size={14} />
             </button>
           )}
         </div>
-      </div>
 
-      {/* Status Filter */}
-      <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700">📊 Lọc theo trạng thái:</span>
-          <div className="flex gap-2">
-            {(["all", "published", "draft"] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors border-2 ${
-                  statusFilter === status
-                    ? "bg-primary-600 text-white border-primary-700 shadow-md"
-                    : "bg-gray-200 text-gray-700 hover:bg-secondary-100 border-gray-300 hover:border-secondary-300"
-                }`}
-              >
-                {status === "all" ? "Tất cả" : status === "published" ? "✓ Xuất bản" : "✎ Bản nháp"}
-              </button>
-            ))}
+        {/* Status Filter Dropdown */}
+        <div className="relative group">
+          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none z-10">
+            <Filter size={18} />
           </div>
+          <CustomSelect
+            options={[
+              { label: "Tất cả bài viết", value: "all" },
+              { label: "Đã xuất bản", value: "published" },
+              { label: "Bản nháp", value: "draft" },
+            ]}
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value as any)}
+            placeholder="Lọc theo trạng thái..."
+            className="pl-14"
+          />
+        </div>
+
+        {/* Categories Breadcrumb/Indicator */}
+        <div className="flex items-center gap-2 px-5 h-14 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden truncate">
+          <Folder size={14} className="text-gray-400 shrink-0" />
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">
+            {selectedCategoryPath.length > 0
+              ? getCategory(selectedCategoryPath[selectedCategoryPath.length - 1])?.name
+              : "Tất cả danh mục"}
+          </span>
+          {selectedCategoryPath.length > 0 && (
+            <button
+              onClick={() => setSelectedCategoryPath([])}
+              className="ml-auto text-primary-900 hover:text-red-600 transition-colors"
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
         </div>
       </div>
 
-      {/* Category Filter - Hierarchical */}
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">🔍 Lọc theo danh mục</h3>
-        <div className="space-y-4">
-          {filterLevels.map((level, levelIndex) => (
-            <div key={levelIndex} className="space-y-2">
-              <p className="text-sm text-gray-600 font-semibold uppercase tracking-wide">
-                {levelIndex === 0 ? "📁 Cấp 1 - Danh mục gốc" : `📁 Cấp ${levelIndex + 1}`}
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {level.map((category) => {
-                  const isSelected = selectedCategoryPath.includes(category._id);
-                  const hasChildren = allCategories.some(
-                    (cat) => cat.parentId === category._id
-                  );
-                  const canHaveChildren = levelIndex === selectedCategoryPath.length;
-
-                  return (
-                    <button
-                      key={category._id}
-                      onClick={() =>
-                        canHaveChildren && handleSelectCategory(category._id, levelIndex)
-                      }
-                      disabled={!canHaveChildren}
-                      className={`p-3 rounded-lg text-sm font-medium transition-colors border-2 ${
-                        isSelected
-                          ? "bg-primary-600 text-white border-primary-700 shadow-md"
-                          : "bg-gray-100 text-gray-700 hover:bg-secondary-50 border-gray-200 hover:border-secondary-300"
-                      } ${!canHaveChildren ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      <div className="font-semibold">{category.name}</div>
-                      {hasChildren && (
-                        <div className="text-xs mt-1 opacity-75">
-                          {allCategories.filter((c) => c.parentId === category._id).length} con
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar Filters */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="admin-card p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gray-50 text-gray-900 rounded-xl border border-gray-200">
+                <Folder size={18} />
               </div>
+              <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Bộ lọc danh mục</h3>
             </div>
-          ))}
-        </div>
-        {selectedCategoryPath.length > 0 && (
-          <button
-            onClick={() => setSelectedCategoryPath([])}
-            className="mt-4 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 font-semibold text-sm transition-colors"
-          >
-            ✕ Xóa bộ lọc
-          </button>
-        )}
-      </div>
 
-      {/* Blogs List */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-        <div className="px-6 py-4 border-b-2 border-secondary-200 flex items-center justify-between bg-linear-to-r from-primary-50 to-secondary-50">
-          <h2 className="text-lg font-bold text-gray-800">
-            📰 Danh sách bài viết ({pagination.total || filteredBlogs.length})
-          </h2>
-        </div>
-
-        {filteredBlogs.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="text-5xl mb-3">📭</div>
-            <p className="text-gray-600">Không có bài viết nào</p>
+            <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+              {filterLevels.map((level, levelIndex) => (
+                <div key={levelIndex} className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    {levelIndex === 0 ? "Cấp 1" : `Cấp ${levelIndex + 1}`}
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {level.map((category) => {
+                      const isSelected = selectedCategoryPath.includes(category._id);
+                      return (
+                        <button
+                          key={category._id}
+                          onClick={() => handleSelectCategory(category._id, levelIndex)}
+                          className={`flex items-center justify-between px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isSelected
+                            ? "bg-primary-900 text-white shadow-lg"
+                            : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-200"
+                            }`}
+                        >
+                          <span className="truncate">{category.name}</span>
+                          {isSelected && <ChevronRight size={12} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : (
-          <>
+        </div>
+
+        {/* Main List Area */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="admin-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Tiêu đề
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-8 py-5 text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Biên tập viên / Tiêu đề</p>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Danh mục
+                    <th className="px-8 py-5 text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</p>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Trạng thái
+                    <th className="px-8 py-5 text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thời gian</p>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Ngày tạo
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-                      Hành động
+                    <th className="px-8 py-5 text-right">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thao tác</p>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredBlogs.map((blog) => {
-                    const category = getCategory(blog.informationId);
-                    return (
-                      <tr key={blog._id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-gray-800 truncate">
-                            {blog.title}
-                          </p>
-                          <p className="text-sm text-gray-500 truncate">{blog.slug}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {category?.name || "N/A"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              blog.status === "published"
-                                ? "bg-third-100 text-third-800"
-                                : "bg-secondary-100 text-secondary-800"
-                            }`}
-                          >
-                            {blog.status === "published" ? "✓ Xuất bản" : "✎ Bản nháp"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {blog.createdAt
-                            ? new Date(blog.createdAt).toLocaleDateString("vi-VN")
-                            : "N/A"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link
-                              href={`/admin/blogs/edit/${blog._id}`}
-                              className="px-3 py-1 bg-primary-100 text-primary-700 rounded text-sm hover:bg-primary-200 font-semibold border border-primary-200 transition-colors"
-                            >
-                              ✏️ Sửa
-                            </Link>
-                            <button
-                              onClick={() => blog._id && handleDelete(blog._id)}
-                              className={`px-3 py-1 rounded text-sm font-semibold transition-colors border ${
-                                deleteConfirm === blog._id
-                                  ? "bg-red-700 text-white border-red-800"
-                                  : "bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
-                              }`}
-                            >
-                              {deleteConfirm === blog._id ? "⚠️ Xác nhận?" : "🗑️ Xóa"}
-                            </button>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredBlogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="p-6 bg-gray-50 rounded-full border border-gray-200">
+                            <Newspaper size={40} className="text-gray-200" />
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Không tìm thấy bài viết nào phù hợp</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredBlogs.map((blog) => {
+                      const blogId = blog._id || blog.id;
+                      const category = getCategory(blog.informationId);
+                      const isPublished = blog.status === "published";
+                      return (
+                        <tr key={blogId} className="group hover:bg-gray-50/50 transition-colors">
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 border border-gray-200 group-hover:border-primary-900/20 group-hover:scale-105 transition-all">
+                                <span className="text-xs font-black text-gray-900">{blog.author?.charAt(0).toUpperCase() || 'P'}</span>
+                              </div>
+                              <div className="min-w-0">
+                                <Link
+                                  href={blogId ? `/admin/blogs/edit/${blogId}` : "#"}
+                                  className="text-sm font-black text-gray-900 uppercase tracking-tight hover:text-primary-900 line-clamp-1 transition-colors"
+                                >
+                                  {blog.title}
+                                </Link>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{category?.name || "Uncategorized"}</span>
+                                  <div className="w-1 h-1 rounded-full bg-gray-200" />
+                                  <span className="text-[10px] font-medium text-gray-400 lowercase italic">/{blog.slug}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex">
+                              <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border ${isPublished
+                                ? "bg-green-50 text-green-600 border-green-100"
+                                : "bg-gray-50 text-gray-400 border-gray-200"
+                                }`}>
+                                {isPublished ? "Đã duyệt" : "Bản nháp"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-2 text-gray-400">
+                              <Calendar size={14} />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">
+                                {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString("vi-VN") : "--/--"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                              <Link
+                                href={blogId ? `/admin/blogs/edit/${blogId}` : "#"}
+                                className="p-3 bg-white text-gray-900 border border-gray-200 rounded-xl hover:bg-primary-900 hover:text-white hover:border-primary-900 transition-all shadow-sm"
+                                title="Chỉnh sửa"
+                              >
+                                <Edit3 size={16} />
+                              </Link>
+                              <button
+                                onClick={() => blogId && handleDelete(blogId)}
+                                className={`p-3 rounded-xl transition-all shadow-sm border ${deleteConfirm === blogId
+                                  ? "bg-red-600 text-white border-red-600"
+                                  : "bg-white text-gray-300 border-gray-200 hover:text-red-600 hover:border-red-200"
+                                  }`}
+                                title="Xóa bài viết"
+                              >
+                                {deleteConfirm === blogId ? <CheckCircle2 size={16} /> : <Trash2 size={16} />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
-            
-            {/* Pagination */}
+
+            {/* Pagination Controls */}
             {pagination.totalPages > 1 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={pagination.totalPages}
-                total={pagination.total}
-                limit={pagination.limit}
-                onPageChange={setCurrentPage}
-                labels={{
-                  previous: "← Trước",
-                  next: "Sau →",
-                  showing: "Hiển thị",
-                  of: "của",
-                  items: "mục",
-                }}
-              />
+              <div className="px-8 py-6 border-t border-gray-200 bg-gray-50/30">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={pagination.totalPages}
+                  total={pagination.total}
+                  limit={pagination.limit}
+                  onPageChange={setCurrentPage}
+                  labels={{
+                    previous: "PHÍA TRƯỚC",
+                    next: "TIẾP THEO",
+                    showing: "HIỂN THỊ",
+                    of: "/",
+                    items: "BẢN GHI",
+                  }}
+                />
+              </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

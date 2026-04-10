@@ -1,0 +1,186 @@
+/* Modern Tiptap Editor Styles */
+
+.modern-editor-container {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-editor-container:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1), 0 0 0 4px rgba(37, 99, 235, 0.05);
+}
+
+.tiptap {
+  min-height: 500px;
+  outline: none !important;
+}
+
+/* Typography Overrides */
+.tiptap h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  letter-spacing: -0.025em;
+  color: #111827;
+}
+
+.tiptap h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  letter-spacing: -0.015em;
+}
+
+.tiptap p {
+  line-height: 1.7;
+  margin: 1.25em 0;
+  color: #374151;
+}
+
+/* Custom Callout Styles */
+.tiptap .callout-wrapper {
+  margin: 2em 0;
+}
+
+/* Blockquote Style */
+.tiptap blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1.5rem;
+  font-style: italic;
+  color: #4b5563;
+  background: #eff6ff;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-radius: 0 0.75rem 0.75rem 0;
+  margin: 2rem 0;
+}
+
+/* Code Block Style */
+.tiptap pre {
+  background: #1e1e1e;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: #d4d4d4;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  margin: 2rem 0;
+  overflow-x: auto;
+}
+
+.tiptap pre code {
+  color: inherit;
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+/* Table Style */
+.tiptap table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 2rem 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.tiptap td, .tiptap th {
+  min-width: 1em;
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.tiptap th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f9fafb;
+}
+
+.tiptap .selectedCell:after {
+  z-index: 2;
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+}
+
+.tiptap .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #3b82f6;
+  pointer-events: none;
+}
+
+/* Placeholder Styling */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #d1d5db;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Highlight Styling */
+.tiptap mark {
+  background-color: #fef08a;
+  border-radius: 0.25rem;
+  padding: 0 0.2rem;
+}
+
+/* Bubble Menu Styles */
+.bubble-menu button {
+  transform: scale(0.95);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bubble-menu button:hover {
+  transform: scale(1.1);
+}
+
+/* Image Selection */
+.tiptap img.ProseMirror-selectednode {
+  outline: 3px solid #3b82f6;
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+}
+
+/* Syntax Highlighting (Lowlight) */
+.hljs-comment,
+.hljs-quote {
+  color: #6a9955;
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #569cd6;
+}
+
+.hljs-string,
+.hljs-attr {
+  color: #ce9178;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable {
+  color: #b5cea8;
+}
+
+.hljs-type,
+.hljs-params {
+  color: #9cdcfe;
+}

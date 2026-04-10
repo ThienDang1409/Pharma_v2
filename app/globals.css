@@ -8,8 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,7 +21,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 
@@ -50,7 +49,8 @@ body {
   --color-primary-600: #d42a5a;
   --color-primary-700: #b31f48;
   --color-primary-800: #961d41;
-  --color-primary-900: #881a44; /* Base color */
+  --color-primary-900: #881a44;
+  /* Base color */
   --color-primary-950: #4f0a22;
 
   /* Secondary - Pink Red (#B03C68) */
@@ -62,7 +62,8 @@ body {
   --color-secondary-500: #ef4479;
   --color-secondary-600: #dd2461;
   --color-secondary-700: #c0184b;
-  --color-secondary-800: #B03C68; /* Base color */
+  --color-secondary-800: #B03C68;
+  /* Base color */
   --color-secondary-900: #8d1738;
   --color-secondary-950: #56081f;
 
@@ -72,7 +73,8 @@ body {
   --color-third-200: #fcefc5;
   --color-third-300: #f9e19d;
   --color-third-400: #f5c963;
-  --color-third-500: #f0b940; /* Base color */
+  --color-third-500: #f0b940;
+  /* Base color */
   --color-third-600: #e19b1e;
   --color-third-700: #bb7917;
   --color-third-800: #975f19;
@@ -84,5 +86,64 @@ body {
   --color-neutral: #4b4b4b;
   --color-white: #ffffff;
 
- 
+  /* === Admin Design System === */
+  --color-admin-sidebar: #ffffff;
+  --color-admin-bg: #f9fafb;
+  --color-admin-accent: #b91c1c;
+  /* Deep Vitalis Red */
+  --color-admin-border: #f3f4f6;
+
+  /* === Custom Shadows === */
+  --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+@layer components {
+  .admin-card {
+    @apply bg-white rounded-[32px] shadow-soft border border-gray-200/80 transition-all duration-300;
+  }
+
+  .admin-input {
+    @apply w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-primary-900/5 focus:border-primary-900/50 transition-all text-gray-900 placeholder:text-gray-400 font-medium;
+  }
+
+  .admin-select {
+    @apply w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-primary-900/5 focus:border-primary-900/50 transition-all text-gray-900 placeholder:text-gray-400 font-medium appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_1.25rem_center] bg-no-repeat pr-12 cursor-pointer;
+  }
+
+  .admin-label {
+    @apply block text-[10px] font-black text-gray-500 mb-2.5 ml-1 uppercase tracking-[0.2em];
+  }
+
+  .admin-checkbox {
+    @apply relative w-6 h-6 rounded-lg pointer-events-auto cursor-pointer appearance-none border-2 border-gray-200 bg-white transition-all duration-200 checked:bg-primary-900 checked:border-primary-900 flex items-center justify-center;
+  }
+
+  .admin-checkbox:checked::after {
+    content: "";
+    @apply w-1.5 h-3 border-r-2 border-b-2 border-white rotate-45 mb-0.5;
+  }
+
+  .admin-header-title {
+    @apply text-xl md:text-2xl font-black text-gray-950 uppercase tracking-tighter leading-tight;
+  }
+
+  .admin-header-subtitle {
+    @apply text-[10px] font-black text-gray-500 uppercase tracking-[0.25em] mt-1;
+  }
+}
+
+/* Custom Scrollbar for Premium Feel */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
 }

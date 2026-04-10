@@ -56,7 +56,7 @@ export const imageApi = {
   ) => {
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append("images", file);
+      formData.append("files", file);
     });
 
     // Add optional metadata
@@ -164,7 +164,7 @@ export const imageApi = {
    * Cleanup unused images (refCount = 0)
    */
   cleanupUnused: () => {
-    return http.delete<ApiResponse<{ deletedCount: number }>>(
+    return http.post<ApiResponse<{ deletedCount: number }>>(
       API_ENDPOINTS.IMAGE_CLEANUP
     );
   },

@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import Image from "next/image";
@@ -7,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { informationApi, Information, blogApi, Blog } from "@/lib/api";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { getLocalizedText } from "@/lib/utils/string/i18n";
-import { extractImageUrl } from "@/lib/utils/image/image-handler";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
@@ -116,27 +117,6 @@ export default function Header() {
     return categories.filter((cat) => cat.parentId === parentId);
   };
 
-  const getCategoryById = (id: string) => {
-    return categories.find((cat) => cat._id === id);
-  };
-
-  const getFeaturedDropdownCategories = (root: Information): Information[] => {
-    const directChildren = getChildren(root._id);
-    if (directChildren.length === 0) {
-      return [root];
-    }
-
-    return directChildren.slice(0, 3);
-  };
-
-  const getDropdownImage = (item: Information, root: Information): string => {
-    return (
-      extractImageUrl(item.image) ||
-      extractImageUrl(root.image) ||
-      "/images/default-dropdown-bg.jpg"
-    );
-  };
-
   // Recursive function to render nested categories with indentation
   const renderNestedCategories = (parentId: string, level: number = 0): React.ReactElement[] => {
     const children = getChildren(parentId);
@@ -192,28 +172,15 @@ export default function Header() {
     }
   };
 
-  const handleMouseEnter = (categoryId: string, hasChildren?: boolean) => {
+  const handleMouseEnter = (categoryId: string, hasChildren: boolean) => {
     if (closeTimeout) {
       clearTimeout(closeTimeout);
       setCloseTimeout(null);
     }
     setOpenDropdown(categoryId);
 
-    const root = getCategoryById(categoryId);
-    if (!root) {
-      return;
-    }
-
-    const featuredCategories = getFeaturedDropdownCategories(root);
-    featuredCategories.forEach((item) => {
-      const itemChildren = getChildren(item._id);
-      if (itemChildren.length === 0) {
-        fetchBlogsForCategory(item._id);
-      }
-    });
-
-    // Backward compatibility for old call sites
-    if (hasChildren === false) {
+    // If category has no children, fetch blogs
+    if (!hasChildren) {
       fetchBlogsForCategory(categoryId);
     }
   };
@@ -478,16 +445,15 @@ export default function Header() {
               {/* Navigation */}
               <nav className="hidden md:flex items-center space-x-6">
                 {rootCategories.map((category) => {
-                  const featuredCategories = getFeaturedDropdownCategories(category);
-                  const isOpen = openDropdown === category._id;
-                  const isSingleLayout = featuredCategories.length === 1;
-                  const listWidthClass = isSingleLayout ? "w-[36%]" : "w-full";
-                  const imageWidthClass = isSingleLayout ? "w-[64%]" : "w-full";
+                  const children = getChildren(category._id);
+                  const hasChildren = children.length > 0;
+                  const isProduct = category.slug === "products" || category.name.toLowerCase().includes("products");
+                  const isContact = category.slug === "contact" || category.name.toLowerCase().includes("liên hệ");
 
                   return (
                     <div
                       key={category._id}
-                      onMouseEnter={() => handleMouseEnter(category._id)}
+                      onMouseEnter={() => handleMouseEnter(category._id, hasChildren)}
                       onMouseLeave={handleMouseLeave}
                     >
                       <div
@@ -496,144 +462,169 @@ export default function Header() {
                         {getLocalizedText(category.name, category.name_en, language)}
                       </div>
 
-                      {/* Dynamic Mega Dropdown - Full width, tree-driven, max 3 visual groups */}
-                      {isOpen && (
+                      {/* Product Dropdown - Full width with grid layout */}
+                      {isProduct && hasChildren && openDropdown === category._id && (
                         <div
                           className="absolute left-0 right-0 top-full -mt-px z-50"
-                          onMouseEnter={() => handleMouseEnter(category._id)}
+                          onMouseEnter={() => handleMouseEnter(category._id, hasChildren)}
                           onMouseLeave={handleMouseLeave}
                         >
-                          <div className="bg-[#ededed] shadow-2xl border-t border-[#d7d7d7]">
-                            <div className="w-[92%] max-w-[1600px] mx-auto py-8 min-h-[440px]">
-                              {isSingleLayout ? (
-                                <div className="flex gap-8 h-full">
-                                  {featuredCategories.map((item) => {
-                                    const subCategories = getChildren(item._id);
-                                    const blogs = categoryBlogs[item._id];
+                          <div className="bg-white shadow-2xl">
+                            <div className="container mx-auto px-4 py-8">
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {renderNestedCategories(category._id)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                                    return (
-                                      <div key={item._id} className="contents">
-                                        <div className={`${imageWidthClass} min-h-[360px] relative overflow-hidden`}>
-                                          <Image
-                                            src={getDropdownImage(item, category)}
-                                            alt={getLocalizedText(item.name, item.name_en, language)}
-                                            fill
-                                            className="object-cover"
-                                          />
-                                          <div className="absolute inset-0 bg-white/35" />
-                                        </div>
+                      {/* Blog Dropdown - When category has no children */}
+                      {!hasChildren && openDropdown === category._id && (
+                        <div
+                          className="absolute left-0 right-0 top-full -mt-px z-50"
+                          onMouseEnter={() => handleMouseEnter(category._id, hasChildren)}
+                          onMouseLeave={handleMouseLeave}
+                        >
+                          <div className="bg-white shadow-2xl">
+                            <div className="flex min-h-[350px]">
+                              {/* Left side - Background Image (3/4 width) */}
+                              <div
+                                className="w-3/4 bg-cover bg-center relative"
+                                style={{
+                                  backgroundImage: category.image
+                                    ? `url(${category.image})`
+                                    : "url('/images/default-dropdown-bg.jpg')"
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-linear-to-r from-black/80 to-transparent"></div>
+                              </div>
 
-                                        <div className={`${listWidthClass} px-4 py-3 border-y border-[#d1d1d1] self-center`}>
-                                          <h3 className="text-xl leading-none font-light text-primary-900 mb-6 tracking-wide">
-                                            {getLocalizedText(item.name, item.name_en, language)}
-                                          </h3>
+                              {/* Right side - Blog List (1/4 width) */}
+                              <div className="w-1/4 bg-white p-6 overflow-y-auto max-h-[500px]">
+                                <h3 className="text-lg font-bold text-primary-900 mb-4">{getLocalizedText(category.name, category.name_en, language)}</h3>
+                                {categoryBlogs[category._id] && categoryBlogs[category._id].length > 0 ? (
+                                  categoryBlogs[category._id].map((blog) => (
+                                    <Link
+                                      key={blog.id}
+                                      href={`/blog/${blog.slug}`}
+                                      className="block py-2 text-sm text-gray-700 hover:text-secondary-800 hover:translate-x-1 transition-all"
+                                    >
+                                      › {getLocalizedText(blog.title, blog.title_en, language)}
+                                    </Link>
+                                  ))
+                                ) : categoryBlogs[category._id] ? (
+                                  <p className="text-sm text-gray-500 italic">{t.common.noArticles}</p>
+                                ) : (
+                                  <p className="text-sm text-gray-500 italic">{t.common.loading}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                                          <div className="space-y-3">
-                                            {subCategories.length > 0 ? (
-                                              subCategories.map((subCategory) => (
-                                                <Link
-                                                  key={subCategory._id}
-                                                  href={`/category/${subCategory.slug}`}
-                                                  className="block text-xl leading-none font-light text-primary-900 hover:translate-x-1 transition-transform"
-                                                >
-                                                  <span className="mr-3 align-middle">›</span>
-                                                  <span className="align-middle">{getLocalizedText(subCategory.name, subCategory.name_en, language)}</span>
-                                                </Link>
-                                              ))
-                                            ) : blogs ? (
-                                              blogs.length > 0 ? (
-                                                blogs.map((blog) => (
-                                                  <Link
-                                                    key={blog.id}
-                                                    href={`/blog/${blog.slug}`}
-                                                    className="block text-xl leading-none font-light text-primary-900 hover:translate-x-1 transition-transform"
-                                                  >
-                                                    <span className="mr-3 align-middle">›</span>
-                                                    <span className="align-middle">{getLocalizedText(blog.title, blog.title_en, language)}</span>
-                                                  </Link>
-                                                ))
-                                              ) : (
-                                                <p className="text-sm text-gray-500 italic">{t.common.noArticles}</p>
-                                              )
-                                            ) : (
-                                              <p className="text-sm text-gray-500 italic">{t.common.loading}</p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
+                      {/* Contact Dropdown - Image + Menu + Contact Info */}
+                      {isContact && hasChildren && openDropdown === category._id && (
+                        <div
+                          className="absolute left-0 right-0 top-full -mt-px z-50"
+                          onMouseEnter={() => handleMouseEnter(category._id, hasChildren)}
+                          onMouseLeave={handleMouseLeave}
+                        >
+                          <div className="bg-white shadow-2xl">
+                            <div className="flex min-h-[400px]">
+                              {/* Left side - Background Image (3/4 width) */}
+                              <div
+                                className="w-3/4 bg-cover bg-center relative"
+                                style={{ backgroundImage: "url('/images/contact-bg.jpg')" }}
+                              >
+                                <div className="absolute inset-0 bg-primary-900/20"></div>
+                              </div>
+
+                              {/* Right side - Menu + Contact Info (1/4 width) */}
+                              <div className="w-1/4 bg-white p-6 flex flex-col">
+                                {/* Menu Items */}
+                                <div className="flex-1">
+                                  <h3 className="text-lg font-bold text-primary-900 mb-4">{getLocalizedText(category.name, category.name_en, language)}</h3>
+                                  {children.map((child) => (
+                                    <Link
+                                      key={child._id}
+                                      href={`/category/${child.slug}`}
+                                      className="block py-2 text-sm text-gray-700 hover:text-secondary-800 hover:translate-x-1 transition-all"
+                                    >
+                                      › {getLocalizedText(child.name, child.name_en, language)}
+                                    </Link>
+                                  ))}
                                 </div>
-                              ) : (
-                                <div className={`grid gap-6 ${featuredCategories.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                                  {featuredCategories.map((item) => {
-                                    const subCategories = getChildren(item._id);
-                                    const blogs = categoryBlogs[item._id];
 
-                                    return (
-                                      <div key={item._id} className="space-y-4">
-                                        <div className="relative h-[220px] overflow-hidden">
-                                          <Image
-                                            src={getDropdownImage(item, category)}
-                                            alt={getLocalizedText(item.name, item.name_en, language)}
-                                            fill
-                                            className="object-cover"
-                                          />
-                                          <div className="absolute inset-0 bg-white/20" />
-                                        </div>
+                                {/* Contact Info */}
+                                <div className="border-t border-gray-200 pt-4 mt-4">
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    📧 contact@pharmatest.com
+                                  </p>
+                                  <p className="text-sm text-gray-600 mb-4">
+                                    📞 +84 123 456 789
+                                  </p>
 
-                                        <div className="border-y border-[#d1d1d1] py-4">
-                                          <h3 className="text-xl leading-none font-light text-primary-900 mb-4 tracking-wide">
-                                            <span className="mr-3 align-middle">›</span>
-                                            <span className="align-middle">{getLocalizedText(item.name, item.name_en, language)}</span>
-                                          </h3>
-
-                                          <div className="space-y-2">
-                                            {subCategories.length > 0 ? (
-                                              subCategories.map((subCategory) => (
-                                                <Link
-                                                  key={subCategory._id}
-                                                  href={`/category/${subCategory.slug}`}
-                                                  className="block text-xl leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
-                                                >
-                                                  <span className="mr-3 align-middle">›</span>
-                                                  <span className="align-middle">{getLocalizedText(subCategory.name, subCategory.name_en, language)}</span>
-                                                </Link>
-                                              ))
-                                            ) : blogs ? (
-                                              blogs.length > 0 ? (
-                                                blogs.map((blog) => (
-                                                  <Link
-                                                    key={blog.id}
-                                                    href={`/blog/${blog.slug}`}
-                                                    className="block text-xl leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
-                                                  >
-                                                    <span className="mr-3 align-middle">›</span>
-                                                    <span className="align-middle">{getLocalizedText(blog.title, blog.title_en, language)}</span>
-                                                  </Link>
-                                                ))
-                                              ) : (
-                                                <p className="text-sm text-gray-500 italic">{t.common.noArticles}</p>
-                                              )
-                                            ) : (
-                                              <p className="text-sm text-gray-500 italic">{t.common.loading}</p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
+                                  {/* Social Media Icons */}
+                                  <div className="flex gap-3">
+                                    <a href="#" className="w-8 h-8 rounded-full bg-third-100 flex items-center justify-center hover:bg-secondary-500 hover:text-white transition-colors">
+                                      <span className="text-sm">f</span>
+                                    </a>
+                                    <a href="#" className="w-8 h-8 rounded-full bg-third-100 flex items-center justify-center hover:bg-secondary-500 hover:text-white transition-colors">
+                                      <span className="text-sm">in</span>
+                                    </a>
+                                    <a href="#" className="w-8 h-8 rounded-full bg-third-100 flex items-center justify-center hover:bg-secondary-500 hover:text-white transition-colors">
+                                      <span className="text-sm">tw</span>
+                                    </a>
+                                    <a href="#" className="w-8 h-8 rounded-full bg-third-100 flex items-center justify-center hover:bg-secondary-500 hover:text-white transition-colors">
+                                      <span className="text-sm">yt</span>
+                                    </a>
+                                  </div>
                                 </div>
-                              )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                              <div className="pt-6">
-                                <Link
-                                  href={`/category/${category.slug}`}
-                                  className="inline-flex items-center text-xl leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
-                                >
-                                  <span className="mr-3 align-middle">›</span>
-                                  <span className="align-middle">{language === "vi" ? "Xem tất cả" : "Overview all"} {getLocalizedText(category.name, category.name_en, language)}</span>
-                                </Link>
+                      {/* General Dropdown - Image (3/4) + Menu (1/4) */}
+                      {!isProduct && !isContact && hasChildren && openDropdown === category._id && (
+                        <div
+                          className="absolute left-0 right-0 top-full -mt-px z-50"
+                          onMouseEnter={() => handleMouseEnter(category._id, hasChildren)}
+                          onMouseLeave={handleMouseLeave}
+                        >
+                          <div className="bg-white shadow-2xl">
+                            <div className="flex min-h-[350px]">
+                              {/* Left side - Background Image (3/4 width) */}
+                              <div
+                                className="w-3/4 bg-cover bg-center relative"
+                                style={{
+                                  backgroundImage: category.image
+                                    ? `url(${category.image})`
+                                    : "url('/images/default-dropdown-bg.jpg')"
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-linear-to-r from-black/80 to-transparent"></div>
+                              </div>
+
+                              {/* Right side - Menu (1/4 width) */}
+                              <div className="w-1/4 bg-white p-6">
+                                <h3 className="text-lg font-bold text-primary-900 mb-4">{getLocalizedText(category.name, category.name_en, language)}</h3>
+                                {children.map((child) => (
+                                  <Link
+                                    key={child._id}
+                                    href={
+                                      category.slug === "news"
+                                        ? `/news/category/${child.slug}`
+                                        : `/category/${child.slug}`
+                                    }
+                                    className="block py-2 text-sm text-gray-700 hover:text-secondary-800 hover:translate-x-1 transition-all"
+                                  >
+                                    › {getLocalizedText(child.name, child.name_en, language)}
+                                  </Link>
+                                ))}
                               </div>
                             </div>
                           </div>
@@ -697,3 +688,4 @@ export default function Header() {
     </>
   );
 } 
+

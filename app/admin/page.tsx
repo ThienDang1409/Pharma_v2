@@ -2,9 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { informationApi, blogApi, imageApi, Information, ImageQueryParams } from "@/lib/api";
+import { informationApi, blogApi, imageApi, Information } from "@/lib/api";
 import { BLOG_STATUS } from "@/lib/constants/api";
 import { getApiErrorFeedback } from "@/lib/utils";
+import { 
+  FolderTree, 
+  Newspaper, 
+  ImageIcon, 
+  CheckCircle2, 
+  Edit3, 
+  Trash2, 
+  ChevronRight,
+  PlusCircle,
+  Activity,
+  Database,
+  ArrowUpRight
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -79,154 +92,212 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Title */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Tổng quan quản lý nội dung</p>
-      </div>
-
+    <div className="space-y-10">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="admin-card border border-gray-200/80 rounded-3xl p-4 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Categories */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Danh mục</p>
-              <p className="text-3xl font-bold text-gray-800 mt-2">
+        <div className="admin-card p-8 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <FolderTree size={120} />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-gray-50 text-gray-900 rounded-xl border border-gray-200">
+                <FolderTree size={20} />
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Danh mục</p>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-4xl font-black text-gray-900 tracking-tighter">
                 {stats.totalCategories}
               </p>
+              <span className="text-xs font-bold text-gray-400">gốc</span>
             </div>
-            <div className="text-5xl">📁</div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <Link
-              href="/admin/information"
-              className="text-primary-600 hover:text-primary-800 text-sm font-semibold"
-            >
-              Quản lý →
-            </Link>
+            <div className="mt-8 flex items-center justify-between">
+              <Link
+                href="/admin/information"
+                className="text-[10px] font-black text-primary-900 uppercase tracking-widest hover:translate-x-1 transition-transform flex items-center gap-1"
+              >
+                Chi tiết <ArrowUpRight size={12} />
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Total Blogs */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Tổng bài viết</p>
-              <p className="text-3xl font-bold text-gray-800 mt-2">
-                {stats.totalBlogs}
-              </p>
-            </div>
-            <div className="text-5xl">📰</div>
+        <div className="admin-card p-8 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Newspaper size={120} />
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <Link
-              href="/admin/blogs"
-              className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
-            >
-              Quản lý →
-            </Link>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-gray-50 text-gray-900 rounded-xl border border-gray-200">
+                <Newspaper size={20} />
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Tổng bài viết</p>
+            </div>
+            <p className="text-4xl font-black text-gray-900 tracking-tighter">
+              {stats.totalBlogs}
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/admin/blogs"
+                className="text-[10px] font-black text-primary-900 uppercase tracking-widest hover:translate-x-1 transition-transform flex items-center gap-1"
+              >
+                Chi tiết <ArrowUpRight size={12} />
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Published Blogs */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Đã xuất bản</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">
+        <div className="admin-card p-8 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <CheckCircle2 size={120} />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-green-50 text-green-600 rounded-xl border border-green-100">
+                <CheckCircle2 size={20} />
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none text-green-600">Đã xuất bản</p>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-4xl font-black text-gray-900 tracking-tighter">
                 {stats.publishedBlogs}
               </p>
+              <span className="text-xs font-bold text-green-600">
+                {Math.round((stats.publishedBlogs / (stats.totalBlogs || 1)) * 100)}%
+              </span>
             </div>
-            <div className="text-5xl">✅</div>
+            <div className="mt-8 w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+              <div 
+                className="bg-green-500 h-full rounded-full transition-all duration-1000" 
+                style={{ width: `${(stats.publishedBlogs / (stats.totalBlogs || 1)) * 100}%` }}
+              />
+            </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {Math.round((stats.publishedBlogs / (stats.totalBlogs || 1)) * 100)}% of total
-          </p>
         </div>
 
         {/* Draft Blogs */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Bản nháp</p>
-              <p className="text-3xl font-bold text-yellow-600 mt-2">
+        <div className="admin-card p-8 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Edit3 size={120} />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-yellow-50 text-yellow-600 rounded-xl border border-yellow-100">
+                <Edit3 size={20} />
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none text-yellow-600">Bản nháp</p>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-4xl font-black text-gray-900 tracking-tighter">
                 {stats.draftBlogs}
               </p>
+              <span className="text-xs font-bold text-yellow-600">
+                {Math.round((stats.draftBlogs / (stats.totalBlogs || 1)) * 100)}%
+              </span>
             </div>
-            <div className="text-5xl">📝</div>
+            <div className="mt-8 w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+              <div 
+                className="bg-yellow-500 h-full rounded-full transition-all duration-1000" 
+                style={{ width: `${(stats.draftBlogs / (stats.totalBlogs || 1)) * 100}%` }}
+              />
+            </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {Math.round((stats.draftBlogs / (stats.totalBlogs || 1)) * 100)}% of total
-          </p>
+        </div>
         </div>
       </div>
 
       {/* Images Stats - Second Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="admin-card border border-gray-200/80 rounded-3xl p-4 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Total Images */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Tổng hình ảnh</p>
-              <p className="text-3xl font-bold text-gray-800 mt-2">
-                {stats.totalImages}
-              </p>
+        <div className="admin-card p-8">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100">
+              <ImageIcon size={24} />
             </div>
-            <div className="text-5xl">🖼️</div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Thư viện</p>
+              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter">Hình ảnh</h3>
+            </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <p className="text-3xl font-black text-gray-900 tracking-tighter">{stats.totalImages}</p>
             <Link
               href="/admin/images"
-              className="text-purple-600 hover:text-purple-800 text-sm font-semibold"
+              className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-900 transition-colors"
             >
-              Quản lý →
+              Quản lý
             </Link>
           </div>
         </div>
 
         {/* Unused Images */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-600">
-          <div className="flex items-center justify-between">
+        <div className="admin-card p-8">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl border border-orange-100">
+              <Trash2 size={24} />
+            </div>
             <div>
-              <p className="text-gray-600 text-sm font-medium">Hình chưa sử dụng</p>
-              <p className="text-3xl font-bold text-orange-600 mt-2">
-                {stats.unusedImages}
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Dung lượng</p>
+              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter">Chưa dùng</h3>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-3xl font-black text-orange-600 tracking-tighter">{stats.unusedImages}</p>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tỉ lệ dọn dẹp</p>
+              <p className="text-xs font-bold text-gray-900">
+                {stats.totalImages > 0 ? Math.round((stats.unusedImages / stats.totalImages) * 100) : 0}% tài nguyên
               </p>
             </div>
-            <div className="text-5xl">🗑️</div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.totalImages > 0 
-              ? Math.round((stats.unusedImages / stats.totalImages) * 100) 
-              : 0}% chưa dùng
-          </p>
         </div>
 
         {/* Storage Info */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Images đang sử dụng</p>
-              <p className="text-3xl font-bold text-indigo-600 mt-2">
-                {stats.totalImages - stats.unusedImages}
-              </p>
+        <div className="admin-card p-8 bg-gray-900 text-white border-none shadow-premium">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-white/10 text-white rounded-2xl border border-white/10 backdrop-blur-sm">
+              <Activity size={24} />
             </div>
-            <div className="text-5xl">✨</div>
+            <div>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Hiệu suất</p>
+              <h3 className="text-lg font-black text-white uppercase tracking-tighter">Đang hoạt động</h3>
+            </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.totalImages > 0 
-              ? Math.round(((stats.totalImages - stats.unusedImages) / stats.totalImages) * 100) 
-              : 0}% đang dùng
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-3xl font-black text-white tracking-tighter">{stats.totalImages - stats.unusedImages}</p>
+            <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="bg-primary-500 h-full rounded-full" 
+                style={{ width: `${stats.totalImages > 0 ? Math.round(((stats.totalImages - stats.unusedImages) / stats.totalImages) * 100) : 0}%` }}
+              />
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 
       {/* Categories Breakdown */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Cấu trúc danh mục</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+      <div className="admin-card p-10 border border-gray-200/80">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-8 mb-8">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Cấu trúc danh mục</h2>
+            <p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-[0.2em]">PHÂN LOẠI NỘI DUNG GỐC</p>
+          </div>
+          <Link
+            href="/admin/information"
+            className="px-6 py-3 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary-900/20 hover:bg-gray-900 transition-all"
+          >
+            Quản lý tất cả
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-4">
           {categories
             .filter(
               (cat) =>
@@ -241,88 +312,103 @@ export default function AdminDashboard() {
               return (
                 <div
                   key={category._id}
-                  className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary-600 transition-colors"
+                  className="p-6 bg-white rounded-3xl border border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all group"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-black text-gray-900 uppercase tracking-tight group-hover:text-primary-900 transition-colors">
                       {category.name}
                     </h3>
-                    {childCount > 0 && (
-                      <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded">
+                    {childCount > 0 ? (
+                      <span className="px-3 py-1 bg-primary-50 text-primary-900 text-[10px] font-black rounded-full border border-primary-100 uppercase">
                         {childCount} con
                       </span>
+                    ) : (
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {category.description || "Không có mô tả"}
+                  <p className="text-xs text-gray-500 mb-6 line-clamp-2 leading-relaxed">
+                    {category.description || "Không có mô tả chi tiết cho danh mục này."}
                   </p>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/admin/information?parent=${category._id}`}
-                      className="text-xs px-3 py-1 bg-secondary-100 text-secondary-800 rounded hover:bg-secondary-200 transition-colors font-medium"
-                    >
-                      Chi tiết
-                    </Link>
-                  </div>
+                  <Link
+                    href={`/admin/information?parent=${category._id}`}
+                    className="inline-flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-gray-900 transition-colors"
+                  >
+                    CHI TIẾT <ChevronRight size={14} />
+                  </Link>
                 </div>
               );
             })}
         </div>
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <Link
-            href="/admin/information"
-            className="inline-block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold transition-colors"
-          >
-            Quản lý tất cả danh mục
-          </Link>
-        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Hành động nhanh
-          </h2>
-          <div className="space-y-3">
+      {/* Quick Actions & System Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 admin-card p-10">
+          <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-8">Hành động nhanh</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               href="/admin/blogs/add"
-              className="block w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-center transition-colors"
+              className="flex items-center justify-between p-6 bg-gray-50 hover:bg-primary-900 hover:text-white rounded-3xl transition-all group border border-gray-200"
             >
-              ➕ Thêm bài viết mới
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white text-primary-900 rounded-2xl shadow-sm group-hover:bg-primary-800 group-hover:text-white transition-colors">
+                  <PlusCircle size={24} />
+                </div>
+                <div>
+                  <p className="text-sm font-black uppercase tracking-tight">Thêm bài viết</p>
+                  <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-0.5">Soạn thảo mới</p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </Link>
             <Link
               href="/admin/information"
-              className="block w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-center transition-colors"
+              className="flex items-center justify-between p-6 bg-gray-50 hover:bg-primary-900 hover:text-white rounded-3xl transition-all group border border-gray-200"
             >
-              ➕ Thêm danh mục mới
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white text-primary-900 rounded-2xl shadow-sm group-hover:bg-primary-800 group-hover:text-white transition-colors">
+                  <FolderTree size={24} />
+                </div>
+                <div>
+                  <p className="text-sm font-black uppercase tracking-tight">Thêm danh mục</p>
+                  <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-0.5">Phân cấp sản phẩm</p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </Link>
           </div>
         </div>
 
         {/* System Info */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Tình trạng hệ thống
-          </h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-700">API Status</span>
+        <div className="admin-card p-10">
+          <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-8">Hệ thống</h2>
+          <div className="space-y-4">
+            <div className="p-6 bg-gray-50 rounded-3xl border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">API Status</span>
+                </div>
+                <span className="text-[10px] font-black text-green-600 uppercase">Hoạt động</span>
               </div>
-              <span className="text-xs font-semibold text-green-700">
-                Hoạt động
-              </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Database</span>
+                </div>
+                <span className="text-[10px] font-black text-green-600 uppercase">Kết nối</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-700">Database</span>
+            
+            <div className="p-6 bg-primary-900 text-white rounded-3xl shadow-lg shadow-primary-900/20">
+              <div className="flex items-center gap-3 mb-2">
+                <Database size={18} className="opacity-50" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Server Load</span>
               </div>
-              <span className="text-xs font-semibold text-green-700">
-                Kết nối
-              </span>
+              <div className="flex items-end justify-between">
+                <p className="text-2xl font-black tracking-tighter">Bình thường</p>
+                <p className="text-[10px] font-black opacity-60 uppercase">Phản hồi 0.2s</p>
+              </div>
             </div>
           </div>
         </div>
