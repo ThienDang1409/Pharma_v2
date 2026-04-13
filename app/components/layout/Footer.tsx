@@ -86,7 +86,8 @@ export default function Footer() {
     fetchFooterData();
   }, []);
 
-  const mainCategories = categories.filter((cat) => !cat.parentId).slice(0, 4);
+  // Exclude 'legal' category from footer - policy links are hardcoded below
+  const mainCategories = categories.filter((cat) => !cat.parentId && cat.slug !== "legal").slice(0, 4);
 
   if (loading) {
     return (

@@ -162,7 +162,7 @@ function SortableCategoryCard({
               <button
                 type="button"
                 onClick={() => onViewChildren(category._id)}
-                className="flex items-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-900 transition-all shadow-lg shadow-gray-900/10 active:scale-95"
+                className="flex items-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-xl min-w-[120px] text-[10px] font-black uppercase tracking-widest hover:bg-primary-900 transition-all shadow-lg shadow-gray-900/10 active:scale-95"
               >
                 {childCount > 0 ? "Mở rộng" : "Thêm con"} <ArrowRight size={12} />
               </button>
@@ -371,8 +371,8 @@ export default function InformationPage() {
     setIsTranslating(true);
     try {
       const results = await Promise.all([
-        textToTranslate ? translateText(textToTranslate) : Promise.resolve(""),
-        descToTranslate ? translateText(descToTranslate) : Promise.resolve("")
+        textToTranslate ? translateText(textToTranslate, { from: "vi", to: "en" }) : Promise.resolve(""),
+        descToTranslate ? translateText(descToTranslate, { from: "vi", to: "en" }) : Promise.resolve("")
       ]);
 
       setFormData((prev: InformationFormData) => ({
@@ -391,6 +391,37 @@ export default function InformationPage() {
       setIsTranslating(false);
     }
   }, [formData.name, formData.description, toast]);
+
+  const handleTranslateReverse = useCallback(async () => {
+    const textToTranslate = formData.name_en;
+    const descToTranslate = formData.description_en;
+
+    if (!textToTranslate && !descToTranslate) {
+      toast.error("Vui lòng nhập tên hoặc mô tả tiếng Anh trước");
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const results = await Promise.all([
+        textToTranslate ? translateText(textToTranslate, { from: "en", to: "vi" }) : Promise.resolve(""),
+        descToTranslate ? translateText(descToTranslate, { from: "en", to: "vi" }) : Promise.resolve("")
+      ]);
+
+      setFormData((prev: InformationFormData) => ({
+        ...prev,
+        name: results[0] || prev.name,
+        description: results[1] || prev.description
+      }));
+
+      toast.success("Đã dịch sang tiếng Việt thành công");
+    } catch (error) {
+      console.error("Reverse translation error:", error);
+      toast.error("Lỗi khi dịch tự động. Kiểm tra lại API Key.");
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [formData.name_en, formData.description_en, toast]);
 
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -780,7 +811,26 @@ export default function InformationPage() {
                     {categoryLanguage === "vi" ? (
                       <div className="space-y-6">
                         <div>
-                          <label className="admin-label">Tên danh mục (VI)</label>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="admin-label !mb-0">Tên danh mục (VI)</label>
+                            <button
+                              type="button"
+                              onClick={() => setFormData((prev: InformationFormData) => ({ ...prev, name: prev.name_en }))}
+                              className="text-[10px] font-black text-primary-900 uppercase tracking-widest hover:text-gray-900 transition-colors"
+                            >
+                              Sync from EN
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleTranslateReverse}
+                              disabled={isTranslating}
+                              className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${isTranslating ? "text-primary-900 animate-pulse" : "text-primary-900/60 hover:text-primary-900"
+                                }`}
+                            >
+                              <Sparkles size={12} className={isTranslating ? "animate-spin" : ""} />
+                              {isTranslating ? "Translating..." : "Auto Translate"}
+                            </button>
+                          </div>
                           <input
                             type="text"
                             value={formData.name}

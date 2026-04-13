@@ -1,12 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { blogApi, Blog } from "@/lib/api";
+import { apiFetch } from "@/lib/utils/api/apiHelper";
 
 interface BlogPreviewProps {
   content: string; // HTML string for now
   title?: string;
   image?: string;
   author?: string;
+  category?: string;
+  categoryId?: string;
+  publishedAt?: string;
   tags?: string[];
   isMobile?: boolean;
 }
@@ -16,12 +21,86 @@ export default function BlogPreview({
   title = "Tiêu đề bài viết",
   image,
   author = "Admin",
+  category = "Sức khỏe",
+  categoryId,
+  publishedAt,
   tags = [],
   isMobile = false,
 }: BlogPreviewProps) {
+  const [relatedProducts, setRelatedProducts] = useState<Blog[]>([]);
+
+  useEffect(() => {
+    if (!categoryId) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    apiFetch(
+      () =>
+        blogApi.getAll({
+          informationId: categoryId,
+          isProduct: true,
+          status: "published",
+          limit: 4,
+        }),
+      {
+        onSuccess: (data) => setRelatedProducts(data?.items || []),
+        onError: () => setRelatedProducts([]),
+      }
+    );
+  }, [categoryId]);
+
+  const renderRelatedProductsHtml = useMemo(() => {
+    if (!relatedProducts.length) {
+      return `
+        <div class="my-8 p-5 border border-gray-200 rounded-2xl bg-gray-50">
+          <p class="text-sm text-gray-500">Chưa có sản phẩm cùng danh mục để hiển thị preview.</p>
+        </div>
+      `;
+    }
+
+    const cards = relatedProducts
+      .map((product) => {
+        const name = product.title || "Sản phẩm";
+        const imageUrl = product.image?.cloudinaryUrl;
+        const excerpt = product.excerpt || "";
+
+        return `
+          <div class="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+            <div class="h-36 bg-gray-50 flex items-center justify-center overflow-hidden">
+              ${
+                imageUrl
+                  ? `<img src="${imageUrl}" alt="${name}" class="w-full h-full object-contain" />`
+                  : `<div class="text-xs text-gray-400">No image</div>`
+              }
+            </div>
+            <div class="p-4">
+              <h4 class="text-sm font-bold text-gray-900 line-clamp-2">${name}</h4>
+              ${excerpt ? `<p class="text-xs text-gray-500 mt-2 line-clamp-2">${excerpt}</p>` : ""}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    return `
+      <div class="my-8 p-5 border border-gray-200 rounded-2xl bg-gray-50">
+        <h3 class="text-base font-bold text-gray-900 mb-4">Sản phẩm liên quan</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${cards}</div>
+      </div>
+    `;
+  }, [relatedProducts]);
+
+  const previewHtml = useMemo(() => {
+    const relatedProductPattern = /<p>\s*\[\[(RELATED_PRODUCTS?|RELATEDPRODUCT)\]\]\s*<\/p>|\[\[(RELATED_PRODUCTS?|RELATEDPRODUCT)\]\]/gi;
+    return content.replace(relatedProductPattern, renderRelatedProductsHtml);
+  }, [content, renderRelatedProductsHtml]);
+
+  const formatReadTime = () => Math.max(1, Math.ceil(content.split(' ').length / 200));
+
   return (
-    <div className={`preview-wrapper p-4 md:p-14 min-h-screen transition-all ${isMobile ? 'max-w-[440px] mx-auto' : 'w-full'}`}>
-      <div className={`preview-container bg-white shadow-premium min-h-full overflow-hidden ${isMobile ? 'rounded-[3rem] border-[12px] border-gray-900 shadow-2xl h-[840px] overflow-y-auto custom-scrollbar' : 'rounded-[3.5rem] border border-gray-100'}`}>
+    <div className={`preview-wrapper h-full flex flex-col transition-all ${isMobile ? 'max-w-[440px] mx-auto' : 'w-full'}`}>
+      <div className={`preview-container bg-white shadow-premium flex-1 flex flex-col ${isMobile ? 'rounded-[3rem] border-[12px] border-gray-900 shadow-2xl overflow-y-auto custom-scrollbar' : 'rounded-[3.5rem] border border-gray-100 overflow-y-auto custom-scrollbar'}`}>
         
         {/* Header Image (Optional) */}
         {image && !isMobile && (
@@ -37,7 +116,7 @@ export default function BlogPreview({
         <div className={`${isMobile ? 'p-8' : 'p-12 md:p-24 md:pt-20'} max-w-4xl mx-auto`}>
           {/* Category / Breadcrumb */}
           <div className="flex items-center gap-2 text-[10px] font-black text-primary-900 uppercase tracking-[0.2em] mb-8">
-            <span className="bg-primary-50 px-2 py-1 rounded">Sức khỏe</span>
+            <span className="bg-primary-50 px-2 py-1 rounded">{category}</span>
             <span className="text-gray-200">/</span>
             <span className="text-gray-400">Tin tức chuyên sâu</span>
           </div>
@@ -54,7 +133,10 @@ export default function BlogPreview({
             </div>
             <div>
               <div className="font-black text-gray-900 text-lg leading-none mb-1">{author}</div>
-              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Chief Medical Editor • 5 Min Read</div>
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                {publishedAt && <span>{publishedAt} • </span>}
+                <span>{formatReadTime()} Min Read</span>
+              </div>
             </div>
           </div>
 
@@ -75,7 +157,7 @@ export default function BlogPreview({
               prose-headings:font-black prose-headings:tracking-tighter prose-headings:text-gray-900
               prose-p:text-gray-600 prose-p:leading-relaxed prose-p:font-medium
               prose-img:rounded-3xl prose-img:shadow-2xl"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: previewHtml }}
           />
 
           {/* Tags */}

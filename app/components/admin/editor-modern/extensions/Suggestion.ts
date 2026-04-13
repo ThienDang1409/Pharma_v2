@@ -115,7 +115,31 @@ export default {
           window.dispatchEvent(event);
         },
       },
-    ].filter(item => item.title.toLowerCase().startsWith(query.toLowerCase()));
+      {
+        title: 'Related Products',
+        description: 'Nhúng danh sách sản phẩm cùng danh mục.',
+        command: ({ editor, range }: any) => {
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .insertContent('<p>[[RELATED_PRODUCTS]]</p>')
+            .run();
+        },
+      },
+      {
+        title: 'Related Articles',
+        description: 'Nhúng danh sách bài viết cùng danh mục.',
+        command: ({ editor, range }: any) => {
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .insertContent('<p>[[RELATED_ARTICLES]]</p>')
+            .run();
+        },
+      },
+    ].filter(item => item.title.toLowerCase().includes(query.toLowerCase()));
   },
 
   render: () => {

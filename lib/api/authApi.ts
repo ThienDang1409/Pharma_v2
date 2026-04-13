@@ -17,8 +17,11 @@ export const authApi = {
   },
 
   logout: () => {
-    http.removeAuthToken();
-    return Promise.resolve();
+    return http.post<ApiResponse>(
+      API_ENDPOINTS.AUTH_LOGOUT
+    ).finally(() => {
+      http.removeAuthToken();
+    });
   },
 
   register: (userData: RegisterData) => {

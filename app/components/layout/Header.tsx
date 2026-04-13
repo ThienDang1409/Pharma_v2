@@ -136,8 +136,9 @@ export default function Header() {
   };
 
   // Get root categories (no parentId or parentId is null)
+  // Exclude 'legal' and 'other' categories from public navigation
   const rootCategories = categories.filter(
-    (cat) => (!cat.parentId || cat.parentId === null || cat.parentId === "null") && cat.slug !== "other"
+    (cat) => (!cat.parentId || cat.parentId === null || cat.parentId === "null") && cat.slug !== "other" && cat.slug !== "legal"
   );
 
   // Get children of a category

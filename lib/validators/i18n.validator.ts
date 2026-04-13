@@ -288,7 +288,7 @@ export const UpdateBlogSchemaI18n = (lang: I18nLanguage = 'vi') =>
 // Blog Section Schema
 export const BlogSectionSchemaI18n = (lang: I18nLanguage = 'vi') =>
   z.object({
-    title: z.string({ message: getMessage('blog.section.title.required', lang) }),
+    title: z.string({ message: getMessage('blog.section.title.required', lang) }).min(1, getMessage('blog.section.title.required', lang)),
     title_en: z.string().optional(),
     slug: z.string({ message: getMessage('blog.section.slug.required', lang) }).optional().or(z.literal('')),
     type: z.string({ message: getMessage('blog.section.type.required', lang) }),

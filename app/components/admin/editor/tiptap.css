@@ -278,8 +278,26 @@
   border-spacing: 0;
   table-layout: fixed;
   width: 100%;
+  min-width: 100%;
   margin: 1em 0;
   overflow: hidden;
+}
+
+.ProseMirror .tableWrapper table {
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Keep table expanded after deleting columns down to one */
+.ProseMirror table colgroup col:only-child {
+  width: 100% !important;
+}
+
+.ProseMirror table tr>td:only-child,
+.ProseMirror table tr>th:only-child {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none;
 }
 
 .ProseMirror table td,

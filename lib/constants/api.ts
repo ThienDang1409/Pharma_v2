@@ -92,7 +92,7 @@ export const API_ENDPOINTS = {
   INFORMATION: '/informations',
   INFORMATION_BY_ID: '/informations/:id',
   INFORMATION_BY_SLUG: '/informations/slug/:slug',
-  INFORMATION_BY_PARENT: '/informations/parent/:parentId',
+  INFORMATION_BY_PARENT: '/informations/:parentId/children',
   INFORMATION_REORDER: '/informations/reorder',
   // Image endpoints
   IMAGES: '/images',

@@ -23,6 +23,48 @@ export default function BlogDetailPage() {
   const [isNavSticky, setIsNavSticky] = useState(false);
   const [isProductCategory, setIsProductCategory] = useState(false);
 
+  const buildRelatedProductsEmbedHtml = () => {
+    if (!relatedProducts.length) {
+      return "";
+    }
+
+    const cards = relatedProducts
+      .map((product) => {
+        const title = getLocalizedText(product.title, product.title_en, language);
+        const image = product.image?.cloudinaryUrl
+          ? `<img src=\"${product.image.cloudinaryUrl}\" alt=\"${title}\" class=\"w-full h-full object-contain group-hover:scale-105 transition-transform duration-300\" />`
+          : `<div class=\"w-full h-full flex items-center justify-center text-gray-300\"><svg class=\"w-16 h-16\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z\" clip-rule=\"evenodd\" /></svg></div>`;
+
+        return `<a href=\"/blog/${product.slug}\" class=\"group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col\"><div class=\"relative h-48 bg-gray-50 overflow-hidden flex items-center justify-center p-4\">${image}</div><div class=\"p-4 flex-1 flex flex-col\"><h3 class=\"font-bold text-lg text-gray-900 mb-1\">${title}</h3><div class=\"text-primary-600 text-sm font-medium group-hover:text-primary-800 inline-flex items-center mt-auto\">Details</div></div></a>`;
+      })
+      .join("");
+
+    return `<div class=\"py-2\"><div class=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6\">${cards}</div></div>`;
+  };
+
+  const buildRelatedArticlesEmbedHtml = () => {
+    if (!relatedBlogs.length) {
+      return "";
+    }
+
+    const items = relatedBlogs
+      .map((relatedBlog) => {
+        const title = getLocalizedText(relatedBlog.title, relatedBlog.title_en, language);
+        return `<a href=\"/blog/${relatedBlog.slug}\" class=\"group flex items-start gap-3 text-gray-700 hover:text-primary-600 transition-colors\"><span class=\"text-primary-600 mt-1 font-bold group-hover:translate-x-1 transition-transform\">&gt;&gt;</span><span class=\"text-base md:text-lg group-hover:underline\">${title}</span></a>`;
+      })
+      .join("");
+
+    return `<div class=\"py-2\"><div class=\"space-y-3\">${items}</div></div>`;
+  };
+
+  const applySlashEmbeds = (htmlContent: string) => {
+    return htmlContent
+      .replace(/<p>\s*\[\[(RELATED_PRODUCTS|RELATED_PRODUCT|RELATEDPRODUCT)\]\]\s*<\/p>/gi, buildRelatedProductsEmbedHtml())
+      .replace(/\[\[(RELATED_PRODUCTS|RELATED_PRODUCT|RELATEDPRODUCT)\]\]/gi, buildRelatedProductsEmbedHtml())
+      .replace(/<p>\s*\[\[(RELATED_ARTICLES|RELATED_ARTICLE|RELATEDARTICLE)\]\]\s*<\/p>/gi, buildRelatedArticlesEmbedHtml())
+      .replace(/\[\[(RELATED_ARTICLES|RELATED_ARTICLE|RELATEDARTICLE)\]\]/gi, buildRelatedArticlesEmbedHtml());
+  };
+
   // Scroll to section
   const scrollToSection = (sectionSlug: string) => {
     setActiveSection(sectionSlug);
@@ -91,8 +133,9 @@ export default function BlogDetailPage() {
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
     // Observe all sections
-    blog.sections.forEach((section) => {
-      const element = document.getElementById(`section-${section.slug}`);
+    blog.sections.forEach((section, index) => {
+      const sectionAnchor = section.slug || `section-${index + 1}`;
+      const element = document.getElementById(`section-${sectionAnchor}`);
       if (element) observer.observe(element);
     });
 
@@ -130,37 +173,30 @@ export default function BlogDetailPage() {
 
           // Fetch all published blogs for related content
           await apiFetch(
-            () => blogApi.getAll({ status: 'published' }),
+            () => blogApi.getAll({ status: 'published', limit: 1000 }),
             {
               onSuccess: (paginationData) => {
                 const allBlogs = paginationData?.items || [];
+                const categoryId = typeof currentBlog.informationId === 'string'
+                  ? currentBlog.informationId
+                  : currentBlog.informationId?._id;
+                const sameCategoryBlogs = allBlogs.filter(
+                  (b) =>
+                    b.id !== currentBlog.id &&
+                    (typeof b.informationId === 'string'
+                      ? b.informationId === categoryId
+                      : b.informationId?._id === categoryId)
+                );
                 
-                // Get related blogs (non-product blogs, excluding current)
-                const related = allBlogs
-                  .filter(
-                    (b) =>
-                      b.isProduct === false &&
-                      b.id !== currentBlog.id
-                  )
+                // Related blogs in same category (non-product)
+                const related = sameCategoryBlogs
+                  .filter((b) => b.isProduct === false)
                   .slice(0, 3);
                 setRelatedBlogs(related);
 
-                // If this is a product blog, fetch related products from same category
-                if (currentBlog.isProduct && currentBlog.informationId) {
-                  const categoryId = typeof currentBlog.informationId === 'string' 
-                    ? currentBlog.informationId 
-                    : currentBlog.informationId._id;
-                  
-                  const relatedProductsList = allBlogs.filter(
-                    (b) =>
-                      b.isProduct === true &&
-                      b.id !== currentBlog.id &&
-                      (typeof b.informationId === 'string' 
-                        ? b.informationId === categoryId
-                        : b.informationId?._id === categoryId)
-                  );
-                  setRelatedProducts(relatedProductsList.slice(0, 4));
-                }
+                // Related products in same category
+                const relatedProductsList = sameCategoryBlogs.filter((b) => b.isProduct === true);
+                setRelatedProducts(relatedProductsList.slice(0, 4));
               },
               onError: () => {
                 setRelatedBlogs([]);
@@ -249,18 +285,19 @@ export default function BlogDetailPage() {
           <div className="flex items-center justify-center gap-8 md:gap-16 overflow-x-auto">
             {blog.sections
               .filter((section) => section.title) // Only show sections with titles
-              .map((section, index) => (
-                <button
+              .map((section, index) => {
+                const sectionAnchor = section.slug || `section-${index + 1}`;
+                return <button
                   key={index}
-                  onClick={() => scrollToSection(section.slug)}
-                  className={`text-base md:text-md pb-2 border-b-4 transition-all whitespace-nowrap cursor-pointer ${activeSection === section.slug
+                  onClick={() => scrollToSection(sectionAnchor)}
+                  className={`text-base md:text-md pb-2 border-b-4 transition-all whitespace-nowrap cursor-pointer ${activeSection === sectionAnchor
                     ? "text-primary-800 border-primary-800 font-semibold"
                     : "text-primary-900 border-transparent hover:text-primary-800 hover:border-primary-800 hover:font-semibold"
                     }`}
                 >
                   {section.title}
                 </button>
-              ))}
+                })}
           </div>
         </div>
       </div>
@@ -322,11 +359,13 @@ export default function BlogDetailPage() {
               const isRelatedProducts = section.title?.toLowerCase().includes('related products');
 
               // Regular section with content
+              const sectionAnchor = section.slug || `section-${index + 1}`;
+
               if (!isSpecialSection) {
                 return (
                   <div
                     key={index}
-                    id={`section-${section.slug}`}
+                    id={`section-${sectionAnchor}`}
                     className="py-10 border-b border-gray-200 last:border-b-0"
                   >
                     {/* Section Title - only show if exists */}
@@ -357,7 +396,7 @@ export default function BlogDetailPage() {
                           prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:border prose-th:border-gray-300
                           prose-td:p-3 prose-td:border prose-td:border-gray-300
                         "
-                        dangerouslySetInnerHTML={{ __html: getLocalizedText(section.content, section.content_en, language) }}
+                        dangerouslySetInnerHTML={{ __html: applySlashEmbeds(getLocalizedText(section.content, section.content_en, language)) }}
                       />
                     )}
                   </div>
@@ -367,7 +406,7 @@ export default function BlogDetailPage() {
               // Special section: Related Articles
               if (isRelatedArticles && relatedBlogs.length > 0) {
                 return (
-                  <div key={index} id={`section-${section.slug}`} className="py-10 border-b border-gray-200">
+                  <div key={index} id={`section-${sectionAnchor}`} className="py-10 border-b border-gray-200">
                     <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">
                       {getLocalizedText(section.title, section.title_en, language)}
                     </h2>
@@ -394,7 +433,7 @@ export default function BlogDetailPage() {
               // Special section: Related Products
               if (isRelatedProducts && relatedProducts.length > 0) {
                 return (
-                  <div key={index} id={`section-${section.slug}`} className="py-10">
+                  <div key={index} id={`section-${sectionAnchor}`} className="py-10">
                     <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">
                       {getLocalizedText(section.title, section.title_en, language)}
                     </h2>

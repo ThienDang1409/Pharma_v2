@@ -75,10 +75,12 @@ function AdminEditNewsPageContent() {
   const [sectionLanguages, setSectionLanguages] = useState<{ [key: number]: "vi" | "en" }>({});
   const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<"edit" | "preview" | "split">("edit");
+  const [isInfoCollapsed, setIsInfoCollapsed] = useState(false);
   const [isPreviewMobile, setIsPreviewMobile] = useState(false);
   const [isTranslatingMain, setIsTranslatingMain] = useState(false);
   const [translatingSectionIndex, setTranslatingSectionIndex] = useState<number | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [sectionViewModes, setSectionViewModes] = useState<Record<number, "edit" | "preview" | "split">>({});
 
   // Fetch categories and existing blog data
   useEffect(() => {
@@ -532,38 +534,58 @@ function AdminEditNewsPageContent() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* View Mode Switcher - Floating Pill */}
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center bg-white/90 backdrop-blur-xl p-1.5 rounded-3xl shadow-premium border border-white">
+      {/* Compact View Switcher: hover to expand full controls */}
+      <div className="fixed bottom-8 right-8 z-50 group">
         <button
           type="button"
-          onClick={() => setViewMode("edit")}
-          className={`px-6 py-3 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all rounded-2xl ${viewMode === 'edit' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+          className="w-14 h-14 rounded-full bg-primary-900 text-white shadow-xl shadow-primary-900/30 flex items-center justify-center"
+          title="Mở thanh công cụ view"
         >
-          <Settings size={14} /> Soạn thảo
+          <Eye size={18} />
         </button>
-        <button
-          type="button"
-          onClick={() => setViewMode("preview")}
-          className={`px-6 py-3 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all rounded-2xl ${viewMode === 'preview' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
-        >
-          <Eye size={14} /> Xem thử
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewMode("split")}
-          className={`hidden lg:flex px-6 py-3 text-xs font-black uppercase tracking-widest items-center gap-2 transition-all rounded-2xl ${viewMode === 'split' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
-        >
-          <Monitor size={14} /> Chia hai
-        </button>
+
+        <div className="absolute right-14 bottom-0 origin-right scale-95 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
+          <div className="flex whitespace-nowrap p-2 items-center bg-white/95  backdrop-blur-xl p-1.5 rounded-2xl shadow-premium border border-gray-100">
+            <button
+              type="button"
+              onClick={() => setViewMode("edit")}
+              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all rounded-xl ${viewMode === 'edit' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            >
+              <Settings size={12} /> Soạn thảo
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("preview")}
+              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all rounded-xl ${viewMode === 'preview' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            >
+              <Eye size={12} /> Preview
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("split")}
+              className={`hidden lg:flex px-4 py-2 text-[10px] font-black uppercase tracking-widest items-center gap-2 transition-all rounded-xl ${viewMode === 'split' ? 'bg-primary-900 text-white shadow-lg' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            >
+              <Monitor size={12} /> Split
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsInfoCollapsed((prev) => !prev)}
+              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest items-center gap-2 transition-all rounded-xl flex ${isInfoCollapsed ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            >
+              <ArrowLeft size={12} className={`transition-transform ${isInfoCollapsed ? 'rotate-180' : ''}`} />
+              {isInfoCollapsed ? 'Mở cột info' : 'Thu gọn info'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Main Content Area */}
         <main className={`flex-1 overflow-y-auto custom-scrollbar ${viewMode === 'preview' ? 'hidden' : viewMode === 'split' ? 'w-1/2' : 'w-full'}`}>
           <div className={`${viewMode === 'split' ? 'w-full' : 'container mx-auto'} py-8 px-4`}>
-            <form className={`grid grid-cols-1 ${viewMode === 'split' ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-8`}>
+            <form className={`grid grid-cols-1 ${(viewMode === 'split' || isInfoCollapsed) ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-8`}>
               {/* Left Sidebar - Metadata (Hidden in Split Mode) */}
-              {viewMode !== 'split' ? (
+              {(viewMode !== 'split' && !isInfoCollapsed) ? (
                 <div className="lg:col-span-1 space-y-6">
                   {/* Publish Card */}
                   <div className="admin-card p-8">
@@ -766,7 +788,7 @@ function AdminEditNewsPageContent() {
               ) : null}
 
               {/* Main Content Area */}
-              <div className={`${viewMode === 'split' ? 'lg:col-span-1' : 'lg:col-span-3'} space-y-8`}>
+              <div className={`${(viewMode === 'split' || isInfoCollapsed) ? 'lg:col-span-1' : 'lg:col-span-3'} space-y-8`}>
                 {/* Basic Info Card */}
                 <div className="admin-card p-10">
                   <div className="flex items-center justify-between border-b border-gray-200 pb-8 mb-8">
@@ -932,6 +954,7 @@ function AdminEditNewsPageContent() {
                       {formData.sections.map((section, index) => {
                         const sectionLang = sectionLanguages[index] || "vi";
                         const isCollapsed = collapsedSections.has(index);
+                        const sectionEditorMode = sectionViewModes[index] || "edit";
 
                         return (
                           <div key={index} className="admin-card overflow-hidden group">
@@ -1037,6 +1060,33 @@ function AdminEditNewsPageContent() {
                                   )}
                                 </div>
 
+                                <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-200 bg-gray-50">
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Editor mode</span>
+                                  <div className="flex bg-white border border-gray-200 rounded-xl p-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSectionViewModes((prev) => ({ ...prev, [index]: "edit" }))}
+                                      className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-wider ${sectionEditorMode === "edit" ? "bg-primary-900 text-white" : "text-gray-500 hover:text-gray-700"}`}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSectionViewModes((prev) => ({ ...prev, [index]: "preview" }))}
+                                      className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-wider ${sectionEditorMode === "preview" ? "bg-primary-900 text-white" : "text-gray-500 hover:text-gray-700"}`}
+                                    >
+                                      Preview
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSectionViewModes((prev) => ({ ...prev, [index]: "split" }))}
+                                      className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-wider ${sectionEditorMode === "split" ? "bg-primary-900 text-white" : "text-gray-500 hover:text-gray-700"}`}
+                                    >
+                                      Split
+                                    </button>
+                                  </div>
+                                </div>
+
                                 {sectionLang === "vi" ? (
                                   <div className="space-y-6">
                                     <div className="grid grid-cols-2 gap-6">
@@ -1062,13 +1112,25 @@ function AdminEditNewsPageContent() {
                                     </div>
                                     <div>
                                       <label className="admin-label">Nội dung chi tiết (VI)</label>
-                                      <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                                        <TiptapEditor
-                                          content={section.content}
-                                          onChange={(content) => handleSectionChange(index, "content", content)}
-                                          placeholder={`Nhập nội dung cho phần ${index + 1}...`}
-                                          onImageUpload={handleTiptapImageUpload}
-                                        />
+                                      <div className={`mt-2 ${sectionEditorMode === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-4" : ""}`}>
+                                        {sectionEditorMode !== "preview" && (
+                                          <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+                                            <TiptapEditor
+                                              content={section.content}
+                                              onChange={(content) => handleSectionChange(index, "content", content)}
+                                              placeholder={`Nhập nội dung cho phần ${index + 1}...`}
+                                              onImageUpload={handleTiptapImageUpload}
+                                            />
+                                          </div>
+                                        )}
+                                        {sectionEditorMode !== "edit" && (
+                                          <div className="rounded-3xl border border-gray-200 bg-white p-5 overflow-y-auto max-h-[520px]">
+                                            <div
+                                              className="prose prose-sm md:prose-base max-w-none"
+                                              dangerouslySetInnerHTML={{ __html: section.content || "<p class='text-gray-400'>Chưa có nội dung</p>" }}
+                                            />
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1086,13 +1148,25 @@ function AdminEditNewsPageContent() {
                                     </div>
                                     <div>
                                       <label className="admin-label">Section Content (EN)</label>
-                                      <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                                        <TiptapEditor
-                                          content={section.content_en || ""}
-                                          onChange={(content) => handleSectionChange(index, "content_en", content)}
-                                          placeholder={`Enter content for section ${index + 1} in English...`}
-                                          onImageUpload={handleTiptapImageUpload}
-                                        />
+                                      <div className={`mt-2 ${sectionEditorMode === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-4" : ""}`}>
+                                        {sectionEditorMode !== "preview" && (
+                                          <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+                                            <TiptapEditor
+                                              content={section.content_en || ""}
+                                              onChange={(content) => handleSectionChange(index, "content_en", content)}
+                                              placeholder={`Enter content for section ${index + 1} in English...`}
+                                              onImageUpload={handleTiptapImageUpload}
+                                            />
+                                          </div>
+                                        )}
+                                        {sectionEditorMode !== "edit" && (
+                                          <div className="rounded-3xl border border-gray-200 bg-white p-5 overflow-y-auto max-h-[520px]">
+                                            <div
+                                              className="prose prose-sm md:prose-base max-w-none"
+                                              dangerouslySetInnerHTML={{ __html: section.content_en || "<p class='text-gray-400'>No content yet</p>" }}
+                                            />
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
