@@ -37,14 +37,14 @@ export default function ModernAddBlogPage() {
         }
       ]
     };
-    
+
     // For now, let's just log it. In a real scenario, we'd call blogApi.create(payload)
     await new Promise((resolve) => setTimeout(resolve, 1500));
   };
 
   return (
     <div className="min-h-screen bg-white">
-      <ModernBlogForm 
+      <ModernBlogForm
         categories={categories}
         onSave={handleSave}
       />

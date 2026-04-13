@@ -21,6 +21,16 @@ export const blogApi = {
   },
 
   /**
+   * Get blogs for exact category only (no descendant categories)
+   */
+  getAllExactCategory: (params?: BlogQueryParams) => {
+    return http.get<ApiResponse<PaginationResult<Blog>>>(
+      API_ENDPOINTS.BLOG_EXACT_CATEGORY,
+      { params }
+    );
+  },
+
+  /**
    * Get single blog by ID
    */
   getById: (id: string) => {

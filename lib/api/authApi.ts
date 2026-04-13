@@ -49,16 +49,16 @@ export const authApi = {
   },
 
   resetPassword: (token: string, password: string) => {
-    return http.post<ApiResponse>(
+    return http.put<ApiResponse>(
       API_ENDPOINTS.AUTH_RESET_PASSWORD,
       { token, password }
     );
   },
 
-  changePassword: (oldPassword: string, newPassword: string) => {
-    return http.post<ApiResponse>(
+  changePassword: (currentPassword: string, newPassword: string) => {
+    return http.put<ApiResponse>(
       API_ENDPOINTS.AUTH_CHANGE_PASSWORD,
-      { oldPassword, newPassword }
+      { currentPassword, newPassword }
     );
   },
 

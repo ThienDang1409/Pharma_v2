@@ -188,9 +188,8 @@ export default function AdminImagesPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="admin-card border border-gray-200/80 rounded-3xl p-5 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-center gap-6">
-          <label className="flex items-center gap-2 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 active:scale-95 cursor-pointer">
+      <div className="flex flex-col md:flex-row md:items-end justify-end gap-6">
+        <label className="flex items-center gap-2 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 active:scale-95 cursor-pointer">
           <Upload size={16} /> Tải ảnh lên
           <input
             type="file"
@@ -200,35 +199,34 @@ export default function AdminImagesPage() {
             className="hidden"
             disabled={uploading}
           />
-          </label>
-        </div>
+        </label>
       </div>
 
       {/* Stats Quick Status */}
       <div className="admin-card border border-gray-200/80 rounded-3xl p-4 md:p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="admin-card p-6 border-l-4 border-primary-900">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tổng số ảnh</p>
-          <p className="text-2xl font-black text-gray-900 tracking-tighter">{pagination.total}</p>
-        </div>
-        <div className="admin-card p-6 border-l-4 border-gray-900">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Đang chọn</p>
-          <p className="text-2xl font-black text-gray-900 tracking-tighter">{selectedImages.length}</p>
-        </div>
-        <div className="admin-card p-6 border-l-4 border-gray-200">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Trang hiện tại</p>
-          <p className="text-2xl font-black text-gray-900 tracking-tighter">
-            {pagination.page} <span className="text-sm text-gray-400 font-bold">/ {pagination.totalPages}</span>
-          </p>
-        </div>
-        <div className="admin-card p-6 bg-gray-50 flex items-center justify-center">
-          <button
-            onClick={handleCleanupUnused}
-            className="flex items-center gap-2 text-[10px] font-black text-orange-600 uppercase tracking-widest hover:text-orange-900 transition-colors"
-          >
-            <RefreshCw size={14} /> Dọn dẹp rác
-          </button>
-        </div>
+          <div className="admin-card p-6 border-l-4 border-primary-900">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tổng số ảnh</p>
+            <p className="text-2xl font-black text-gray-900 tracking-tighter">{pagination.total}</p>
+          </div>
+          <div className="admin-card p-6 border-l-4 border-gray-900">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Đang chọn</p>
+            <p className="text-2xl font-black text-gray-900 tracking-tighter">{selectedImages.length}</p>
+          </div>
+          <div className="admin-card p-6 border-l-4 border-gray-200">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Trang hiện tại</p>
+            <p className="text-2xl font-black text-gray-900 tracking-tighter">
+              {pagination.page} <span className="text-sm text-gray-400 font-bold">/ {pagination.totalPages}</span>
+            </p>
+          </div>
+          <div className="admin-card p-6 bg-gray-50 flex items-center justify-center">
+            <button
+              onClick={handleCleanupUnused}
+              className="flex items-center gap-2 text-[10px] font-black text-orange-600 uppercase tracking-widest hover:text-orange-900 transition-colors"
+            >
+              <RefreshCw size={14} /> Dọn dẹp rác
+            </button>
+          </div>
         </div>
       </div>
 

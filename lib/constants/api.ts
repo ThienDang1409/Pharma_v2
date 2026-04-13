@@ -84,6 +84,7 @@ export const API_ENDPOINTS = {
   HEALTH: '/',
   // Blog endpoints
   BLOGS: '/blog',
+  BLOG_EXACT_CATEGORY: '/blog/exact-category',
   BLOG_BY_ID: '/blog/:id',
   BLOG_BY_SLUG: '/blog/slug/:slug',
   BLOGS_SEARCH: '/blog/search',

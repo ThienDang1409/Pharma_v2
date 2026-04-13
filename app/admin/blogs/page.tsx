@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useToast } from "@/app/context/ToastContext";
+import { apiSubmit } from "@/lib/utils/api/apiHelper";
+import { z } from "zod";
 import { blogApi, informationApi } from "@/lib/api";
 import type { Blog, Information, BlogQueryParams, InformationPreviewDto } from "@/lib/types";
 import { BLOG_STATUS } from "@/lib/constants/api";
@@ -23,6 +26,7 @@ import {
 } from "lucide-react";
 
 export default function AdminBlogsPage() {
+  const toast = useToast();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [allCategories, setAllCategories] = useState<Information[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
@@ -130,13 +134,19 @@ export default function AdminBlogsPage() {
       return;
     }
 
-    try {
-      await blogApi.delete(id);
-      await fetchData();
-      setDeleteConfirm(null);
-    } catch (error) {
-      console.error("Error deleting blog:", error);
-      alert(getApiErrorFeedback(error).message || "Lỗi xóa bài viết");
+    // Use apiSubmit for consistent validation/toast/error handling
+    const result = await apiSubmit(z.any(), {}, () => blogApi.delete(id), {
+      toast,
+      successMsg: "Xóa bài viết thành công!",
+      onSuccess: () => {
+        fetchData();
+        setDeleteConfirm(null);
+      },
+    });
+
+    if (!result.success) {
+      // apiSubmit already showed toast; log for debugging
+      console.debug("Delete failed:", result.error);
     }
   };
 
@@ -182,77 +192,75 @@ export default function AdminBlogsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="admin-card border border-gray-200/80 rounded-3xl p-5 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-center gap-6">
-          <Link
-            href="/admin/blogs/add"
-            className="flex items-center gap-2 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 active:scale-95"
-          >
-            <Plus size={16} /> Thêm bài viết mới
-          </Link>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-end justify-end gap-6">
+        <Link
+          href="/admin/blogs/add"
+          className="flex items-center gap-2 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20 active:scale-95"
+        >
+          <Plus size={16} /> Thêm bài viết mới
+        </Link>
       </div>
 
       {/* Primary Filters Row */}
       <div className="admin-card border border-gray-200/80 rounded-3xl p-4 md:p-5">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Search Input */}
-        <div className="lg:col-span-2 relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none">
-            <Search size={18} />
+          {/* Search Input */}
+          <div className="lg:col-span-2 relative group">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none">
+              <Search size={18} />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm theo tiêu đề, slug, hoặc nội dung..."
+              className="admin-input pl-14 h-14"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-300 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tiêu đề, slug, hoặc nội dung..."
-            className="admin-input pl-14 h-14"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-300 hover:text-red-500 transition-colors"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
 
-        {/* Status Filter Dropdown */}
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none z-10">
-            <Filter size={18} />
+          {/* Status Filter Dropdown */}
+          <div className="relative group">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-900 transition-colors pointer-events-none z-10">
+              <Filter size={18} />
+            </div>
+            <CustomSelect
+              options={[
+                { label: "Tất cả bài viết", value: "all" },
+                { label: "Đã xuất bản", value: "published" },
+                { label: "Bản nháp", value: "draft" },
+              ]}
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value as any)}
+              placeholder="Lọc theo trạng thái..."
+              className="pl-14"
+            />
           </div>
-          <CustomSelect
-            options={[
-              { label: "Tất cả bài viết", value: "all" },
-              { label: "Đã xuất bản", value: "published" },
-              { label: "Bản nháp", value: "draft" },
-            ]}
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value as any)}
-            placeholder="Lọc theo trạng thái..."
-            className="pl-14"
-          />
-        </div>
 
-        {/* Categories Breadcrumb/Indicator */}
-        <div className="flex items-center gap-2 px-5 h-14 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden truncate">
-          <Folder size={14} className="text-gray-400 shrink-0" />
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">
-            {selectedCategoryPath.length > 0
-              ? getCategory(selectedCategoryPath[selectedCategoryPath.length - 1])?.name
-              : "Tất cả danh mục"}
-          </span>
-          {selectedCategoryPath.length > 0 && (
-            <button
-              onClick={() => setSelectedCategoryPath([])}
-              className="ml-auto text-primary-900 hover:text-red-600 transition-colors"
-            >
-              <Trash2 size={12} />
-            </button>
-          )}
-        </div>
+          {/* Categories Breadcrumb/Indicator */}
+          <div className="flex items-center gap-2 px-5 h-14 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden truncate">
+            <Folder size={14} className="text-gray-400 shrink-0" />
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">
+              {selectedCategoryPath.length > 0
+                ? getCategory(selectedCategoryPath[selectedCategoryPath.length - 1])?.name
+                : "Tất cả danh mục"}
+            </span>
+            {selectedCategoryPath.length > 0 && (
+              <button
+                onClick={() => setSelectedCategoryPath([])}
+                className="ml-auto text-primary-900 hover:text-red-600 transition-colors"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

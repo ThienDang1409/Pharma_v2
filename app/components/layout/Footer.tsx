@@ -104,21 +104,21 @@ export default function Footer() {
         <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_1fr_0.9fr] gap-8 lg:gap-12">
           <div>
             <h2 className="text-3xl  font-bold tracking-tight uppercase mb-4 md:mb-5">
-              CONG TY CP THIET BI VIET ANH
+              CÔNG TY CP THIẾT BỊ VIỆT ANH
             </h2>
 
             <div className="space-y-4 md:space-y-5 text-sm md:text-md leading-[1.5] text-white/75 max-w-[640px]">
               <p className="flex items-start gap-3">
                 <span className="text-white mt-1"><IconPin /></span>
                 <span>
-                  <strong className="text-white">Ho Chi Minh:</strong> 11A Nguyen An, Khu pho 4, P. Cat Lai, Tp. HCM
+                  <strong className="text-white">Hồ Chí Minh:</strong> 11A Nguyễn An, Khu phố 4, P. Cát Lái, Tp. HCM
                 </span>
               </p>
 
               <p className="flex items-start gap-3">
                 <span className="text-white mt-1"><IconPin /></span>
                 <span>
-                  <strong className="text-white">Ha Noi:</strong> P808, 8/F, Vivaseen Building 48 To Huu, P. Dai Mo, Tp. Ha Noi
+                  <strong className="text-white">Hà Nội:</strong> P808, 8/F, Vivaseen Building 48 Tố Hữu, P. Đại Mỗ, Tp. Hà Nội
                 </span>
               </p>
 
@@ -158,13 +158,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/blog/imprint" className="hover:text-white transition-colors">
-                  {language === "vi" ? "Dieu khoan su dung" : "Terms of Use"}
+                <Link href="/blog/terms" className="hover:text-white transition-colors">
+                  {t.footer.terms}
                 </Link>
               </li>
               <li>
-                <Link href="/blog/imprint" className="hover:text-white transition-colors">
-                  {language === "vi" ? "Dang ky bao hanh" : "Warranty Registration"}
+                <Link href="/blog/warranty" className="hover:text-white transition-colors">
+                  {t.footer.warranty}
                 </Link>
               </li>
             </ul>

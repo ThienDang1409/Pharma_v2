@@ -214,16 +214,16 @@ export const LoginSchemaI18n = (lang: I18nLanguage = 'vi') =>
     password: z.string({ message: getMessage('password.required', lang) }),
   });
 
-export const UpdateProfileSchemaI18n = (lang: I18nLanguage = 'vi') =>
-  z.object({
-    name: z
-      .string()
-      .min(2, getMessage('name.minLength', lang))
-      .max(100, getMessage('name.maxLength', lang))
-      .optional(),
-    phone: z.string().optional(),
-    address: z.string().optional(),
-  });
+// export const UpdateProfileSchemaI18n = (lang: I18nLanguage = 'vi') =>
+//   z.object({
+//     name: z
+//       .string()
+//       .min(2, getMessage('name.minLength', lang))
+//       .max(100, getMessage('name.maxLength', lang))
+//       .optional(),
+//     phone: z.string().optional(),
+//     address: z.string().optional(),
+//   });
 
 export const ChangePasswordSchemaI18n = (lang: I18nLanguage = 'vi') =>
   z
@@ -251,33 +251,34 @@ export const CreateBlogSchemaI18n = (lang: I18nLanguage = 'vi') =>
       .string()
       .min(3, getMessage('title_en.minLength', lang))
       .max(200, getMessage('title_en.maxLength', lang))
-      .optional(),
+      .optional()
+      .or(z.literal('')),
     slug: z
-      .string({ message: getMessage('slug.required', lang) })
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, getMessage('slug.invalid', lang))
+      .string()
       .optional()
       .or(z.literal('')),
     excerpt: z
       .string()
       .max(500, getMessage('excerpt.maxLength', lang))
-      .optional(),
+      .optional()
+      .or(z.literal('')),
     excerpt_en: z
       .string()
       .max(500, getMessage('excerpt_en.maxLength', lang))
-      .optional(),
-    section: z
+      .optional()
+      .or(z.literal('')),
+    sections: z
       .array(BlogSectionSchemaI18n(lang), { message: getMessage('blog.sections.minItems', lang) })
       .optional(),
-    // .array(BlogSectionSchemaI18n(lang))
-    // .min(1, getMessage('section.required', lang)),
     author: z
       .string({ message: getMessage('author.required', lang) })
       .max(100, getMessage('author.maxLength', lang)),
     informationId: z
-      .string({ message: getMessage('category.required', lang) })
-      .optional(),
+      .string({ message: getMessage('category.required', lang) }),
+    image: z.string().optional().or(z.literal('')),
     tags: z.array(z.string()).optional(),
-    published: z.boolean().optional(),
+    isProduct: z.boolean().optional(),
+    status: z.enum(['draft', 'published']).optional(),
     publishedAt: z.string().datetime().optional(),
   });
 
@@ -322,6 +323,18 @@ export const UpdateUserSchemaI18n = (lang: I18nLanguage = 'vi') =>
     address: z.string().optional(),
     role: z.enum(['user', 'admin'], { message: getMessage('role.invalid', lang) }).optional(),
     isActive: z.boolean({ message: getMessage('isActive.invalid', lang) }).optional(),
+  });
+
+// Schema for updating current user profile (matches backend authApi.updateProfile)
+export const UpdateProfileSchemaI18n = (lang: I18nLanguage = 'vi') =>
+  z.object({
+    name: z
+      .string()
+      .min(2, getMessage('name.minLength', lang))
+      .max(100, getMessage('name.maxLength', lang))
+      .optional(),
+    phone: z.string().optional(),
+    avatar: z.string().url(getMessage('avatar.invalid', lang)).optional().or(z.literal('')),
   });
 
 export const UserQuerySchemaI18n = (lang: I18nLanguage = 'vi') =>

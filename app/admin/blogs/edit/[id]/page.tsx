@@ -6,7 +6,7 @@ import CustomSelect from "@/app/components/admin/CustomSelect";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { blogApi, informationApi, imageApi, Information, ImageResponse, Blog } from "@/lib/api";
+import { blogApi, informationApi, imageApi, Information, ImageResponse, Blog, BlogSection } from "@/lib/api";
 import { IMAGE_FOLDERS } from "@/lib/constants/api";
 import { generateSlug } from "@/lib/utils/string/slug";
 import { translateText, translateHtmlPreservingMedia } from "@/lib/utils/string/translate";
@@ -31,15 +31,6 @@ import {
 } from "lucide-react";
 import BlogPreview from "@/app/components/admin/editor-modern/BlogPreview";
 
-interface BlogSection {
-  type: string;
-  title: string;
-  title_en?: string;
-  slug: string;
-  content: string;
-  content_en?: string;
-}
-
 interface BlogFormData {
   title: string;
   title_en?: string;
@@ -54,6 +45,7 @@ interface BlogFormData {
   isProduct: boolean;
   status: "draft" | "published";
 }
+
 function AdminEditNewsPageContent() {
   const router = useRouter();
   const params = useParams();
@@ -149,7 +141,7 @@ function AdminEditNewsPageContent() {
     if (blogId) {
       fetchData();
     }
-  }, [blogId, router, toast]);
+  }, [blogId, router]);
 
   // Auto-generate slug from English title (preferred) or Vietnamese title
   useEffect(() => {
@@ -244,6 +236,7 @@ function AdminEditNewsPageContent() {
       updatedSections[index] = {
         ...updatedSections[index],
         title,
+        slug: generateSlug(title),
       };
       return { ...prev, sections: updatedSections };
     });
@@ -506,16 +499,12 @@ function AdminEditNewsPageContent() {
   ) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("Submitting blog data:", formData);
 
-    const submitData = { ...formData, status: publishStatus };
-
-    const payload: Omit<BlogFormData, "informationId"> & { informationId?: string } = {
-      ...submitData,
-      ...(submitData.informationId ? { informationId: submitData.informationId } : {}),
-    };
+    const payload = { ...formData, status: publishStatus };
 
     // Use API helper with automatic validation and toast
-    const result = await apiSubmit<any, unknown>(
+    const result = await apiSubmit(
       UpdateBlogSchema,
       payload,
       (validatedData) => blogApi.update(blogId, validatedData),
@@ -525,11 +514,6 @@ function AdminEditNewsPageContent() {
           publishStatus === "published"
             ? "Cập nhật và xuất bản thành công!"
             : "Cập nhật bản nháp thành công!",
-        onSuccess: () => {
-          setTimeout(() => {
-            window.location.href = "/admin/blogs";
-          }, 800);
-        },
       }
     );
 

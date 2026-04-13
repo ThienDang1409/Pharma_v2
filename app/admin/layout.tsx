@@ -48,6 +48,11 @@ const navItems = [
     href: "/admin/images",
     icon: <ImageIcon size={20} />,
   },
+  {
+    name: "Hỗ trợ",
+    href: "/admin/help-center",
+    icon: <HelpCircle size={20} />,
+  },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -76,6 +81,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     if (pathname.startsWith("/admin/blogs/add")) return "Viết bài mới";
     if (pathname.startsWith("/admin/blogs")) return "Quản lý Bài viết";
     if (pathname.startsWith("/admin/images")) return "Thư viện Hình ảnh";
+    if (pathname.startsWith("/admin/help-center")) return "Trung tâm Hỗ trợ";
     return "Pharma Admin";
   };
 
@@ -209,9 +215,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
                 <div className="h-8 w-px bg-gray-200 mx-2" />
 
-                {/* <Link href="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                <Link href="/admin/help-center" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
                   Help Center
-                </Link> */}
+                </Link>
                 <span className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">{user?.name}</span>
 
                 <div className="relative" ref={dropdownRef}>

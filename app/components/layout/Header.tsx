@@ -106,6 +106,35 @@ export default function Header() {
     );
   };
 
+  const fetchBlogsExactCategory = async (categoryId: string) => {
+    // Skip if already fetched
+    if (categoryBlogs[categoryId]) {
+      return;
+    }
+
+    await apiFetch(
+      () => blogApi.getAllExactCategory({
+        informationId: categoryId,
+        status: 'published',
+        limit: 10
+      }),
+      {
+        onSuccess: (data) => {
+          setCategoryBlogs(prev => ({
+            ...prev,
+            [categoryId]: data?.items || []
+          }));
+        },
+        onError: () => {
+          setCategoryBlogs(prev => ({
+            ...prev,
+            [categoryId]: []
+          }));
+        },
+      }
+    );
+  };
+
   // Get root categories (no parentId or parentId is null)
   const rootCategories = categories.filter(
     (cat) => (!cat.parentId || cat.parentId === null || cat.parentId === "null") && cat.slug !== "other"
@@ -118,15 +147,6 @@ export default function Header() {
 
   const getCategoryById = (id: string) => {
     return categories.find((cat) => cat._id === id);
-  };
-
-  const getFeaturedDropdownCategories = (root: Information): Information[] => {
-    const directChildren = getChildren(root._id);
-    if (directChildren.length === 0) {
-      return [root];
-    }
-
-    return directChildren.slice(0, 3);
   };
 
   const getDropdownImage = (item: Information, root: Information): string => {
@@ -204,18 +224,34 @@ export default function Header() {
       return;
     }
 
-    const featuredCategories = getFeaturedDropdownCategories(root);
-    featuredCategories.forEach((item) => {
-      const itemChildren = getChildren(item._id);
-      if (itemChildren.length === 0) {
-        fetchBlogsForCategory(item._id);
-      }
-    });
+    const rootChildren = getChildren(root._id);
 
-    // Backward compatibility for old call sites
-    if (hasChildren === false) {
-      fetchBlogsForCategory(categoryId);
+    // Case root has no child or only one child: fetch exact category blogs only (no descendants)
+    if (rootChildren.length <= 1) {
+      fetchBlogsExactCategory(root._id);
+      // Backward compatibility for old call sites
+      if (hasChildren === false) {
+        fetchBlogsExactCategory(categoryId);
+      }
+      return;
     }
+
+    // Preload blogs for leaf children (when root has multiple children)
+    rootChildren.forEach((child) => {
+      const grandChildren = getChildren(child._id);
+
+      if (grandChildren.length === 0) {
+        fetchBlogsForCategory(child._id);
+        return;
+      }
+
+      grandChildren.forEach((grandChild) => {
+        const greatGrandChildren = getChildren(grandChild._id);
+        if (greatGrandChildren.length === 0) {
+          fetchBlogsForCategory(grandChild._id);
+        }
+      });
+    });
   };
 
   const handleMouseLeave = () => {
@@ -478,11 +514,11 @@ export default function Header() {
               {/* Navigation */}
               <nav className="hidden md:flex items-center space-x-6">
                 {rootCategories.map((category) => {
-                  const featuredCategories = getFeaturedDropdownCategories(category);
                   const isOpen = openDropdown === category._id;
-                  const isSingleLayout = featuredCategories.length === 1;
-                  const listWidthClass = isSingleLayout ? "w-[36%]" : "w-full";
-                  const imageWidthClass = isSingleLayout ? "w-[64%]" : "w-full";
+                  const directChildren = getChildren(category._id);
+                  const rootBlogs = categoryBlogs[category._id];
+                  const hasNoChildren = directChildren.length === 0;
+                  const hasSingleChild = directChildren.length === 1;
 
                   return (
                     <div
@@ -496,7 +532,7 @@ export default function Header() {
                         {getLocalizedText(category.name, category.name_en, language)}
                       </div>
 
-                      {/* Dynamic Mega Dropdown - Full width, tree-driven, max 3 visual groups */}
+                      {/* Dynamic Mega Dropdown */}
                       {isOpen && (
                         <div
                           className="absolute left-0 right-0 top-full -mt-px z-50"
@@ -505,104 +541,89 @@ export default function Header() {
                         >
                           <div className="bg-[#ededed] shadow-2xl border-t border-[#d7d7d7]">
                             <div className="w-[92%] max-w-[1600px] mx-auto py-8 min-h-[440px]">
-                              {isSingleLayout ? (
+                              {hasNoChildren && (
                                 <div className="flex gap-8 h-full">
-                                  {featuredCategories.map((item) => {
-                                    const subCategories = getChildren(item._id);
-                                    const blogs = categoryBlogs[item._id];
+                                  <div className="w-[64%] min-h-[360px] relative overflow-hidden">
+                                    <Image
+                                      src={getDropdownImage(category, category)}
+                                      alt={getLocalizedText(category.name, category.name_en, language)}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-white/35" />
+                                  </div>
 
-                                    return (
-                                      <div key={item._id} className="contents">
-                                        <div className={`${imageWidthClass} min-h-[360px] relative overflow-hidden`}>
-                                          <Image
-                                            src={getDropdownImage(item, category)}
-                                            alt={getLocalizedText(item.name, item.name_en, language)}
-                                            fill
-                                            className="object-cover"
-                                          />
-                                          <div className="absolute inset-0 bg-white/35" />
-                                        </div>
-
-                                        <div className={`${listWidthClass} px-4 py-3 border-y border-[#d1d1d1] self-center`}>
-                                          <h3 className="text-xl leading-none font-light text-primary-900 mb-6 tracking-wide">
-                                            {getLocalizedText(item.name, item.name_en, language)}
-                                          </h3>
-
-                                          <div className="space-y-3">
-                                            {subCategories.length > 0 ? (
-                                              subCategories.map((subCategory) => (
-                                                <Link
-                                                  key={subCategory._id}
-                                                  href={`/category/${subCategory.slug}`}
-                                                  className="block text-xl leading-none font-light text-primary-900 hover:translate-x-1 transition-transform"
-                                                >
-                                                  <span className="mr-3 align-middle">›</span>
-                                                  <span className="align-middle">{getLocalizedText(subCategory.name, subCategory.name_en, language)}</span>
-                                                </Link>
-                                              ))
-                                            ) : blogs ? (
-                                              blogs.length > 0 ? (
-                                                blogs.map((blog) => (
-                                                  <Link
-                                                    key={blog.id}
-                                                    href={`/blog/${blog.slug}`}
-                                                    className="block text-xl leading-none font-light text-primary-900 hover:translate-x-1 transition-transform"
-                                                  >
-                                                    <span className="mr-3 align-middle">›</span>
-                                                    <span className="align-middle">{getLocalizedText(blog.title, blog.title_en, language)}</span>
-                                                  </Link>
-                                                ))
-                                              ) : (
-                                                <p className="text-sm text-gray-500 italic">{t.common.noArticles}</p>
-                                              )
-                                            ) : (
-                                              <p className="text-sm text-gray-500 italic">{t.common.loading}</p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
+                                  <div className="w-[36%] px-4 py-3 border-y border-[#d1d1d1] self-center max-h-[360px] overflow-y-auto">
+                                    <div className="space-y-3">
+                                      {rootBlogs ? (
+                                        rootBlogs.length > 0 ? (
+                                          rootBlogs.map((blog) => (
+                                            <Link
+                                              key={blog.id}
+                                              href={`/blog/${blog.slug}`}
+                                              className="block text-xl leading-none font-light text-primary-900 hover:translate-x-1 transition-transform"
+                                            >
+                                              <span className="mr-3 align-middle">›</span>
+                                              <span className="align-middle">{getLocalizedText(blog.title, blog.title_en, language)}</span>
+                                            </Link>
+                                          ))
+                                        ) : (
+                                          <p className="text-sm text-gray-500 italic">{t.common.noArticles}</p>
+                                        )
+                                      ) : (
+                                        <p className="text-sm text-gray-500 italic">{t.common.loading}</p>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                              ) : (
-                                <div className={`grid gap-6 ${featuredCategories.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                                  {featuredCategories.map((item) => {
-                                    const subCategories = getChildren(item._id);
-                                    const blogs = categoryBlogs[item._id];
+                              )}
+
+                              {hasSingleChild && (
+                                <div className="flex gap-8 h-full">
+                                  {(() => {
+                                    const child = directChildren[0];
+                                    const grandChildren = getChildren(child._id);
 
                                     return (
-                                      <div key={item._id} className="space-y-4">
-                                        <div className="relative h-[220px] overflow-hidden">
+                                      <div className="contents">
+                                        <div className="w-[64%] min-h-[360px] relative overflow-hidden">
                                           <Image
-                                            src={getDropdownImage(item, category)}
-                                            alt={getLocalizedText(item.name, item.name_en, language)}
+                                            src={getDropdownImage(child, category)}
+                                            alt={getLocalizedText(child.name, child.name_en, language)}
                                             fill
                                             className="object-cover"
                                           />
                                           <div className="absolute inset-0 bg-white/20" />
                                         </div>
 
-                                        <div className="border-y border-[#d1d1d1] py-4">
-                                          <h3 className="text-xl leading-none font-light text-primary-900 mb-4 tracking-wide">
-                                            <span className="mr-3 align-middle">›</span>
-                                            <span className="align-middle">{getLocalizedText(item.name, item.name_en, language)}</span>
-                                          </h3>
+                                        <div className="w-[36%] border-y border-[#d1d1d1] py-4 px-2 self-center max-h-[360px] overflow-y-auto">
+                                          <div className="space-y-3">
+                                            <Link
+                                              href={`/category/${child.slug}`}
+                                              className="block text-xl leading-none font-light text-primary-900 tracking-wide hover:translate-x-1 transition-transform"
+                                            >
+                                              <span className="mr-3 align-middle">›</span>
+                                              <span className="align-middle">{getLocalizedText(child.name, child.name_en, language)}</span>
+                                            </Link>
 
-                                          <div className="space-y-2">
-                                            {subCategories.length > 0 ? (
-                                              subCategories.map((subCategory) => (
-                                                <Link
-                                                  key={subCategory._id}
-                                                  href={`/category/${subCategory.slug}`}
-                                                  className="block text-xl leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
-                                                >
-                                                  <span className="mr-3 align-middle">›</span>
-                                                  <span className="align-middle">{getLocalizedText(subCategory.name, subCategory.name_en, language)}</span>
-                                                </Link>
-                                              ))
-                                            ) : blogs ? (
-                                              blogs.length > 0 ? (
-                                                blogs.map((blog) => (
+                                            {grandChildren.length > 0 && (
+                                              <div className="space-y-2 pl-6 pb-2 border-b border-[#d1d1d1]">
+                                                {grandChildren.map((grandChild) => (
+                                                  <Link
+                                                    key={grandChild._id}
+                                                    href={`/category/${grandChild.slug}`}
+                                                    className="block text-lg leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
+                                                  >
+                                                    <span className="mr-3 align-middle">›</span>
+                                                    <span className="align-middle">{getLocalizedText(grandChild.name, grandChild.name_en, language)}</span>
+                                                  </Link>
+                                                ))}
+                                              </div>
+                                            )}
+
+                                            {rootBlogs ? (
+                                              rootBlogs.length > 0 ? (
+                                                rootBlogs.map((blog) => (
                                                   <Link
                                                     key={blog.id}
                                                     href={`/blog/${blog.slug}`}
@@ -622,19 +643,74 @@ export default function Header() {
                                         </div>
                                       </div>
                                     );
-                                  })}
+                                  })()}
                                 </div>
                               )}
 
-                              <div className="pt-6">
-                                <Link
-                                  href={`/category/${category.slug}`}
-                                  className="inline-flex items-center text-xl leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
-                                >
-                                  <span className="mr-3 align-middle">›</span>
-                                  <span className="align-middle">{language === "vi" ? "Xem tất cả" : "Overview all"} {getLocalizedText(category.name, category.name_en, language)}</span>
-                                </Link>
-                              </div>
+                              {!hasNoChildren && !hasSingleChild && (
+                                <div className={`grid gap-6 ${directChildren.length >= 4 ? "grid-cols-4" : directChildren.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+                                  {directChildren.map((child) => {
+                                    const grandChildren = getChildren(child._id);
+                                    const childBlogs = categoryBlogs[child._id];
+
+                                    return (
+                                      <div key={child._id} className="space-y-4">
+                                        <div className="relative h-[220px] overflow-hidden">
+                                          <Image
+                                            src={getDropdownImage(child, category)}
+                                            alt={getLocalizedText(child.name, child.name_en, language)}
+                                            fill
+                                            className="object-cover"
+                                          />
+                                          <div className="absolute inset-0 bg-white/20" />
+                                        </div>
+
+                                        <div className="border-y border-[#d1d1d1] py-4 max-h-[340px] overflow-y-auto">
+                                          <Link
+                                            href={`/category/${child.slug}`}
+                                            className="block text-xl leading-none font-light text-primary-900 mb-4 tracking-wide hover:translate-x-1 transition-transform"
+                                          >
+                                            <span className="mr-3 align-middle">›</span>
+                                            <span className="align-middle">{getLocalizedText(child.name, child.name_en, language)}</span>
+                                          </Link>
+
+                                          <div className="space-y-2 pl-6">
+                                            {grandChildren.length > 0 ? (
+                                              grandChildren.map((grandChild) => (
+                                                <Link
+                                                  key={grandChild._id}
+                                                  href={`/category/${grandChild.slug}`}
+                                                  className="block text-lg leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
+                                                >
+                                                  <span className="mr-3 align-middle">›</span>
+                                                  <span className="align-middle">{getLocalizedText(grandChild.name, grandChild.name_en, language)}</span>
+                                                </Link>
+                                              ))
+                                            ) : childBlogs ? (
+                                              childBlogs.length > 0 ? (
+                                                childBlogs.map((blog) => (
+                                                  <Link
+                                                    key={blog.id}
+                                                    href={`/blog/${blog.slug}`}
+                                                    className="block text-lg leading-none font-light text-gray-900 hover:translate-x-1 transition-transform"
+                                                  >
+                                                    <span className="mr-3 align-middle">›</span>
+                                                    <span className="align-middle">{getLocalizedText(blog.title, blog.title_en, language)}</span>
+                                                  </Link>
+                                                ))
+                                              ) : (
+                                                <p className="text-sm text-gray-500 italic">{t.common.noArticles}</p>
+                                              )
+                                            ) : (
+                                              <p className="text-sm text-gray-500 italic">{t.common.loading}</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

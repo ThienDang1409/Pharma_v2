@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ImageField } from "@/app/components/admin/image";
-import { informationApi, Information, ImagePreview } from "@/lib/api";
+import { informationApi, blogApi, Information, ImagePreview, Blog } from "@/lib/api";
 import type { InformationFormData } from "@/lib/types/form.types";
 import { generateSlug } from "@/lib/utils/string/slug";
 import { apiFetch, apiSubmit } from "@/lib/utils/api/apiHelper";
@@ -45,7 +45,9 @@ import {
   Trash,
   Sparkles,
   Search,
-  FileText
+  FileText,
+  Eye,
+  ArrowUpRight
 } from "lucide-react";
 
 // Sortable Category Card Component
@@ -59,6 +61,7 @@ interface SortableCategoryCardProps {
   onEdit: (category: Information) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
+  onViewBlogs: (category: Information) => void;
   getImageUrl: (
     image?: string | ImagePreview,
     transformation?: {
@@ -80,6 +83,7 @@ function SortableCategoryCard({
   onEdit,
   onDelete,
   onAddChild,
+  onViewBlogs,
   getImageUrl,
 }: SortableCategoryCardProps) {
   const {
@@ -103,7 +107,7 @@ function SortableCategoryCard({
       ref={setNodeRef}
       style={style}
       className={`admin-card p-0 overflow-hidden transition-all duration-300 group border border-gray-200/80 ${isDragging ? "shadow-2xl scale-[1.02] border-primary-900/50 ring-2 ring-primary-900/15" : "hover:border-gray-300 hover:shadow-xl"}`}
-      onClick={() => onViewChildren(category._id)}
+      // onClick={() => onViewChildren(category._id)}
     >
       <div className="flex items-stretch min-h-[120px]">
         {/* Drag Handle Column */}
@@ -199,6 +203,14 @@ function SortableCategoryCard({
               >
                 <FileText size={16} />
               </Link>
+              <button
+                type="button"
+                onClick={() => onViewBlogs(category)}
+                className="p-3 bg-white text-gray-900 border border-gray-200 rounded-xl hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm"
+                title="Xem bài viết của danh mục này"
+              >
+                <Eye size={16} />
+              </button>
             </div>
           </div>
         </div>
@@ -218,6 +230,9 @@ export default function InformationPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [viewingBlogsCategory, setViewingBlogsCategory] = useState<Information | null>(null);
+  const [categoryBlogs, setCategoryBlogs] = useState<Blog[]>([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(false);
 
   const [formData, setFormData] = useState<InformationFormData>({
     name: "",
@@ -254,6 +269,24 @@ export default function InformationPage() {
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  const handleFetchBlogs = useCallback(async (category: Information) => {
+    setLoadingBlogs(true);
+    setViewingBlogsCategory(category);
+    await apiFetch(
+      () => blogApi.getAll({ informationId: category._id, includeDescendants: true, limit: 100 }),
+      {
+        onSuccess: (data) => {
+          setCategoryBlogs(data?.items || []);
+        },
+        onError: (err) => {
+          console.error("Error fetching blogs:", err);
+          toast.error("Không thể tải danh sách bài viết");
+        }
+      }
+    );
+    setLoadingBlogs(false);
+  }, [toast]);
 
   const handleOpenModal = (category?: Information) => {
     if (category) {
@@ -538,8 +571,7 @@ export default function InformationPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="admin-card border border-gray-200/80 rounded-3xl p-5 md:p-6 bg-white">
-        <div className="flex flex-col md:flex-row md:items-end justify-center gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-end gap-6">
         <div className="flex gap-2">
           {selectedParentId && (
             <button
@@ -570,7 +602,6 @@ export default function InformationPage() {
           >
             <Layout size={16} /> Danh mục gốc mới
           </button>
-        </div>
         </div>
       </div>
 
@@ -653,6 +684,7 @@ export default function InformationPage() {
                         setShowModal(true);
                       }}
                       getImageUrl={getImageUrl}
+                      onViewBlogs={handleFetchBlogs}
                     />
                   );
                 })}
@@ -672,10 +704,10 @@ export default function InformationPage() {
               className="mt-8 px-8 py-4 bg-primary-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-primary-900/20"
             >
               Tạo danh mục đầu tiên
-              </button>
+            </button>
           </div>
         )}
-</div>
+      </div>
       {/* Modal Section - Styled like blogs/add modal */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
@@ -872,6 +904,117 @@ export default function InformationPage() {
               >
                 {modalMode === "edit" ? "Lưu thay đổi" : "Khởi tạo ngay"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Blogs Drawer/Panel */}
+      {viewingBlogsCategory && (
+        <div className="fixed inset-0 z-[110] flex justify-end animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            onClick={() => setViewingBlogsCategory(null)}
+          />
+          <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
+            {/* Drawer Header */}
+            <div className="p-8 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-black text-primary-900 uppercase tracking-widest">Category Blogs</span>
+                  <div className="w-1 h-1 rounded-full bg-gray-300" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    {categoryBlogs.length} bài viết
+                  </span>
+                </div>
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter truncate max-w-[400px]">
+                  {viewingBlogsCategory.name_en || viewingBlogsCategory.name}
+                </h2>
+              </div>
+              <button
+                onClick={() => setViewingBlogsCategory(null)}
+                className="w-12 h-12 bg-gray-50 hover:bg-gray-100 rounded-2xl flex items-center justify-center transition-all group"
+              >
+                <ChevronRight size={20} className="text-gray-400 group-hover:text-gray-900 transition-colors" />
+              </button>
+            </div>
+
+            {/* Drawer content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+              {loadingBlogs ? (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-900 mb-4" />
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Đang tải bài viết...</p>
+                </div>
+              ) : categoryBlogs.length > 0 ? (
+                <div className="space-y-4">
+                  {categoryBlogs.map((blog) => {
+                    const isDirect = (blog.informationId as any)?._id === viewingBlogsCategory._id || blog.informationId === viewingBlogsCategory._id;
+
+                    return (
+                      <div key={blog.id || blog._id} className="admin-card !p-4 border border-gray-100 hover:border-primary-900/20 hover:shadow-lg transition-all group flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                          {blog.image ? (
+                            <img
+                              src={getImageUrl(blog.image)}
+                              alt={blog.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-200">
+                              <FileText size={24} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {isDirect ? (
+                              <span className="px-2 py-0.5 bg-primary-50 text-primary-900 text-[8px] font-black uppercase rounded tracking-widest border border-primary-200">
+                                Trực tiếp
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-[8px] font-black uppercase rounded tracking-widest border border-orange-200">
+                                Danh mục con: {(blog.informationId as any)?.name_en || (blog.informationId as any)?.name || 'N/A'}
+                              </span>
+                            )}
+                            <div className="w-1 h-1 rounded-full bg-gray-200" />
+                            <span className="text-[9px] font-bold text-gray-400 capitalize">{blog.status}</span>
+                          </div>
+                          <h4 className="text-sm font-black text-gray-900 tracking-tight truncate group-hover:text-primary-900 transition-colors">
+                            {blog.title_en || blog.title}
+                          </h4>
+                        </div>
+                        <Link
+                          href={`/admin/blogs/edit/${blog.id || blog._id}`}
+                          className="w-10 h-10 bg-gray-50 hover:bg-primary-900 hover:text-white rounded-xl flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <ArrowUpRight size={18} />
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-center opacity-40">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <FileText size={32} className="text-gray-300" />
+                  </div>
+                  <h3 className="font-black text-gray-900 uppercase tracking-tighter">Không có bài viết</h3>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mt-1">
+                    Danh mục này và các cấp con hiện chưa có bài viết nào
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-8 border-t border-gray-100 bg-gray-50/50">
+              <Link
+                href={`/admin/blogs/add?categoryId=${viewingBlogsCategory._id}`}
+                className="w-full py-4 bg-primary-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl shadow-primary-900/20 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                <Plus size={16} /> Thêm bài viết mới
+              </Link>
             </div>
           </div>
         </div>

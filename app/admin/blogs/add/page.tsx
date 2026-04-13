@@ -6,12 +6,12 @@ import CustomSelect from "@/app/components/admin/CustomSelect";
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { blogApi, informationApi, imageApi, Information, ImageResponse } from "@/lib/api";
+import { blogApi, informationApi, imageApi, Information, ImageResponse, BlogSection, CreateBlogDto } from "@/lib/api";
 import { IMAGE_FOLDERS } from "@/lib/constants/api";
 import { generateSlug } from "@/lib/utils/string/slug";
 import { translateText, translateHtmlPreservingMedia } from "@/lib/utils/string/translate";
 import { useToast } from "@/app/context/ToastContext";
-import { CreateBlogSchema, type CreateBlogInput } from "@/lib/validators";
+import { CreateBlogSchema } from "@/lib/validators";
 import { apiFetch, apiSubmit } from "@/lib/utils/api/apiHelper";
 import {
   Eye,
@@ -30,15 +30,6 @@ import {
   FolderTree
 } from "lucide-react";
 import BlogPreview from "@/app/components/admin/editor-modern/BlogPreview";
-
-interface BlogSection {
-  type: string;
-  title: string;
-  title_en?: string;
-  slug: string;
-  content: string;
-  content_en?: string;
-}
 
 interface BlogFormData {
   title: string;
@@ -196,6 +187,7 @@ function AdminAddNewsPageContent() {
       updatedSections[index] = {
         ...updatedSections[index],
         title,
+        slug: generateSlug(title),
       };
       return { ...prev, sections: updatedSections };
     });
@@ -452,22 +444,19 @@ function AdminAddNewsPageContent() {
       tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
+
   const handleSubmit = async (
     e: React.FormEvent,
     publishStatus: "draft" | "published"
   ) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("Submitting blog data:", formData);
 
-    const submitData = { ...formData, status: publishStatus };
-
-    const payload: Omit<BlogFormData, "informationId"> & { informationId?: string } = {
-      ...submitData,
-      ...(submitData.informationId ? { informationId: submitData.informationId } : {}),
-    };
+    const payload = { ...formData, status: publishStatus };
 
     // Use API helper with automatic validation and toast
-    const result = await apiSubmit<any, unknown>(
+    const result = await apiSubmit(
       CreateBlogSchema,
       payload,
       (validatedData) => blogApi.create(validatedData),

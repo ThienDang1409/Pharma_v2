@@ -134,13 +134,16 @@ export interface InformationPreviewDto {
 export interface BlogSection {
   title: string;
   title_en?: string;
-  slug: string;
+  slug?: string;
   type: string;
   content: string;
   content_en?: string;
 }
 
-export interface BlogResponseDto {
+/**
+ * Lightweight DTO for list views (without sections - better performance)
+ */
+export interface BlogListItemDto {
   id: string;
   title: string;
   title_en?: string;
@@ -151,12 +154,18 @@ export interface BlogResponseDto {
   excerpt_en?: string;
   informationId: InformationPreviewDto | string;
   tags: string[];
-  sections: BlogSection[];
   isProduct: boolean;
   status: 'draft' | 'published';
   publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * Full DTO with sections for detail views
+ */
+export interface BlogResponseDto extends BlogListItemDto {
+  sections: BlogSection[];
 }
 
 // Alias for compatibility
@@ -167,6 +176,7 @@ export interface Blog extends BlogResponseDto {
 export interface CreateBlogDto {
   title: string;
   title_en?: string;
+  slug?: string;
   author?: string;
   image?: string;
   excerpt?: string;
@@ -176,11 +186,13 @@ export interface CreateBlogDto {
   sections?: BlogSection[];
   isProduct?: boolean;
   status?: 'draft' | 'published';
+  publishedAt?: string;
 }
 
 export interface UpdateBlogDto {
   title?: string;
   title_en?: string;
+  slug?: string;
   author?: string;
   image?: string;
   excerpt?: string;
@@ -190,6 +202,7 @@ export interface UpdateBlogDto {
   sections?: BlogSection[];
   isProduct?: boolean;
   status?: 'draft' | 'published';
+  publishedAt?: string;
 }
 
 export interface BlogQueryDto {
@@ -199,6 +212,7 @@ export interface BlogQueryDto {
   isProduct?: string;
   search?: string;
   tags?: string;
+  informationId?: string;
 }
 
 // Alias for compatibility

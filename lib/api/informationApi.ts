@@ -14,9 +14,15 @@ export const informationApi = {
    * Get all categories
    */
   getAll: (params?: InformationQueryParams) => {
+    const finalParams: InformationQueryParams = {
+      page: 1,
+      limit: 1000,
+      ...params,
+    };  
+
     return http.get<ApiResponse<PaginationResult<Information>>>(
       API_ENDPOINTS.INFORMATION,
-      { params }
+      { params: finalParams }
     );
   },
 
