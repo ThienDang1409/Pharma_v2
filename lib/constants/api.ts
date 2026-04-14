@@ -132,7 +132,9 @@ export const HTTP_STATUS = {
 // Folder Names for Images (Cloudinary)
 export const IMAGE_FOLDERS = {
   UPLOADS: 'uploads',
-  BLOGS: 'blogs',
-  PROFILES: 'profiles',
-  INFORMATION: 'info',
+  BLOGS: 'blogs/content',
+  BLOGS_CONTENT: 'blogs/content',
+  BLOGS_THUMBNAIL: 'blogs/thumbnail',
+  PROFILES: 'user-avatars',
+  INFORMATION: 'informations',
 } as const;

@@ -31,8 +31,19 @@ export default function ImageUpload({
   const [progress, setProgress] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState(folder);
+  const [isCustomFolder, setIsCustomFolder] = useState(false);
+  const [customFolder, setCustomFolder] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+
+  const folderOptions = [
+    { value: "uploads", label: "Default (uploads)" },
+    { value: "blogs/content", label: "Blogs - Content" },
+    { value: "blogs/thumbnail", label: "Blogs - Thumbnail" },
+    { value: "products", label: "Products" },
+    { value: "user-avatars", label: "User Avatars" },
+  ];
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -86,6 +97,8 @@ export default function ImageUpload({
   const handleConfirmUpload = async () => {
     if (selectedFiles.length === 0) return;
 
+    const finalFolder = isCustomFolder && customFolder ? customFolder : selectedFolder;
+
     setUploading(true);
     setProgress(0);
 
@@ -97,7 +110,7 @@ export default function ImageUpload({
         const response = await imageApi.upload(
           file,
           {
-            folder,
+            folder: finalFolder,
             entityType,
             entityId,
             field,
@@ -115,7 +128,7 @@ export default function ImageUpload({
         const response = await imageApi.uploadMultiple(
           selectedFiles,
           {
-            folder,
+            folder: finalFolder,
             entityType,
             entityId,
             field,
@@ -148,7 +161,45 @@ export default function ImageUpload({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
+      {/* Folder Selection */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">Folder</label>
+        <div className="space-y-3">
+          <select
+            value={isCustomFolder ? "" : selectedFolder}
+            onChange={(e) => {
+              if (e.target.value === "custom") {
+                setIsCustomFolder(true);
+              } else {
+                setIsCustomFolder(false);
+                setSelectedFolder(e.target.value);
+                setCustomFolder("");
+              }
+            }}
+            disabled={uploading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+          >
+            {folderOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+            <option value="custom">📁 Custom Folder...</option>
+          </select>
+
+          {isCustomFolder && (
+            <input
+              type="text"
+              placeholder="e.g., blogs/content or custom-folder"
+              value={customFolder}
+              onChange={(e) => setCustomFolder(e.target.value)}
+              disabled={uploading}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          )}
+        </div>
+      </div>
       {/* Show preview if files selected */}
       {selectedFiles.length > 0 && !uploading ? (
         <div className="space-y-4">

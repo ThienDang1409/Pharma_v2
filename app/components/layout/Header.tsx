@@ -528,7 +528,7 @@ export default function Header() {
                       onMouseLeave={handleMouseLeave}
                     >
                       <div
-                        className="text-gray-700 hover:text-secondary-800 text-sm uppercase font-medium transition-colors block py-2"
+                        className="text-gray-700 cursor-pointer hover:text-secondary-800 text-sm uppercase font-medium transition-colors block py-2"
                       >
                         {getLocalizedText(category.name, category.name_en, language)}
                       </div>
@@ -666,7 +666,7 @@ export default function Header() {
                                           <div className="absolute inset-0 bg-white/20" />
                                         </div>
 
-                                        <div className="border-y border-[#d1d1d1] py-4 max-h-[340px] overflow-y-auto">
+                                        <div className="border-y border-[#d1d1d1] py-4 max-h-[340px]">
                                           <Link
                                             href={`/category/${child.slug}`}
                                             className="block text-xl leading-none font-light text-primary-900 mb-4 tracking-wide hover:translate-x-1 transition-transform"

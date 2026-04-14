@@ -147,3 +147,29 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
 }
+
+/* ==========================================================================
+   Tiptap Rendered Content Table Styles (Preview & Frontend)
+   ========================================================================== */
+.rendered-content table {
+  width: 100% !important;
+  min-width: 100% !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 2rem 0;
+}
+
+.rendered-content table td,
+.rendered-content table th {
+  min-width: 80px;
+  padding: 0.75rem;
+  vertical-align: top;
+  border: 1px solid #e5e7eb;
+  word-break: break-word;
+}
+
+.rendered-content table th {
+  background-color: #f9fafb;
+  font-weight: bold;
+  text-align: left;
+}

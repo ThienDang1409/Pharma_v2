@@ -62,7 +62,7 @@ export default function BlogSlider() {
   }
 
   return (
-    <div className="relative w-full h-[600px] md:h-[700px] bg-gray-700">
+    <div className="relative w-full bg-[#edf4f8] md:h-[700px]">
       <Swiper
         modules={[Autoplay, Pagination, Navigation]}
         spaceBetween={0}
@@ -80,33 +80,33 @@ export default function BlogSlider() {
         }}
         navigation={true}
         loop={true}
-        className="h-full w-full"
+        className="h-auto w-full md:h-full"
       >
         {blogs.map((blog) => (
           <SwiperSlide key={blog._id}>
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-auto md:h-full">
               {/* Background Image */}
-              <div className="absolute inset-0 bg-linear-to-r from-gray-800/90 to-gray-900/70">
+              <div className="relative h-[380px] w-full md:absolute md:inset-0 md:h-full">
                 <OptimizedImage
                   src={typeof blog.image === 'string' ? blog.image : blog.image?.cloudinaryUrl}
                   alt={blog.title}
                   preset="hero"
-                  className="w-full h-full object-cover mix-blend-overlay opacity-40"
+                  className="h-full w-full object-cover"
                 />
               </div>
 
               {/* Content */}
-              <div className="absolute inset-0 flex items-center">
-                <div className="container mx-auto px-4 md:px-8">
-                  <div className="max-w-3xl ml-4 md:ml-12">
+              <div className="relative px-12 py-12 md:absolute md:inset-0 md:flex md:items-start ">
+                <div className="container mx-auto md:px-8">
+                  <div className="max-w-[550px] md:ml-12 md:bg-white/30 md:p-10 md:shadow-sm">
                     {/* Title */}
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6 leading-tight">
+                    <h2 className="text-3xl md:text-4xl font-bold text-black mb-4 md:mb-6 leading-tight">
                       {blog.title}
                     </h2>
 
                     {/* Excerpt from first section */}
                     {blog.sections && blog.sections.length > 0 && (
-                      <p className="text-white/90 text-base md:text-lg mb-6 md:mb-8 line-clamp-2">
+                      <p className="hidden md:block text-gray-700 text-base md:text-lg mb-6 md:mb-8 line-clamp-2">
                         {blog.sections[0].content
                           ?.replace(/<[^>]*>/g, "")
                           .substring(0, 150)}
@@ -117,8 +117,9 @@ export default function BlogSlider() {
                     {/* Read More Button */}
                     <Link
                       href={`/blog/${blog.slug}`}
-                      className="inline-block bg-primary-900 hover:bg-primary-800 text-white font-semibold px-6 md:px-8 py-2 md:py-3 rounded-md transition-colors duration-300 uppercase text-sm tracking-wider"
+                      className="inline-flex items-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold px-6 md:px-8 py-2 md:py-3 transition-colors duration-300 uppercase text-sm tracking-wider"
                     >
+                      <span>›</span>
                       {t.pages.readMore}
                     </Link>
                   </div>
@@ -127,7 +128,7 @@ export default function BlogSlider() {
 
               {/* Optional: Category badge */}
               {blog.tags && blog.tags.length > 0 && (
-                <div className="absolute top-4 md:top-8 left-4 md:left-8 bg-primary-900 text-white px-3 md:px-4 py-1 md:py-2 rounded-md text-xs md:text-sm font-semibold">
+                <div className="hidden md:block absolute top-8 left-8 bg-primary-900 text-white px-4 py-2 rounded-sm text-sm font-semibold">
                   {blog.tags[0]}
                 </div>
               )}  
@@ -181,6 +182,17 @@ export default function BlogSlider() {
 
         .swiper-pagination {
           bottom: 20px !important;
+        }
+
+        @media (max-width: 767px) {
+          .swiper-button-next,
+          .swiper-button-prev {
+            display: none !important;
+          }
+
+          .swiper-pagination {
+            bottom: 170px !important;
+          }
         }
       `}</style>
     </div>

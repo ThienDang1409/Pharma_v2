@@ -97,7 +97,7 @@ export default function HelpCenterPage() {
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-normal">
               Chào mừng đến với <br /> <span className="text-primary-300">Trung tâm Hỗ trợ</span>
             </h1>
             <p className="text-primary-100/70 max-w-2xl mx-auto text-sm md:text-base font-medium">
@@ -105,7 +105,7 @@ export default function HelpCenterPage() {
             </p>
           </div>
 
-          <div className="w-full max-w-2xl relative group">
+          {/* <div className="w-full max-w-2xl relative group">
             <div className="absolute inset-0 bg-white/20 blur-xl group-focus-within:bg-primary-400/30 transition-all rounded-3xl" />
             <div className="relative flex items-center bg-white rounded-3xl p-2 shadow-inner">
               <div className="pl-6 pr-4 text-gray-400">
@@ -122,7 +122,7 @@ export default function HelpCenterPage() {
                 Tìm kiếm
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
 

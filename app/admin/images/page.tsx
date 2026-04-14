@@ -34,6 +34,11 @@ export default function AdminImagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterFolder, setFilterFolder] = useState("");
   const [filterUnused, setFilterUnused] = useState(false);
+  const [showFolderSelector, setShowFolderSelector] = useState(false);
+  const [uploadFolder, setUploadFolder] = useState("uploads");
+  const [uploadCustomFolder, setUploadCustomFolder] = useState("");
+  const [isCustomUploadFolder, setIsCustomUploadFolder] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -42,6 +47,14 @@ export default function AdminImagesPage() {
   });
 
   const toast = useToast();
+
+  const folderOptions = [
+    { value: "uploads", label: "📁 Default (uploads)" },
+    { value: "blogs/content", label: "📝 Blogs - Content" },
+    { value: "blogs/thumbnail", label: "🖼️ Blogs - Thumbnail" },
+    { value: "products", label: "🛍️ Products" },
+    { value: "user-avatars", label: "👤 User Avatars" },
+  ];
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
@@ -82,17 +95,31 @@ export default function AdminImagesPage() {
   const handleFileUpload = useCallback(async (files: FileList) => {
     if (!files || files.length === 0) return;
 
+    setPendingFiles(Array.from(files));
+    setShowFolderSelector(true);
+  }, []);
+
+  const handleUploadInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFileUpload(e.target.files);
+    }
+  }, [handleFileUpload]);
+
+  const handleConfirmUpload = useCallback(async () => {
+    if (pendingFiles.length === 0) return;
+
+    const finalFolder = isCustomUploadFolder && uploadCustomFolder ? uploadCustomFolder : uploadFolder;
     setUploading(true);
-    const fileArray = Array.from(files);
 
     try {
-      if (fileArray.length === 1) {
+      if (pendingFiles.length === 1) {
         await apiFetch(
-          () => imageApi.upload(fileArray[0], { folder: IMAGE_FOLDERS.UPLOADS }),
+          () => imageApi.upload(pendingFiles[0], { folder: finalFolder }),
           {
             onSuccess: () => {
               toast.success("Image uploaded successfully!");
               fetchImages();
+              handleCloseFolderSelector();
             },
             onError: (error) => {
               toast.error(error);
@@ -101,11 +128,12 @@ export default function AdminImagesPage() {
         );
       } else {
         await apiFetch(
-          () => imageApi.uploadMultiple(fileArray, { folder: IMAGE_FOLDERS.UPLOADS }),
+          () => imageApi.uploadMultiple(pendingFiles, { folder: finalFolder }),
           {
             onSuccess: () => {
-              toast.success(`${fileArray.length} images uploaded successfully!`);
+              toast.success(`${pendingFiles.length} images uploaded successfully!`);
               fetchImages();
+              handleCloseFolderSelector();
             },
             onError: (error) => {
               toast.error(error);
@@ -116,7 +144,15 @@ export default function AdminImagesPage() {
     } finally {
       setUploading(false);
     }
-  }, [fetchImages, toast]);
+  }, [pendingFiles, uploadFolder, uploadCustomFolder, isCustomUploadFolder, fetchImages, toast]);
+
+  const handleCloseFolderSelector = () => {
+    setShowFolderSelector(false);
+    setPendingFiles([]);
+    setUploadCustomFolder("");
+    setIsCustomUploadFolder(false);
+    setUploadFolder("uploads");
+  };
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Are you sure you want to delete this image?")) return;
@@ -195,7 +231,7 @@ export default function AdminImagesPage() {
             type="file"
             multiple
             accept="image/*"
-            onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+            onChange={handleUploadInputChange}
             className="hidden"
             disabled={uploading}
           />
@@ -256,8 +292,9 @@ export default function AdminImagesPage() {
               options={[
                 { label: "Tất cả thư mục", value: "" },
                 { label: "Tải lên", value: "uploads" },
-                { label: "Bài viết", value: "blogs" },
-                { label: "Danh mục", value: "categories" },
+                { label: "Bài viết - Nội dung", value: "blogs/content" },
+                { label: "Bài viết - Thumbnail", value: "blogs/thumbnail" },
+                { label: "Danh mục", value: "informations" },
                 { label: "Sản phẩm", value: "products" },
               ]}
               value={filterFolder}
@@ -438,6 +475,86 @@ export default function AdminImagesPage() {
           >
             →
           </button>
+        </div>
+      )}
+
+      {/* Folder Selector Modal */}
+      {showFolderSelector && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in scale-95">
+            <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter mb-4">
+              {pendingFiles.length} file(s) - Choose Folder
+            </h3>
+
+            <div className="space-y-3 mb-6">
+              {folderOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setUploadFolder(opt.value);
+                    setIsCustomUploadFolder(false);
+                    setUploadCustomFolder("");
+                  }}
+                  className={`
+                    w-full text-left px-4 py-3 rounded-xl border-2 transition-all
+                    ${uploadFolder === opt.value && !isCustomUploadFolder
+                      ? "bg-primary-100 border-primary-600 text-primary-900 font-semibold"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }
+                  `}
+                >
+                  {opt.label}
+                </button>
+              ))}
+
+              {/* Custom Folder */}
+              <div className="border-t pt-3 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomUploadFolder(!isCustomUploadFolder)}
+                  className={`
+                    w-full text-left px-4 py-3 rounded-xl border-2 transition-all
+                    ${isCustomUploadFolder
+                      ? "bg-primary-100 border-primary-600 text-primary-900 font-semibold"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }
+                  `}
+                >
+                  📁 Custom Folder
+                </button>
+                {isCustomUploadFolder && (
+                  <input
+                    type="text"
+                    placeholder="e.g., blogs/drafts or custom-folder"
+                    value={uploadCustomFolder}
+                    onChange={(e) => setUploadCustomFolder(e.target.value)}
+                    autoFocus
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleCloseFolderSelector}
+                disabled={uploading}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors font-semibold disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmUpload}
+                disabled={uploading || (isCustomUploadFolder && !uploadCustomFolder)}
+                className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-semibold disabled:opacity-50"
+              >
+                {uploading ? "Uploading..." : "Upload"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

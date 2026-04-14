@@ -80,7 +80,7 @@ function AdminEditNewsPageContent() {
   const [isTranslatingMain, setIsTranslatingMain] = useState(false);
   const [translatingSectionIndex, setTranslatingSectionIndex] = useState<number | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
-  const [sectionViewModes, setSectionViewModes] = useState<Record<number, "edit" | "preview" | "split">>({});
+  const [maximizedSectionIndex, setMaximizedSectionIndex] = useState<number | null>(null);
 
   // Fetch categories and existing blog data
   useEffect(() => {
@@ -467,7 +467,7 @@ function AdminEditNewsPageContent() {
 
   const handleTiptapImageUpload = async (file: File): Promise<string> => {
     try {
-      const result = await imageApi.upload(file, { folder: IMAGE_FOLDERS.BLOGS });
+      const result = await imageApi.upload(file, { folder: IMAGE_FOLDERS.BLOGS_CONTENT });
       const imageData = result.data?.image;
       if (imageData?.cloudinaryUrl) {
         return imageData.cloudinaryUrl;
@@ -544,8 +544,8 @@ function AdminEditNewsPageContent() {
           <Eye size={18} />
         </button>
 
-        <div className="absolute right-14 bottom-0 origin-right scale-95 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
-          <div className="flex whitespace-nowrap p-2 items-center bg-white/95  backdrop-blur-xl p-1.5 rounded-2xl shadow-premium border border-gray-100">
+        <div className="absolute right-14 bottom-1 origin-right scale-95 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
+          <div className="flex flex-col whitespace-nowrap p-2 items-center bg-white/95  backdrop-blur-xl p-1.5 rounded-2xl shadow-premium border border-black">
             <button
               type="button"
               onClick={() => setViewMode("edit")}
@@ -953,11 +953,11 @@ function AdminEditNewsPageContent() {
                     <div className="space-y-6">
                       {formData.sections.map((section, index) => {
                         const sectionLang = sectionLanguages[index] || "vi";
-                        const isCollapsed = collapsedSections.has(index);
-                        const sectionEditorMode = sectionViewModes[index] || "edit";
+                        const isCollapsed = collapsedSections.has(index) && maximizedSectionIndex !== index;
+                        const isMaximized = maximizedSectionIndex === index;
 
                         return (
-                          <div key={index} className="admin-card overflow-hidden group">
+                          <div key={index} className={`admin-card overflow-hidden group transition-all duration-300 ${isMaximized ? 'fixed inset-4 sm:inset-10 z-[60] shadow-2xl flex flex-col bg-white overflow-y-auto custom-scrollbar' : ''}`}>
                             {/* Section Header */}
                             <div className="px-8 py-6 flex items-center justify-between border-b border-gray-200 bg-gray-50/50 group-hover:bg-gray-50 transition-colors">
                               <div className="flex items-center gap-4">
@@ -975,6 +975,14 @@ function AdminEditNewsPageContent() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setMaximizedSectionIndex(isMaximized ? null : index)}
+                                  className={`p-3 rounded-xl transition-all ${isMaximized ? 'text-primary-600 bg-primary-50' : 'text-gray-400 hover:text-primary-600 hover:bg-primary-50'}`}
+                                  title={isMaximized ? "Thu nhỏ" : "Phóng to toàn trang"}
+                                >
+                                  {isMaximized ? <span className="font-bold text-sm px-2">Thu nhỏ</span> : <Monitor size={18} />}
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => toggleSectionCollapse(index)}
@@ -1058,33 +1066,7 @@ function AdminEditNewsPageContent() {
                                       </button>
                                     </div>
                                   )}
-                                </div>
 
-                                <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-200 bg-gray-50">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Editor mode</span>
-                                  <div className="flex bg-white border border-gray-200 rounded-xl p-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => setSectionViewModes((prev) => ({ ...prev, [index]: "edit" }))}
-                                      className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-wider ${sectionEditorMode === "edit" ? "bg-primary-900 text-white" : "text-gray-500 hover:text-gray-700"}`}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setSectionViewModes((prev) => ({ ...prev, [index]: "preview" }))}
-                                      className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-wider ${sectionEditorMode === "preview" ? "bg-primary-900 text-white" : "text-gray-500 hover:text-gray-700"}`}
-                                    >
-                                      Preview
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setSectionViewModes((prev) => ({ ...prev, [index]: "split" }))}
-                                      className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-wider ${sectionEditorMode === "split" ? "bg-primary-900 text-white" : "text-gray-500 hover:text-gray-700"}`}
-                                    >
-                                      Split
-                                    </button>
-                                  </div>
                                 </div>
 
                                 {sectionLang === "vi" ? (
@@ -1112,25 +1094,15 @@ function AdminEditNewsPageContent() {
                                     </div>
                                     <div>
                                       <label className="admin-label">Nội dung chi tiết (VI)</label>
-                                      <div className={`mt-2 ${sectionEditorMode === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-4" : ""}`}>
-                                        {sectionEditorMode !== "preview" && (
-                                          <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                                            <TiptapEditor
-                                              content={section.content}
-                                              onChange={(content) => handleSectionChange(index, "content", content)}
-                                              placeholder={`Nhập nội dung cho phần ${index + 1}...`}
-                                              onImageUpload={handleTiptapImageUpload}
-                                            />
-                                          </div>
-                                        )}
-                                        {sectionEditorMode !== "edit" && (
-                                          <div className="rounded-3xl border border-gray-200 bg-white p-5 overflow-y-auto max-h-[520px]">
-                                            <div
-                                              className="prose prose-sm md:prose-base max-w-none"
-                                              dangerouslySetInnerHTML={{ __html: section.content || "<p class='text-gray-400'>Chưa có nội dung</p>" }}
-                                            />
-                                          </div>
-                                        )}
+                                      <div className={`mt-2`}>
+                                        <div className={`rounded-3xl border border-gray-200 overflow-hidden shadow-sm flex flex-col ${isMaximized ? 'flex-1 min-h-[500px]' : ''}`}>
+                                          <TiptapEditor
+                                            content={section.content}
+                                            onChange={(content) => handleSectionChange(index, "content", content)}
+                                            placeholder={`Nhập nội dung cho phần ${index + 1}...`}
+                                            onImageUpload={handleTiptapImageUpload}
+                                          />
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -1148,25 +1120,15 @@ function AdminEditNewsPageContent() {
                                     </div>
                                     <div>
                                       <label className="admin-label">Section Content (EN)</label>
-                                      <div className={`mt-2 ${sectionEditorMode === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-4" : ""}`}>
-                                        {sectionEditorMode !== "preview" && (
-                                          <div className="rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                                            <TiptapEditor
-                                              content={section.content_en || ""}
-                                              onChange={(content) => handleSectionChange(index, "content_en", content)}
-                                              placeholder={`Enter content for section ${index + 1} in English...`}
-                                              onImageUpload={handleTiptapImageUpload}
-                                            />
-                                          </div>
-                                        )}
-                                        {sectionEditorMode !== "edit" && (
-                                          <div className="rounded-3xl border border-gray-200 bg-white p-5 overflow-y-auto max-h-[520px]">
-                                            <div
-                                              className="prose prose-sm md:prose-base max-w-none"
-                                              dangerouslySetInnerHTML={{ __html: section.content_en || "<p class='text-gray-400'>No content yet</p>" }}
-                                            />
-                                          </div>
-                                        )}
+                                      <div className={`mt-2`}>
+                                        <div className={`rounded-3xl border border-gray-200 overflow-hidden shadow-sm flex flex-col ${isMaximized ? 'flex-1 min-h-[500px]' : ''}`}>
+                                          <TiptapEditor
+                                            content={section.content_en || ""}
+                                            onChange={(content) => handleSectionChange(index, "content_en", content)}
+                                            placeholder={`Enter content for section ${index + 1} in English...`}
+                                            onImageUpload={handleTiptapImageUpload}
+                                          />
+                                        </div>
                                       </div>
                                     </div>
                                   </div>

@@ -162,7 +162,7 @@ export default function BlogDetailPage() {
       {
         onSuccess: async (data) => {
           const currentBlog = data?.blog;
-          
+
           if (!currentBlog) {
             router.push("/blog");
             return;
@@ -187,7 +187,7 @@ export default function BlogDetailPage() {
                       ? b.informationId === categoryId
                       : b.informationId?._id === categoryId)
                 );
-                
+
                 // Related blogs in same category (non-product)
                 const related = sameCategoryBlogs
                   .filter((b) => b.isProduct === false)
@@ -245,15 +245,15 @@ export default function BlogDetailPage() {
           />
           <div className="absolute inset-0 bg-white/40" />
 
-        {/* Title */}
-        <div className="absolute inset-0 flex items-center">
-          <div className="container mx-auto px-6 md:px-30">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 max-w-3xl">
-              {blog.title}
-            </h1>
+          {/* Title */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="container mx-auto px-6 md:px-30">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 max-w-3xl">
+                {blog.title}
+              </h1>
+            </div>
           </div>
-        </div>
-      </div>)}
+        </div>)}
 
       {/* Breadcrumb Navigation - Golden Yellow Background */}
       <div className="bg-third-500 py-4 shadow-sm mb-10">
@@ -297,7 +297,7 @@ export default function BlogDetailPage() {
                 >
                   {section.title}
                 </button>
-                })}
+              })}
           </div>
         </div>
       </div>
@@ -378,7 +378,7 @@ export default function BlogDetailPage() {
                     {/* Section Content with Rich Formatting */}
                     {section.content && (
                       <div
-                        className="prose prose-lg max-w-none
+                        className="prose prose-lg md:prose-xl max-w-none rendered-content
                           prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
                           prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
                           prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
@@ -392,7 +392,7 @@ export default function BlogDetailPage() {
                           prose-img:rounded-lg prose-img:shadow-md prose-img:my-6 prose-img:w-full
                           prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:text-primary-700
                           prose-pre:bg-gray-900 prose-pre:text-white prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:my-6
-                          prose-table:w-full prose-table:border-collapse prose-table:my-6
+                          prose-table:w-full prose-table:border-collapse prose-table:my-6 prose-table:table-fixed
                           prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:border prose-th:border-gray-300
                           prose-td:p-3 prose-td:border prose-td:border-gray-300
                         "

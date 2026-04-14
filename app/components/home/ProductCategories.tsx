@@ -76,11 +76,11 @@ export default function ProductCategories() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="h-px bg-gray-300 w-24 md:w-64"></div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-700">
+              <div className="h-px bg-primary-200 w-24 md:w-full"></div>
+              <h2 className="text-3xl md:text-4xl font-bold text-primary-900 whitespace-nowrap">
                 {t.pages.productCategories}
               </h2>
-              <div className="h-px bg-gray-300 w-24 md:w-64"></div>
+              <div className="h-px bg-primary-200 w-24 md:w-full"></div>
             </div>
           </div>
           <CategoryGridSkeleton count={4} />
@@ -94,19 +94,19 @@ export default function ProductCategories() {
       <div className="container mx-auto px-4">
         {/* Section Title */}
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px bg-gray-300 w-24 md:w-64"></div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-700">
+          <div className="flex items-center justify-center gap-4 mb-4 whitespace-nowrap md:px-20">
+            <div className="h-px bg-primary-200 w-24 md:w-full"></div>
+            <h2 className="text-3xl md:text-4xl font-bold text-primary-900 ">
               {t.pages.productCategories}
             </h2>
-            <div className="h-px bg-gray-300 w-24 md:w-64"></div>
+            <div className="h-px bg-primary-200 w-24 md:w-full"></div>
           </div>
         </div>
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2">
           {displayedCategories.map((category) => (
             <div
               key={category._id}
-              className="relative group overflow-hidden rounded-lg shadow-lg"
+              className="relative group overflow-hidden rounded-2xl shadow-lg"
             >
               <div className="relative h-96">
                 {/* Background image */}
@@ -135,11 +135,9 @@ export default function ProductCategories() {
                   )}
                 </div>
 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all"></div>
 
                 {/* Content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-black z-10">
                   <h3 className="text-3xl font-bold mb-6 text-center px-4">
                     {getLocalizedText(category.name, category.name_en, language)}
                   </h3>
@@ -150,9 +148,9 @@ export default function ProductCategories() {
                   )}
                   <Link
                     href={`/category/${category.slug}`}
-                    className="bg-primary-900 text-white px-8 py-3 rounded hover:bg-primary-800 transition-colors font-semibold"
+                    className="bg-primary-900 text-white px-8 py-3 rounded hover:bg-primary-800 transition-colors font-normal"
                   >
-                    {t.pages.viewAll}
+                    &#62; {t.pages.viewAll}
                   </Link>
                 </div>
               </div>
@@ -165,9 +163,9 @@ export default function ProductCategories() {
           <div className="flex justify-center mt-12">
             <button
               onClick={() => setShowAll(!showAll)}
-              className="border-2 border-primary-900 text-gray-700 px-10 py-3 rounded-md hover:bg-primary-800 hover:text-white transition-colors font-semibold uppercase tracking-wider cursor-pointer "
+              className="border-2 border-primary-900 text-primary-900 px-10 py-3 rounded-md hover:bg-primary-800 hover:text-white transition-colors font-semibold uppercase tracking-wider cursor-pointer "
             >
-              {showAll ? `→ ${t.pages.showLess}` : `→ ${t.pages.readMore}`}
+              {showAll ? `${t.pages.showLess}` : `${t.pages.readMore}`}
             </button>
           </div>
         )}

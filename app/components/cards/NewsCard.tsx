@@ -19,8 +19,8 @@ export default function NewsCard({ article, formatDate }: NewsCardProps) {
   const { language } = useLanguage();
   const t = translations[language];
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-shadow">
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
+    <div className=" overflow-hidden group hover:shadow-xl transition-shadow">
+      <div className="relative h-56 bg-gray-100 overflow-hidden">
         <OptimizedImage
           src={article.image?.cloudinaryUrl}
           alt={article.title}
@@ -37,7 +37,7 @@ export default function NewsCard({ article, formatDate }: NewsCardProps) {
           href={`/blog/${article.slug}`}
           className="text-primary-900 hover:text-primary-800 font-semibold flex items-center gap-2"
         >
-          <span>→ {t.pages.readMore}</span>
+          <span>&#62; {t.pages.readMore}</span>
         </Link>
       </div>
     </div>

@@ -13,6 +13,7 @@ import NewsCard from "@/app/components/cards/NewsCard";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
 import ProductCard from "@/app/components/cards/ProductCard";
+import OptimizedImage from "@/app/components/common/OptimizedImage";
 
 const translations = {
   en: enTranslations,
@@ -330,13 +331,14 @@ export default function CategoryPage() {
                   href={`/blog/${currentProducts[0].slug}`}
                   className="block mb-8"
                 >
-                  <div className="grid md:grid-cols-2 gap-8 bg-white rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-all">
-                    <div className="relative h-100 bg-gray-100">
+                  <div className="grid md:grid-cols-8 gap-8 bg-white rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-all">
+                    <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
                       {currentProducts[0].image ? (
-                        <img
+                        <OptimizedImage
                           src={withFallbackImage(currentProducts[0].image, "/images/placeholder.jpg")}
-                          alt={currentProducts[0].title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          alt={getLocalizedText(currentProducts[0].title, currentProducts[0].title_en, language)}
+                          preset="cardLarge"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center">
@@ -346,7 +348,7 @@ export default function CategoryPage() {
                         </div>
                       )}
                     </div>
-                    <div className="p-6 md:p-8 flex flex-col justify-center">
+                    <div className="p-6 md:p-8 col-span-3 flex flex-col justify-start">
                       <p className="text-gray-700 text-sm mb-2">
                         {formatDate(currentProducts[0].createdAt)}
                       </p>
@@ -359,7 +361,7 @@ export default function CategoryPage() {
                           .substring(0, 200) || t.pages.noDescription}
                       </p>
                       <span className="text-primary-900 hover:text-primary-800 font-semibold flex items-center gap-2">
-                        → {t.pages.readMore}
+                        &#62; {t.pages.readMore}
                       </span>
                     </div>
                   </div>

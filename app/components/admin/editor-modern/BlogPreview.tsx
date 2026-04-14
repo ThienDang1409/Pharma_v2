@@ -100,7 +100,7 @@ export default function BlogPreview({
 
   return (
     <div className={`preview-wrapper h-full flex flex-col transition-all ${isMobile ? 'max-w-[440px] mx-auto' : 'w-full'}`}>
-      <div className={`preview-container bg-white shadow-premium flex-1 flex flex-col ${isMobile ? 'rounded-[3rem] border-[12px] border-gray-900 shadow-2xl overflow-y-auto custom-scrollbar' : 'rounded-[3.5rem] border border-gray-100 overflow-y-auto custom-scrollbar'}`}>
+      <div className={`preview-container bg-white shadow-premium flex-1 flex flex-col ${isMobile ? 'rounded-[3rem] border-[12px] border-gray-900 shadow-2xl overflow-y-auto custom-scrollbar' : ' border border-gray-100 overflow-y-auto custom-scrollbar'}`}>
         
         {/* Header Image (Optional) */}
         {image && !isMobile && (
@@ -156,7 +156,8 @@ export default function BlogPreview({
             className="prose prose-lg md:prose-xl max-w-none rendered-content 
               prose-headings:font-black prose-headings:tracking-tighter prose-headings:text-gray-900
               prose-p:text-gray-600 prose-p:leading-relaxed prose-p:font-medium
-              prose-img:rounded-3xl prose-img:shadow-2xl"
+              prose-img:rounded-3xl prose-img:shadow-2xl
+              prose-table:w-full prose-table:table-fixed"
             dangerouslySetInnerHTML={{ __html: previewHtml }}
           />
 

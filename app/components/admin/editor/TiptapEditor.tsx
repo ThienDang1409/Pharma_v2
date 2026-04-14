@@ -1139,12 +1139,13 @@ export default function TiptapEditor({
         },
       }),
       Placeholder.configure({ placeholder }),
-      ResizableImage.configure({
-        allowBase64: true,
-        HTMLAttributes: {
-          class: "max-w-full h-auto rounded transition-all shadow-sm",
-        },
-      }),
+      // ResizableImage.configure({
+      //   allowBase64: true,
+      //   HTMLAttributes: {
+      //     class: "max-w-full h-auto rounded transition-all shadow-sm",
+      //   },
+      // }),
+      ResizableImage,
       Table.configure({
         resizable: true,
       }),
@@ -1396,9 +1397,9 @@ export default function TiptapEditor({
   );
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden flex flex-col">
+    <div className="border border-gray-300 rounded-lg flex flex-col relative bg-white h-full">
       {/* ─── Toolbar ─── */}
-      <div className="bg-white border-b border-gray-300 p-2 flex flex-wrap gap-1 shadow-sm overflow-x-auto">
+      <div className="bg-white border-b border-gray-300 p-2 flex flex-wrap gap-1 shadow-sm overflow-x-auto sticky top-0 z-40 rounded-t-lg">
         {/* Text style */}
         <ToolBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
           <strong>B</strong>
@@ -1460,7 +1461,7 @@ export default function TiptapEditor({
             <div className="w-4 h-0.5 rounded" style={{ backgroundColor: selectedColor }} />
           </button>
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-20">
+            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50">
               <div className="grid grid-cols-5 gap-2 mb-2">
                 {colors.map((color) => (
                   <button key={color} type="button" onClick={() => setColor(color)}
@@ -1512,7 +1513,7 @@ export default function TiptapEditor({
                 <div className="w-4 h-4 rounded border border-gray-300" style={{ backgroundColor: selectedBgColor }} />
               </button>
               {showBgColorPicker && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-20 w-48">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-48">
                   <p className="text-xs font-medium text-gray-700 mb-2">Cell Background</p>
                   <div className="grid grid-cols-5 gap-2 mb-2">
                     {bgColors.map((color) => (
@@ -1557,7 +1558,7 @@ export default function TiptapEditor({
       </div>
 
       {/* ─── Editor ─── */}
-      <EditorContent className="overflow-auto max-h-[600px]" editor={editor} />
+      <EditorContent className="flex-1 overflow-y-auto" editor={editor} />
 
       {/* ─── Right-click Context Menu ─── */}
       {showCellMenu && (

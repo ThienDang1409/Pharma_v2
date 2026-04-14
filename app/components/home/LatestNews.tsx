@@ -131,11 +131,11 @@ export default function LatestNews() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="h-px bg-gray-300 w-24 md:w-64"></div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-700">
+              <div className="h-px bg-primary-200 w-24 md:w-64"></div>
+              <h2 className="text-3xl md:text-4xl font-bold text-primary-900 whitespace-nowrap">
                 {t.pages.latestNews}
               </h2>
-              <div className="h-px bg-gray-300 w-24 md:w-64"></div>
+              <div className="h-px bg-primary-200 w-24 md:w-64"></div>
             </div>
           </div>
           
@@ -159,15 +159,15 @@ export default function LatestNews() {
 
   return (
     <section id="latest-news-section">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 md:px-20">
         {/* Section Title */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px bg-gray-300 w-24 md:w-64"></div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-700">
+            <div className="h-px bg-primary-200 w-24 md:w-full"></div>
+            <h2 className="text-3xl md:text-4xl font-bold text-primary-900 whitespace-nowrap">
               {t.pages.latestNews}
             </h2>
-            <div className="h-px bg-gray-300 w-24 md:w-64"></div>
+            <div className="h-px bg-primary-200 w-24 md:w-full"></div>
           </div>
         </div>
 
@@ -175,17 +175,17 @@ export default function LatestNews() {
         <div className="grid gap-8">
           {/* Featured Article */}
           {currentArticles[0] && (
-            <div className="grid md:grid-cols-2 gap-8 bg-white rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-all">
-              <div className="relative h-100 bg-gray-100 overflow-hidden">
+            <div className="grid md:grid-cols-8 gap-8 overflow-hidden group hover:shadow-xl transition-all">
+              <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
                 <OptimizedImage
                   src={currentArticles[0].image?.cloudinaryUrl || '/images/placeholder.jpg'}
                   alt={getLocalizedText(currentArticles[0].title, currentArticles[0].title_en, language)}
                   preset="cardLarge"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <div className="p-6 md:p-8 flex flex-col justify-center">
-                <p className="text-gray-700 text-sm mb-2">
+              <div className="p-6 md:p-8 col-span-3 flex flex-col justify-start">
+                <p className="text-primary-700 text-sm mb-2">
                   {formatDate(currentArticles[0].createdAt)}
                 </p>
                 <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 group-hover:text-primary-600 transition-colors">
@@ -196,9 +196,9 @@ export default function LatestNews() {
                 </p>
                 <Link
                   href={`/blog/${currentArticles[0].slug}`}
-                  className="text-primary-900 hover:text-primary-800 font-semibold flex items-center gap-2"
+                  className="text-primary-900 text-sm group-hover:text-gray-800 font-semibold flex items-center gap-2"
                 >
-                  <span>→ {t.pages.readMore}</span>
+                  <span>&#62;  {t.pages.readMore}</span>
                 </Link>
               </div>
             </div>
@@ -273,9 +273,9 @@ export default function LatestNews() {
         <div className="text-center mt-12">
           <Link
             href="/category/news"
-            className="inline-flex items-center gap-2 border-2 border-primary-900 text-gray-700 px-8 py-3 rounded hover:bg-primary-800 hover:text-white transition-all font-semibold"
+            className="inline-flex items-center gap-2 border-2 border-primary-900 text-primary-900 px-8 py-3 rounded hover:bg-primary-800 hover:text-white transition-all font-semibold"
           >
-            <span>→ {t.pages.moreNews}</span>
+            <span> {t.pages.moreNews}</span>
           </Link>
         </div>
       </div>

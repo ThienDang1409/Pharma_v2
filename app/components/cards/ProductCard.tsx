@@ -28,10 +28,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={`/blog/${product.slug}`}
-      className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full"
+      className="group hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full"
     >
       {/* Product Image */}
-      <div className="relative h-56 bg-gray-50 overflow-hidden flex items-center justify-center p-6">
+      <div className="relative h-56  overflow-hidden flex items-center justify-center">
         <OptimizedImage
           src={extractImageUrl(product.image)}
           alt={product.title}
@@ -50,7 +50,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {description}
           </p>
         )}
-        
+
         {/* Details Link */}
         <div className="text-primary-600 text-sm font-medium group-hover:text-primary-800 inline-flex items-center mt-auto">
           {t.pages.details}
