@@ -516,6 +516,12 @@ function AdminEditNewsPageContent() {
           publishStatus === "published"
             ? "Cập nhật và xuất bản thành công!"
             : "Cập nhật bản nháp thành công!",
+        onSuccess: () => {
+          // Redirect to admin dashboard
+          setTimeout(() => {
+            window.location.href = "/admin/blogs";
+          }, 1000);
+        },
       }
     );
 

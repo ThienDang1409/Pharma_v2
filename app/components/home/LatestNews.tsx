@@ -272,7 +272,7 @@ export default function LatestNews() {
         {/* More News Button */}
         <div className="text-center mt-12">
           <Link
-            href="/category/news"
+            href="/category/news-1"
             className="inline-flex items-center gap-2 border-2 border-primary-900 text-primary-900 px-8 py-3 rounded hover:bg-primary-800 hover:text-white transition-all font-semibold"
           >
             <span> {t.pages.moreNews}</span>
