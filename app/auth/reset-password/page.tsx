@@ -30,16 +30,13 @@ function ResetPasswordPageContent() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [token, setToken] = useState("");
+  const token = searchParams.get("token") || "";
 
   useEffect(() => {
-    const resetToken = searchParams.get("token");
-    if (!resetToken) {
+    if (!token) {
       toast.error("Invalid reset token");
-    } else {
-      setToken(resetToken);
     }
-  }, [searchParams, toast]);
+  }, [token, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -18,7 +18,7 @@ export default function CompanyBanner() {
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Left quote */}
           <span className="absolute -left-8 top-0 text-6xl text-black opacity-50">
-            "
+            &quot;
           </span>
 
           <p className="text-gray-800 text-lg md:text-xl leading-relaxed">
@@ -31,7 +31,7 @@ export default function CompanyBanner() {
 
           {/* Right quote */}
           <span className="absolute -right-8 bottom-0 text-6xl text-black opacity-50">
-            "
+            &quot;
           </span>
         </div>
       </div>

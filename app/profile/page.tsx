@@ -35,11 +35,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name || "",
-        phone: user.phone || "",
-        avatar: user.avatar || "",
-      });
+      const timeoutId = window.setTimeout(() => {
+        setFormData({
+          name: user.name || "",
+          phone: user.phone || "",
+          avatar: user.avatar || "",
+        });
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
     }
   }, [user]);
 

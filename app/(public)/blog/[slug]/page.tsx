@@ -21,7 +21,68 @@ export default function BlogDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>("");
   const [isNavSticky, setIsNavSticky] = useState(false);
-  const [isProductCategory, setIsProductCategory] = useState(false);
+  const [, setIsProductCategory] = useState(false);
+
+  async function fetchBlogBySlug() {
+    setLoading(true);
+
+    // Fetch current blog by slug
+    await apiFetch(
+      () => blogApi.getBySlug(slug),
+      {
+        onSuccess: async (data) => {
+          const currentBlog = data?.blog;
+
+          if (!currentBlog) {
+            router.push("/blog");
+            return;
+          }
+
+          setBlog(currentBlog);
+          setIsProductCategory(currentBlog.isProduct || false);
+
+          // Fetch all published blogs for related content
+          await apiFetch(
+            () => blogApi.getAll({ status: 'published', limit: 1000 }),
+            {
+              onSuccess: (paginationData) => {
+                const allBlogs = paginationData?.items || [];
+                const categoryId = typeof currentBlog.informationId === 'string'
+                  ? currentBlog.informationId
+                  : currentBlog.informationId?._id;
+                const sameCategoryBlogs = allBlogs.filter(
+                  (b) =>
+                    b.id !== currentBlog.id &&
+                    (typeof b.informationId === 'string'
+                      ? b.informationId === categoryId
+                      : b.informationId?._id === categoryId)
+                );
+
+                // Related blogs in same category (non-product)
+                const related = sameCategoryBlogs
+                  .filter((b) => b.isProduct === false)
+                  .slice(0, 3);
+                setRelatedBlogs(related);
+
+                // Related products in same category
+                const relatedProductsList = sameCategoryBlogs.filter((b) => b.isProduct === true);
+                setRelatedProducts(relatedProductsList.slice(0, 4));
+              },
+              onError: () => {
+                setRelatedBlogs([]);
+                setRelatedProducts([]);
+              },
+            }
+          );
+        },
+        onError: () => {
+          router.push("/blog");
+        },
+      }
+    );
+
+    setLoading(false);
+  }
 
   const buildRelatedProductsEmbedHtml = () => {
     if (!relatedProducts.length) {
@@ -83,31 +144,50 @@ export default function BlogDetailPage() {
 
   // Suppress browser extension errors
   useEffect(() => {
-    const handleError = (event: ErrorEvent | PromiseRejectionEvent) => {
-      const error = "error" in event ? event.error : event.reason;
+    const shouldSuppress = (error: unknown): boolean => {
+      if (!(error instanceof Error) && typeof error !== "object") {
+        return false;
+      }
+
+      const err = error as { message?: string; originalError?: { stack?: string } };
       // Suppress errors from browser extensions
-      if (
-        error?.message?.includes("permission error") ||
-        error?.message?.includes("extension") ||
-        error?.originalError?.stack?.includes("chrome-extension")
-      ) {
+      return (
+        Boolean(err.message?.includes("permission error")) ||
+        Boolean(err.message?.includes("extension")) ||
+        Boolean(err.originalError?.stack?.includes("chrome-extension"))
+      );
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      if (shouldSuppress(event.error)) {
         event.preventDefault();
-        return;
       }
     };
 
-    window.addEventListener("error", handleError as any);
-    window.addEventListener("unhandledrejection", handleError as any);
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      if (shouldSuppress(event.reason)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
 
     return () => {
-      window.removeEventListener("error", handleError as any);
-      window.removeEventListener("unhandledrejection", handleError as any);
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
     };
   }, []);
 
   useEffect(() => {
     if (slug) {
-      fetchBlogBySlug();
+      const timeoutId = window.setTimeout(() => {
+        void fetchBlogBySlug();
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
     }
   }, [slug]);
 
@@ -152,67 +232,6 @@ export default function BlogDetailPage() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const fetchBlogBySlug = async () => {
-    setLoading(true);
-
-    // Fetch current blog by slug
-    await apiFetch(
-      () => blogApi.getBySlug(slug),
-      {
-        onSuccess: async (data) => {
-          const currentBlog = data?.blog;
-
-          if (!currentBlog) {
-            router.push("/blog");
-            return;
-          }
-
-          setBlog(currentBlog);
-          setIsProductCategory(currentBlog.isProduct || false);
-
-          // Fetch all published blogs for related content
-          await apiFetch(
-            () => blogApi.getAll({ status: 'published', limit: 1000 }),
-            {
-              onSuccess: (paginationData) => {
-                const allBlogs = paginationData?.items || [];
-                const categoryId = typeof currentBlog.informationId === 'string'
-                  ? currentBlog.informationId
-                  : currentBlog.informationId?._id;
-                const sameCategoryBlogs = allBlogs.filter(
-                  (b) =>
-                    b.id !== currentBlog.id &&
-                    (typeof b.informationId === 'string'
-                      ? b.informationId === categoryId
-                      : b.informationId?._id === categoryId)
-                );
-
-                // Related blogs in same category (non-product)
-                const related = sameCategoryBlogs
-                  .filter((b) => b.isProduct === false)
-                  .slice(0, 3);
-                setRelatedBlogs(related);
-
-                // Related products in same category
-                const relatedProductsList = sameCategoryBlogs.filter((b) => b.isProduct === true);
-                setRelatedProducts(relatedProductsList.slice(0, 4));
-              },
-              onError: () => {
-                setRelatedBlogs([]);
-                setRelatedProducts([]);
-              },
-            }
-          );
-        },
-        onError: () => {
-          router.push("/blog");
-        },
-      }
-    );
-
-    setLoading(false);
-  };
 
   const formatDate = (dateInput: string | Date) => {
     return formatDateLong(dateInput, language === "vi" ? "vi-VN" : "en-US");

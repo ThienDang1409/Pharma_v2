@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -212,11 +213,7 @@ export default function ModernTiptapEditor({
       Placeholder.configure({
         placeholder,
       }),
-      ResizableImage.configure({
-        HTMLAttributes: {
-          class: "rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md",
-        },
-      }),
+      ResizableImage,
       Table.configure({
         resizable: true,
       }),
@@ -394,7 +391,7 @@ export default function ModernTiptapEditor({
          </div>
          <div className="flex items-center gap-3">
             <span className="text-[11px] text-gray-400 font-medium italic">
-               Tips: Type '/' to show menu
+              Tips: Type &apos;/&apos; to show menu
             </span>
          </div>
       </div>

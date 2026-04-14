@@ -557,7 +557,10 @@ export class AppError extends Error {
     this.isOperational = isOperational;
 
     const errorCtor = Error as ErrorConstructor & {
-      captureStackTrace?: (targetObject: object, constructorOpt?: Function) => void;
+      captureStackTrace?: (
+        targetObject: object,
+        constructorOpt?: (...args: never[]) => unknown
+      ) => void;
     };
     errorCtor.captureStackTrace?.(this, this.constructor);
   }

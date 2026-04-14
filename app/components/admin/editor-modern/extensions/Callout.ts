@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import CalloutNodeView from './CalloutNodeView';

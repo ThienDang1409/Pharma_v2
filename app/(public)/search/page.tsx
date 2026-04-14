@@ -105,7 +105,7 @@ function SearchPageContent() {
             </h1>
             {query && (
               <p className="text-xl text-gray-600">
-                {t.pages.search.searchFor} <span className="font-semibold text-primary-600">"{query}"</span>
+                {t.pages.search.searchFor} <span className="font-semibold text-primary-600">&quot;{query}&quot;</span>
               </p>
             )}
             {!loading && (
@@ -205,7 +205,7 @@ function SearchPageContent() {
                 {t.pages.search.noResults}
               </h2>
               <p className="text-gray-500 mb-6">
-                {t.pages.search.noResultsDesc} "{query}"
+                {t.pages.search.noResultsDesc} &quot;{query}&quot;
               </p>
               <Link
                 href="/"

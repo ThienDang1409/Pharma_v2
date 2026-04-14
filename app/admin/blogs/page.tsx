@@ -179,7 +179,7 @@ export default function AdminBlogsPage() {
 
   // Build category filter levels
   const filterLevels = [];
-  let currentLevel = getChildCategories();
+  const currentLevel = getChildCategories();
   filterLevels.push(currentLevel);
 
   for (let i = 0; i < selectedCategoryPath.length; i++) {
@@ -238,7 +238,9 @@ export default function AdminBlogsPage() {
                 { label: "Bản nháp", value: "draft" },
               ]}
               value={statusFilter}
-              onChange={(value) => setStatusFilter(value as any)}
+              onChange={(value) =>
+                setStatusFilter(value as "all" | "published" | "draft")
+              }
               placeholder="Lọc theo trạng thái..."
               className="pl-14"
             />

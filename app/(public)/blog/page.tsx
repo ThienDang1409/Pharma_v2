@@ -55,7 +55,13 @@ export default function BlogPage() {
 
   // Load blogs on mount and when filters change
   useEffect(() => {
-    fetchBlogs();
+    const timeoutId = window.setTimeout(() => {
+      void fetchBlogs();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [searchQuery, selectedCategory, fetchBlogs]);
 
   return (

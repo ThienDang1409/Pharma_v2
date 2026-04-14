@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import ModernBlogForm from "@/app/components/admin/editor-modern/ModernBlogForm";
 import { informationApi, blogApi } from "@/lib/api";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
+import type { Information } from "@/lib/types";
 
 export default function ModernAddBlogPage() {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Information[]>([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -22,7 +23,7 @@ export default function ModernAddBlogPage() {
     fetchCategories();
   }, []);
 
-  const handleSave = async (formData: any) => {
+  const handleSave = async (formData: Record<string, unknown>) => {
     console.log("Saving blog data:", formData);
     // Transform formData to match backend expectations if needed
     const payload = {

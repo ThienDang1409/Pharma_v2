@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "../constants/api";
 import { http } from "./http";
+import type { AxiosProgressEvent } from "axios";
 import type {
   ApiResponse,
   PaginationResult,
@@ -36,9 +37,9 @@ export const imageApi = {
       API_ENDPOINTS.IMAGE_UPLOAD,
       formData,
       onProgress
-        ? (progressEvent: any) => {
+        ? (progressEvent: AxiosProgressEvent) => {
             const progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
+              ((progressEvent.loaded ?? 0) * 100) / (progressEvent.total ?? 1)
             );
             onProgress(progress);
           }
@@ -71,9 +72,9 @@ export const imageApi = {
       API_ENDPOINTS.IMAGE_UPLOAD_MULTIPLE,
       formData,
       onProgress
-        ? (progressEvent: any) => {
+        ? (progressEvent: AxiosProgressEvent) => {
             const progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
+              ((progressEvent.loaded ?? 0) * 100) / (progressEvent.total ?? 1)
             );
             onProgress(progress);
           }
@@ -145,7 +146,7 @@ export const imageApi = {
    * Transform image (create thumbnail, resize, etc.)
    */
   transform: (id: string, data: TransformImageDto) => {
-    return http.post<ApiResponse<{ transformation: any }>>(
+    return http.post<ApiResponse<{ transformation: Record<string, unknown> }>>(
       API_ENDPOINTS.IMAGE_TRANSFORM.replace(":id", id),
       data
     );

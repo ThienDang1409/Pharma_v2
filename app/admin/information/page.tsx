@@ -999,7 +999,13 @@ export default function InformationPage() {
               ) : categoryBlogs.length > 0 ? (
                 <div className="space-y-4">
                   {categoryBlogs.map((blog) => {
-                    const isDirect = (blog.informationId as any)?._id === viewingBlogsCategory._id || blog.informationId === viewingBlogsCategory._id;
+                    const infoValue =
+                      typeof blog.informationId === "object" && blog.informationId
+                        ? blog.informationId
+                        : null;
+                    const isDirect =
+                      (infoValue?._id === viewingBlogsCategory._id) ||
+                      blog.informationId === viewingBlogsCategory._id;
 
                     return (
                       <div key={blog.id || blog._id} className="admin-card !p-4 border border-gray-100 hover:border-primary-900/20 hover:shadow-lg transition-all group flex items-center gap-4">
@@ -1024,7 +1030,7 @@ export default function InformationPage() {
                               </span>
                             ) : (
                               <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-[8px] font-black uppercase rounded tracking-widest border border-orange-200">
-                                Danh mục con: {(blog.informationId as any)?.name_en || (blog.informationId as any)?.name || 'N/A'}
+                                Danh mục con: {infoValue?.name_en || infoValue?.name || 'N/A'}
                               </span>
                             )}
                             <div className="w-1 h-1 rounded-full bg-gray-200" />

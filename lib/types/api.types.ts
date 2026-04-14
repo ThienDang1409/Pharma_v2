@@ -4,7 +4,7 @@
  **/
 
 // Standard API Response format
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
@@ -65,7 +65,7 @@ export interface ImageResponseDto {
 }
 
 // Alias for compatibility
-export interface ImageResponse extends ImageResponseDto {}
+export type ImageResponse = ImageResponseDto;
 
 export interface UploadImageDto {
   tags?: string[];
@@ -94,7 +94,7 @@ export interface ImageQueryDto {
 }
 
 // Alias for compatibility
-export interface ImageQueryParams extends ImageQueryDto {}
+export type ImageQueryParams = ImageQueryDto;
 
 export interface AddReferenceDto {
   entityType: 'blog' | 'user' | 'information' | 'other';
@@ -291,7 +291,7 @@ export interface InformationQueryDto {
 }
 
 // Alias for compatibility
-export interface InformationQueryParams extends InformationQueryDto {}
+export type InformationQueryParams = InformationQueryDto;
 
 // ==================== USER & AUTH TYPES ====================
 // Match: backend_ts/src/modules/user/user.dto.ts
@@ -365,7 +365,7 @@ export interface LoginDto {
 }
 
 // Alias for compatibility
-export interface LoginCredentials extends LoginDto {}
+export type LoginCredentials = LoginDto;
 
 export interface RegisterDto {
   email: string;
@@ -375,7 +375,7 @@ export interface RegisterDto {
 }
 
 // Alias for compatibility
-export interface RegisterData extends RegisterDto {}
+export type RegisterData = RegisterDto;
 
 export interface AuthResponseDto {
   user: UserResponseDto;

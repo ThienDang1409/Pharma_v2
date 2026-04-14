@@ -1271,7 +1271,10 @@ export default function TiptapEditor({
     setShowImageSelector(true);
   }, []);
 
-  const handleImageSelect = (imageId: string | null, imageData?: any) => {
+  const handleImageSelect = (
+    _imageId: string | null,
+    imageData?: { cloudinaryUrl?: string }
+  ) => {
     if (imageData?.cloudinaryUrl && editor) {
       editor.chain().focus().setImage({ src: imageData.cloudinaryUrl }).run();
     }

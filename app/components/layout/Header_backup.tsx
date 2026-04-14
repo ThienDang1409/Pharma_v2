@@ -33,6 +33,18 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileOpenSubmenu, setMobileOpenSubmenu] = useState<string | null>(null);
 
+  async function fetchCategories() {
+    await apiFetch(
+      () => informationApi.getAll(),
+      {
+        onSuccess: (data) => {
+          setCategories(data?.items || []);
+        },
+        onError: () => setCategories([]),
+      }
+    );
+  }
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -65,18 +77,6 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY, isSearchOpen]);
-
-  const fetchCategories = async () => {
-    await apiFetch(
-      () => informationApi.getAll(),
-      {
-        onSuccess: (data) => {
-          setCategories(data?.items || []);
-        },
-        onError: () => setCategories([]),
-      }
-    );
-  };
 
   const fetchBlogsForCategory = async (categoryId: string) => {
     // Skip if already fetched

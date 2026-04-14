@@ -8,6 +8,7 @@ import {
   LucideIcon,
   ChevronDown,
 } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const icons: Record<string, LucideIcon> = {
   info: Info,

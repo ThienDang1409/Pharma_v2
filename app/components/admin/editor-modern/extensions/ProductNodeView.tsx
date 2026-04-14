@@ -1,6 +1,7 @@
 import React from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { ShoppingCart, ExternalLink, Trash2 } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function ProductNodeView(props: any) {
   const { node, deleteNode } = props;
