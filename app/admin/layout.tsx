@@ -101,7 +101,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <ProtectedRoute requireAdmin={true}>
-      <div className="flex h-screen bg-gray-50 font-sans antialiased text-gray-900">
+      <div className="admin-typography flex h-screen bg-gray-50 font-sans antialiased text-gray-900">
         {/* Sidebar */}
         <aside
           className={`${sidebarOpen ? "w-72" : "w-24"

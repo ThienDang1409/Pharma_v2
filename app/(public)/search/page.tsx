@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { blogApi, Blog } from "@/lib/api";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { getLocalizedText } from "@/lib/utils/string/i18n";
-import { extractImageUrl, getApiErrorFeedback } from "@/lib/utils";
+import { getApiErrorFeedback, getBlogExcerpt, getBlogImageUrl, getCategoryPreview } from "@/lib/utils";
 import { formatDateIntl as formatDateUtil } from "@/lib/utils/string/format";
+import OptimizedImage from "@/app/components/common/OptimizedImage";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
 
@@ -84,12 +85,7 @@ function SearchPageContent() {
   const currentBlogs = filteredBlogs.slice(startIndex, endIndex);
 
   const getExcerpt = (blog: Blog) => {
-    const firstSection = blog.sections?.[0];
-    if (!firstSection?.content) return "";
-    
-    // Strip HTML tags and get first 150 characters
-    const text = firstSection.content.replace(/<[^>]*>/g, "");
-    return text.substring(0, 150) + (text.length > 150 ? "..." : "");
+    return getBlogExcerpt(blog, language, 150);
   };
 
   const productsCount = blogs.filter((b) => b.isProduct === true).length;
@@ -220,8 +216,10 @@ function SearchPageContent() {
           {!loading && currentBlogs.length > 0 && (
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                {currentBlogs.map((blog) => (
-                  <Link
+                {currentBlogs.map((blog) => {
+                  const category = getCategoryPreview(blog.informationId);
+
+                  return <Link
                     key={blog._id}
                     href={`/blog/${blog.slug}`}
                     className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -229,9 +227,10 @@ function SearchPageContent() {
                     {/* Image */}
                     <div className="relative h-56 overflow-hidden bg-linear-to-br from-gray-100 to-gray-200">
                       {blog.image ? (
-                        <img
-                          src={extractImageUrl(blog.image)}
+                        <OptimizedImage
+                          src={getBlogImageUrl(blog)}
                           alt={getLocalizedText(blog.title, blog.title_en, language)}
+                          preset="cardMedium"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
@@ -269,11 +268,11 @@ function SearchPageContent() {
                     <div className="p-6">
                       {/* Category & Date */}
                       <div className="flex items-center gap-3 mb-3">
-                        {blog.informationId && typeof blog.informationId !== 'string' && (
+                        {category && (
                           <span className="text-xs font-medium text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
                             {getLocalizedText(
-                              blog.informationId.name,
-                              blog.informationId.name_en,
+                              category.name,
+                              category.name_en,
                               language
                             )}
                           </span>
@@ -332,7 +331,7 @@ function SearchPageContent() {
                       </div>
                     </div>
                   </Link>
-                ))}
+                })}
               </div>
 
               {/* Pagination */}

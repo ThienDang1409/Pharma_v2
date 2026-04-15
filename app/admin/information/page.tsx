@@ -699,6 +699,7 @@ export default function InformationPage() {
                       onEdit={handleOpenModal}
                       onDelete={handleDelete}
                       onAddChild={(parentId) => {
+                        setSelectedParentId(parentId);
                         setModalMode("create");
                         setEditingCategory(null);
                         setFormData({
@@ -919,14 +920,16 @@ export default function InformationPage() {
                       <div className="p-6 bg-gray-50 rounded-3xl border border-gray-200">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-3">Vị trí cấu trúc</p>
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-xl border ${selectedParentId ? "bg-secondary-50 border-secondary-100 text-secondary-900" : "bg-primary-50 border-primary-100 text-primary-900"}`}>
+                          <div className={`p-2 rounded-xl border ${formData.parentId ? "bg-secondary-50 border-secondary-100 text-secondary-900" : "bg-primary-50 border-primary-100 text-primary-900"}`}>
                             <Layout size={16} />
                           </div>
                           <div>
                             <p className="text-xs font-black uppercase tracking-tight">
-                              {selectedParentId ? `Con của: ${currentParent?.name}` : "Danh mục ROOT"}
+                              {formData.parentId ? `Con của: ${getCategory(formData.parentId)?.name || "N/A"}` : "Danh mục ROOT"}
                             </p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Mức {currentLevel}</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                              Mức {formData.parentId && getCategory(formData.parentId) ? getCategoryLevel(getCategory(formData.parentId) as Information) + 1 : 1}
+                            </p>
                           </div>
                         </div>
                       </div>

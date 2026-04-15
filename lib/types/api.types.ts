@@ -169,8 +169,9 @@ export interface BlogResponseDto extends BlogListItemDto {
 }
 
 // Alias for compatibility
-export interface Blog extends BlogResponseDto {
+export interface Blog extends BlogListItemDto {
   _id?: string;
+  sections?: BlogSection[];
 }
 
 export interface CreateBlogDto {
@@ -292,6 +293,26 @@ export interface InformationQueryDto {
 
 // Alias for compatibility
 export type InformationQueryParams = InformationQueryDto;
+
+// ==================== CONTACT TYPES ====================
+
+export interface SubmitContactDto {
+  fullName: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  subject?: string;
+  message: string;
+  sourcePage?: string;
+  language?: 'vi' | 'en';
+}
+
+export interface ContactSubmitResultDto {
+  recipient: string;
+  delivered: boolean;
+  queued: boolean;
+  messageId?: string;
+}
 
 // ==================== USER & AUTH TYPES ====================
 // Match: backend_ts/src/modules/user/user.dto.ts

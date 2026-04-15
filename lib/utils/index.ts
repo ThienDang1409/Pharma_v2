@@ -19,3 +19,4 @@ export * from "./auth/auth"; // Token management
 export * from "./image/cloudinary"; // Cloudinary utilities
 export * from "./handler/type-guards"; // Runtime type guards
 export * from "./image/image-handler"; // Image extraction helpers
+export * from "./content/content"; // Blog/category/image normalization helpers

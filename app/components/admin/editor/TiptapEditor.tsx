@@ -1074,6 +1074,10 @@ import { useCallback, useState, useEffect } from "react";
 import SlashCommand from "../editor-modern/extensions/SlashCommand";
 import suggestion from "../editor-modern/extensions/Suggestion";
 import ImageSelector from "../image/ImageSelector";
+import ImageCaption from "./extensions/ImageCaption";
+import ImageOverlayText from "./extensions/ImageOverlayText";
+import { imageApi } from "@/lib/api";
+import { IMAGE_FOLDERS } from "@/lib/constants/api";
 import "./tiptap.css";
 
 interface TiptapEditorProps {
@@ -1082,6 +1086,8 @@ interface TiptapEditorProps {
   placeholder?: string;
   onImageUpload?: (file: File) => Promise<string>;
 }
+
+type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
 
 export default function TiptapEditor({
   content,
@@ -1100,6 +1106,36 @@ export default function TiptapEditor({
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
   const [showImageSelector, setShowImageSelector] = useState(false);
+  const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
+  const [showCaptionDialog, setShowCaptionDialog] = useState(false);
+  const [captionText, setCaptionText] = useState("");
+  const [showOverlayDialog, setShowOverlayDialog] = useState(false);
+  const [overlayText, setOverlayText] = useState("");
+  const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>("bottom-left");
+
+  const uploadImageToCloudinary = useCallback(
+    async (file: File): Promise<string> => {
+      if (onImageUpload) {
+        const uploadedUrl = await onImageUpload(file);
+        if (!uploadedUrl) {
+          throw new Error("Image upload did not return URL");
+        }
+        return uploadedUrl;
+      }
+
+      const response = await imageApi.upload(file, {
+        folder: IMAGE_FOLDERS.BLOGS_CONTENT,
+      });
+
+      const uploadedUrl = response.data?.image?.cloudinaryUrl;
+      if (!uploadedUrl) {
+        throw new Error("Cloudinary URL was not returned by upload API");
+      }
+
+      return uploadedUrl;
+    },
+    [onImageUpload]
+  );
 
   useEffect(() => {
     const openImagePicker = () => {
@@ -1146,6 +1182,8 @@ export default function TiptapEditor({
       //   },
       // }),
       ResizableImage,
+      ImageCaption,
+      ImageOverlayText,
       Table.configure({
         resizable: true,
       }),
@@ -1232,8 +1270,17 @@ export default function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[300px] max-w-none p-4",
+          "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[360px] max-w-none p-4",
       },
+        handleClickOn: (_view, pos, node) => {
+          if (!isImageLikeNode(node.type.name)) {
+            return false;
+          }
+
+          setSelectedImagePos(pos);
+          editor?.commands.setNodeSelection(pos);
+          return true;
+        },
       handleDOMEvents: {
         contextmenu: (view, event) => {
           const { state } = view;
@@ -1258,22 +1305,258 @@ export default function TiptapEditor({
   });
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (editor && !editor.isFocused && content !== editor.getHTML()) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);
+
+  const insertUploadedImage = useCallback(
+    async (file: File) => {
+      if (!editor) return;
+
+      const imageUrl = await uploadImageToCloudinary(file);
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: imageUrl, alt: file.name })
+        .run();
+    },
+    [editor, uploadImageToCloudinary]
+  );
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const handlePaste: EventListener = (event) => {
+      const clipboardEvent = event as ClipboardEvent;
+      const filesFromItems = Array.from(clipboardEvent.clipboardData?.items || [])
+        .filter((item) => item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter((file): file is File => Boolean(file));
+
+      const filesFromFileList = Array.from(clipboardEvent.clipboardData?.files || []).filter(
+        (file) => file.type.startsWith("image/")
+      );
+
+      const dedupedFiles = [...filesFromItems, ...filesFromFileList].filter(
+        (file, index, allFiles) =>
+          allFiles.findIndex(
+            (candidate) =>
+              candidate.name === file.name &&
+              candidate.size === file.size &&
+              candidate.lastModified === file.lastModified
+          ) === index
+      );
+
+      const files = dedupedFiles;
+
+      if (!files.length) return;
+
+      clipboardEvent.preventDefault();
+
+      void (async () => {
+        setIsUploadingImage(true);
+
+        try {
+          for (const file of files) {
+            await insertUploadedImage(file);
+          }
+        } catch (error) {
+          console.error("Error handling pasted image:", error);
+          window.alert("Paste ảnh thất bại. Vui lòng kiểm tra upload Cloudinary.");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      })();
+    };
+
+    const editorDom = editor.view.dom;
+    editorDom.addEventListener("paste", handlePaste);
+
+    return () => {
+      editorDom.removeEventListener("paste", handlePaste);
+    };
+  }, [editor, insertUploadedImage]);
+
+  const isImageLikeNode = useCallback((nodeName?: string | null): boolean => {
+    if (!nodeName) return false;
+    return nodeName.toLowerCase().includes("image");
+  }, []);
+
+  const findImageNodePosition = useCallback((): number | null => {
+    if (!editor) return null;
+
+    const { state } = editor;
+    const { from, to } = state.selection;
+    let imagePos: number | null = null;
+
+    state.doc.nodesBetween(from, to, (node, pos) => {
+      if (isImageLikeNode(node.type.name) && imagePos === null) {
+        imagePos = pos;
+        return false;
+      }
+      return true;
+    });
+
+    if (imagePos !== null) return imagePos;
+
+    const nodeAtFrom = state.doc.nodeAt(from);
+    if (isImageLikeNode(nodeAtFrom?.type.name)) {
+      return from;
+    }
+
+    const beforeNode = state.selection.$from.nodeBefore;
+    if (beforeNode && isImageLikeNode(beforeNode.type.name)) {
+      return from - beforeNode.nodeSize;
+    }
+
+    const afterNode = state.selection.$from.nodeAfter;
+    if (afterNode && isImageLikeNode(afterNode.type.name)) {
+      return from;
+    }
+
+    return null;
+  }, [editor, isImageLikeNode]);
+
+  const openCaptionDialog = useCallback(() => {
+    if (!editor) return;
+
+    const imagePos = selectedImagePos ?? findImageNodePosition();
+    if (imagePos === null) {
+      window.alert("Hãy chọn ảnh trước khi thêm chú thích.");
+      return;
+    }
+
+    const imageNode = editor.state.doc.nodeAt(imagePos);
+    const existingCaption = imageNode ? editor.state.doc.nodeAt(imagePos + imageNode.nodeSize) : null;
+    setCaptionText(existingCaption ? existingCaption.textContent || "" : "");
+    setSelectedImagePos(imagePos);
+    setShowCaptionDialog(true);
+  }, [editor, findImageNodePosition, selectedImagePos]);
+
+  const saveCaption = useCallback(() => {
+    if (!editor) return;
+
+    const imagePos = selectedImagePos ?? findImageNodePosition();
+    if (imagePos === null) return;
+
+    const imageNode = editor.state.doc.nodeAt(imagePos);
+    if (!imageNode) return;
+
+    const captionPos = imagePos + imageNode.nodeSize;
+    const existingNode = editor.state.doc.nodeAt(captionPos);
+
+    if (existingNode?.type.name === "imageCaption") {
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: captionPos, to: captionPos + existingNode.nodeSize })
+        .insertContentAt(captionPos, {
+          type: "imageCaption",
+          content: [{ type: "text", text: captionText.trim() }],
+        })
+        .setTextSelection(captionPos + 1)
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(captionPos, {
+          type: "imageCaption",
+          content: [{ type: "text", text: captionText.trim() }],
+        })
+        .setTextSelection(captionPos + 1)
+        .run();
+    }
+
+    setShowCaptionDialog(false);
+  }, [captionText, editor, findImageNodePosition, selectedImagePos]);
+
+  const openOverlayDialog = useCallback(() => {
+    if (!editor) return;
+
+    const imagePos = selectedImagePos ?? findImageNodePosition();
+    if (imagePos === null) {
+      window.alert("Hãy chọn ảnh trước khi viết đè.");
+      return;
+    }
+
+    const imageNode = editor.state.doc.nodeAt(imagePos);
+    const existingOverlay = imageNode ? editor.state.doc.nodeAt(imagePos + imageNode.nodeSize) : null;
+    setOverlayText(existingOverlay ? existingOverlay.textContent || "" : "");
+    setOverlayPosition("bottom-left");
+    setSelectedImagePos(imagePos);
+    setShowOverlayDialog(true);
+  }, [editor, findImageNodePosition, selectedImagePos]);
+
+  const saveOverlay = useCallback(() => {
+    if (!editor) return;
+
+    const imagePos = selectedImagePos ?? findImageNodePosition();
+    if (imagePos === null) return;
+
+    const imageNode = editor.state.doc.nodeAt(imagePos);
+    if (!imageNode) return;
+
+    const overlayPos = imagePos + imageNode.nodeSize;
+    const existingNode = editor.state.doc.nodeAt(overlayPos);
+
+    if (existingNode?.type.name === "imageOverlayText") {
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: overlayPos, to: overlayPos + existingNode.nodeSize })
+        .insertContentAt(overlayPos, {
+          type: "imageOverlayText",
+          attrs: { position: overlayPosition },
+          content: [{ type: "text", text: overlayText.trim() }],
+        })
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(overlayPos, {
+          type: "imageOverlayText",
+          attrs: { position: overlayPosition },
+          content: [{ type: "text", text: overlayText.trim() }],
+        })
+        .run();
+    }
+
+    setShowOverlayDialog(false);
+  }, [editor, findImageNodePosition, overlayPosition, overlayText, selectedImagePos]);
 
   const addImage = useCallback(() => {
     setShowImageSelector(true);
   }, []);
 
   const handleImageUpload = useCallback(() => {
-    setShowImageSelector(true);
-  }, []);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setIsUploadingImage(true);
+      try {
+        await insertUploadedImage(file);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        window.alert("Upload ảnh thất bại. Vui lòng kiểm tra Cloudinary.");
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
+
+    input.click();
+  }, [insertUploadedImage]);
 
   const handleImageSelect = (
     _imageId: string | null,
-    imageData?: { cloudinaryUrl?: string }
+    imageData?: { cloudinaryUrl?: string; fileName?: string; description?: string }
   ) => {
     if (imageData?.cloudinaryUrl && editor) {
       editor.chain().focus().setImage({ src: imageData.cloudinaryUrl }).run();
@@ -1400,9 +1683,9 @@ export default function TiptapEditor({
   );
 
   return (
-    <div className="border border-gray-300 rounded-lg flex flex-col relative bg-white h-full">
+    <div className="border border-gray-300 rounded-lg flex flex-col relative overflow-visible bg-white h-full min-h-[520px]">
       {/* ─── Toolbar ─── */}
-      <div className="bg-white border-b border-gray-300 p-2 flex flex-wrap gap-1 shadow-sm overflow-x-auto sticky top-0 z-40 rounded-t-lg">
+      <div className="relative bg-white border-b border-gray-300 p-2 flex flex-wrap content-start gap-1 min-h-[104px] shadow-sm overflow-visible sticky top-0 z-40 rounded-t-lg">
         {/* Text style */}
         <ToolBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
           <strong>B</strong>
@@ -1464,7 +1747,7 @@ export default function TiptapEditor({
             <div className="w-4 h-0.5 rounded" style={{ backgroundColor: selectedColor }} />
           </button>
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50">
+            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[70]">
               <div className="grid grid-cols-5 gap-2 mb-2">
                 {colors.map((color) => (
                   <button key={color} type="button" onClick={() => setColor(color)}
@@ -1516,7 +1799,7 @@ export default function TiptapEditor({
                 <div className="w-4 h-4 rounded border border-gray-300" style={{ backgroundColor: selectedBgColor }} />
               </button>
               {showBgColorPicker && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-48">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[70] w-48">
                   <p className="text-xs font-medium text-gray-700 mb-2">Cell Background</p>
                   <div className="grid grid-cols-5 gap-2 mb-2">
                     {bgColors.map((color) => (
@@ -1542,7 +1825,7 @@ export default function TiptapEditor({
         <div className="w-px bg-gray-300 mx-1 self-stretch" />
 
         {/* Image */}
-        <ToolBtn onClick={addImage} title="Add image from URL">🔗 URL</ToolBtn>
+        <ToolBtn onClick={addImage} title="Open image library">🖼️ Library</ToolBtn>
         <button
           type="button"
           onClick={handleImageUpload}
@@ -1552,6 +1835,8 @@ export default function TiptapEditor({
         >
           {isUploadingImage ? "⏳" : "📤"} Upload
         </button>
+        <ToolBtn onClick={openCaptionDialog} title="Them chu thich cho anh dang chon">📝 Chu thich</ToolBtn>
+        <ToolBtn onClick={openOverlayDialog} title="Them o text de viet de len anh">✍ Overlay</ToolBtn>
 
         <div className="w-px bg-gray-300 mx-1 self-stretch" />
 
@@ -1561,7 +1846,7 @@ export default function TiptapEditor({
       </div>
 
       {/* ─── Editor ─── */}
-      <EditorContent className="flex-1 overflow-y-auto" editor={editor} />
+      <EditorContent className="flex-1 overflow-y-auto min-h-[420px]" editor={editor} />
 
       {/* ─── Right-click Context Menu ─── */}
       {showCellMenu && (
@@ -1626,11 +1911,109 @@ export default function TiptapEditor({
           </div>
         </div>
       )}
+
+      {showCaptionDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Thêm chú thích ảnh</h3>
+              <p className="text-sm text-gray-500 mt-1">Chọn ảnh đã click, nhập dòng chú thích và lưu để hiển thị ngay phía dưới ảnh.</p>
+            </div>
+            <div className="p-6 space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">Nội dung chú thích</label>
+              <input
+                type="text"
+                value={captionText}
+                onChange={(e) => setCaptionText(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Nhập chú thích ảnh..."
+                autoFocus
+              />
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCaptionDialog(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={saveCaption}
+                disabled={!captionText.trim()}
+                className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Lưu chú thích
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOverlayDialog && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Viết đè lên ảnh</h3>
+              <p className="text-sm text-gray-500 mt-1">Tạo một ô text nổi trên ảnh. Bản này là overlay block riêng, chưa phải kéo thả tự do.</p>
+            </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nội dung text</label>
+                <textarea
+                  value={overlayText}
+                  onChange={(e) => setOverlayText(e.target.value)}
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Nhập text muốn đè lên ảnh..."
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Vị trí overlay</label>
+                <select
+                  value={overlayPosition}
+                  onChange={(e) => setOverlayPosition(e.target.value as OverlayPosition)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="top-left">Top left</option>
+                  <option value="top-right">Top right</option>
+                  <option value="bottom-left">Bottom left</option>
+                  <option value="bottom-right">Bottom right</option>
+                  <option value="center">Center</option>
+                </select>
+
+                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                  Nếu bạn muốn kéo thả ô text tự do trên ảnh, mình sẽ nâng cấp thành canvas overlay riêng ở bước tiếp theo.
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowOverlayDialog(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={saveOverlay}
+                disabled={!overlayText.trim()}
+                className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Chèn overlay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ImageSelector
         isOpen={showImageSelector}
         onClose={() => setShowImageSelector(false)}
         onSelect={(image) => handleImageSelect(image._id, image)}
-        folder="blogs/content"
       />
     </div>
   );

@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
+import ConnectSection from "@/app/components/home/ConnectSection";
 import { getLocalizedText } from "@/lib/utils/string/i18n";
 import { formatDateLong } from "@/lib/utils/string/format";
 import { blogApi, type Blog } from "@/lib/api";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
+import { getBlogExcerpt, getBlogId, getBlogImageUrl, getCategoryId } from "@/lib/utils";
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -47,15 +49,11 @@ export default function BlogDetailPage() {
             {
               onSuccess: (paginationData) => {
                 const allBlogs = paginationData?.items || [];
-                const categoryId = typeof currentBlog.informationId === 'string'
-                  ? currentBlog.informationId
-                  : currentBlog.informationId?._id;
+                const categoryId = getCategoryId(currentBlog.informationId);
                 const sameCategoryBlogs = allBlogs.filter(
                   (b) =>
-                    b.id !== currentBlog.id &&
-                    (typeof b.informationId === 'string'
-                      ? b.informationId === categoryId
-                      : b.informationId?._id === categoryId)
+                    getBlogId(b) !== getBlogId(currentBlog) &&
+                    getCategoryId(b.informationId) === categoryId
                 );
 
                 // Related blogs in same category (non-product)
@@ -92,8 +90,9 @@ export default function BlogDetailPage() {
     const cards = relatedProducts
       .map((product) => {
         const title = getLocalizedText(product.title, product.title_en, language);
-        const image = product.image?.cloudinaryUrl
-          ? `<img src=\"${product.image.cloudinaryUrl}\" alt=\"${title}\" class=\"w-full h-full object-contain group-hover:scale-105 transition-transform duration-300\" />`
+        const imageUrl = getBlogImageUrl(product);
+        const image = imageUrl
+          ? `<img src=\"${imageUrl}\" alt=\"${title}\" class=\"w-full h-full object-contain group-hover:scale-105 transition-transform duration-300\" />`
           : `<div class=\"w-full h-full flex items-center justify-center text-gray-300\"><svg class=\"w-16 h-16\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z\" clip-rule=\"evenodd\" /></svg></div>`;
 
         return `<a href=\"/blog/${product.slug}\" class=\"group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col\"><div class=\"relative h-48 bg-gray-50 overflow-hidden flex items-center justify-center p-4\">${image}</div><div class=\"p-4 flex-1 flex flex-col\"><h3 class=\"font-bold text-lg text-gray-900 mb-1\">${title}</h3><div class=\"text-primary-600 text-sm font-medium group-hover:text-primary-800 inline-flex items-center mt-auto\">Details</div></div></a>`;
@@ -195,6 +194,8 @@ export default function BlogDetailPage() {
   useEffect(() => {
     if (!blog) return;
 
+    const sections = blog.sections || [];
+
     const observerOptions = {
       root: null,
       rootMargin: "-20% 0px -60% 0px", // Active when section is in middle of viewport
@@ -213,7 +214,7 @@ export default function BlogDetailPage() {
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
     // Observe all sections
-    blog.sections.forEach((section, index) => {
+    sections.forEach((section, index) => {
       const sectionAnchor = section.slug || `section-${index + 1}`;
       const element = document.getElementById(`section-${sectionAnchor}`);
       if (element) observer.observe(element);
@@ -252,13 +253,16 @@ export default function BlogDetailPage() {
     return null;
   }
 
+  const sections = blog.sections || [];
+  const shouldShowContactForm = (blog.slug || slug || "").toLowerCase().includes("contact");
+
   return (
     <div className="min-h-screen">
       {/* Hero Banner with Title */}
       {blog.image?.cloudinaryUrl && (
         <div className="relative w-full h-[600px] bg-gray-100 overflow-hidden">
           <img
-            src={blog.image.cloudinaryUrl}
+            src={getBlogImageUrl(blog)}
             alt={blog.title}
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -302,7 +306,7 @@ export default function BlogDetailPage() {
 
           {/* Navigation Tabs */}
           <div className="flex items-center justify-center gap-8 md:gap-16 overflow-x-auto">
-            {blog.sections
+            {sections
               .filter((section) => section.title) // Only show sections with titles
               .map((section, index) => {
                 const sectionAnchor = section.slug || `section-${index + 1}`;
@@ -363,7 +367,7 @@ export default function BlogDetailPage() {
 
             <div className=" mx-auto">
               {/* Show blog title if first section has no title */}
-              {blog.sections[0] && !blog.sections[0].title && (
+              {sections[0] && !sections[0].title && (
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-4 mb-8">
                   {getLocalizedText(blog.title, blog.title_en, language)}
                 </h2>
@@ -371,7 +375,7 @@ export default function BlogDetailPage() {
             </div>
 
             {/* All Sections */}
-            {blog.sections.map((section, index) => {
+            {sections.map((section, index) => {
               // Check if this is a special section (only title, no content)
               const isSpecialSection = section.title && !section.content;
               const isRelatedArticles = section.title?.toLowerCase().includes('related articles');
@@ -458,14 +462,8 @@ export default function BlogDetailPage() {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {relatedProducts.map((product) => {
-                        const contentToUse = getLocalizedText(
-                          product.sections?.[0]?.content || '',
-                          product.sections?.[0]?.content_en,
-                          language
-                        );
-                        const description = contentToUse
-                          ? contentToUse.replace(/<[^>]*>/g, '').substring(0, 100)
-                          : '';
+                        const description = getBlogExcerpt(product, language, 100);
+                        const imageUrl = getBlogImageUrl(product);
 
                         return (
                           <Link
@@ -474,9 +472,9 @@ export default function BlogDetailPage() {
                             className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                           >
                             <div className="relative h-48 bg-gray-50 overflow-hidden flex items-center justify-center p-4">
-                              {product.image?.cloudinaryUrl ? (
+                              {imageUrl ? (
                                 <img
-                                  src={product.image.cloudinaryUrl}
+                                  src={imageUrl}
                                   alt={getLocalizedText(product.title, product.title_en, language)}
                                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                 />
@@ -531,6 +529,12 @@ export default function BlogDetailPage() {
           </div>
         </div>
       </div>
+
+      {shouldShowContactForm && (
+        <div className="pt-4 pb-16 border-t border-gray-100">
+          <ConnectSection compact />
+        </div>
+      )}
     </div>
   );
 }

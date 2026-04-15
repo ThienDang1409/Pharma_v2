@@ -13,6 +13,7 @@ export const siteConfig = {
     twitter: "https://twitter.com/pharmatest",
     linkedin: "https://linkedin.com/company/pharmatest",
     youtube: "https://youtube.com/@pharmatest",
+    instagram: "https://instagram.com/pharmatest",
   },
 
   // Contact info
@@ -20,6 +21,12 @@ export const siteConfig = {
     email: "info@pharmatest.com",
     phone: "+84 123 456 789",
     address: "123 Main Street, Hanoi, Vietnam",
+    mapEmbedUrl:
+      process.env.NEXT_PUBLIC_CONTACT_MAP_EMBED_URL ||
+      "https://www.google.com/maps?q=123+Main+Street,+Hanoi,+Vietnam&output=embed",
+    mapDirectionsUrl:
+      process.env.NEXT_PUBLIC_CONTACT_MAP_DIRECTIONS_URL ||
+      "https://www.google.com/maps/search/?api=1&query=123+Main+Street,+Hanoi,+Vietnam",
   },
 
   // Default meta tags

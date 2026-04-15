@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Edit3,
   Trash2,
+  ExternalLink,
   ArrowRight,
   Folder,
   Newspaper
@@ -27,7 +28,6 @@ import {
 
 export default function AdminBlogsPage() {
   const toast = useToast();
-  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [allCategories, setAllCategories] = useState<Information[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,7 @@ export default function AdminBlogsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -44,8 +45,16 @@ export default function AdminBlogsPage() {
   });
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     fetchData();
-  }, [currentPage, statusFilter, selectedCategoryPath]);
+  }, [currentPage, statusFilter, selectedCategoryPath, debouncedSearchQuery]);
 
   const fetchData = async () => {
     try {
@@ -66,6 +75,10 @@ export default function AdminBlogsPage() {
         params.informationId = selectedCategoryId;
       }
 
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery;
+      }
+
       const [blogsResponse, categoriesResponse] = await Promise.all([
         blogApi.getAll(params),
         informationApi.getAll(),
@@ -73,8 +86,7 @@ export default function AdminBlogsPage() {
 
       // Extract blogs from response
       const blogs = blogsResponse.data?.items || [];
-      setBlogs(blogs);
-      applySearch(blogs);
+      setFilteredBlogs(blogs);
       setPagination({
         page: blogsResponse.data?.currentPage || 1,
         limit: 10,
@@ -93,29 +105,9 @@ export default function AdminBlogsPage() {
   };
 
   useEffect(() => {
-    // Reset to page 1 when filters change
+    // Reset to page 1 when filters or keyword change
     setCurrentPage(1);
-  }, [statusFilter, selectedCategoryPath]);
-
-  useEffect(() => {
-    // Apply search filter when search query changes
-    applySearch(blogs);
-  }, [searchQuery]);
-
-  const applySearch = (blogsData: Blog[]) => {
-    if (!searchQuery.trim()) {
-      setFilteredBlogs(blogsData);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = blogsData.filter(blog =>
-      blog.title?.toLowerCase().includes(query) ||
-      blog.title_en?.toLowerCase().includes(query) ||
-      blog.slug?.toLowerCase().includes(query)
-    );
-    setFilteredBlogs(filtered);
-  };
+  }, [statusFilter, selectedCategoryPath, debouncedSearchQuery]);
 
   const handleSelectCategory = (categoryId: string, level: number) => {
     const newPath = selectedCategoryPath.slice(0, level + 1);
@@ -363,6 +355,21 @@ export default function AdminBlogsPage() {
                                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{category?.name || "Uncategorized"}</span>
                                   <div className="w-1 h-1 rounded-full bg-gray-200" />
                                   <span className="text-[10px] font-medium text-gray-400 lowercase italic">/{blog.slug}</span>
+                                  {blog.slug && (
+                                    <>
+                                      <div className="w-1 h-1 rounded-full bg-gray-200" />
+                                      <Link
+                                        href={`/blog/${blog.slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary-900 hover:text-primary-700"
+                                        title="Mở bài viết public"
+                                      >
+                                        Public
+                                        <ExternalLink size={10} />
+                                      </Link>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>

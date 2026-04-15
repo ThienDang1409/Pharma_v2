@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ImageResponse } from "@/lib/api";
 import ImageUpload from "./ImageUpload";
 import ImageGallery from "./ImageGallery";
+
+const ALL_FOLDERS_VALUE = "__all__";
+
+const folderOptions = [
+  { value: ALL_FOLDERS_VALUE, label: "All folders" },
+  { value: "uploads", label: "Default (uploads)" },
+  { value: "blogs/content", label: "Blogs - Content" },
+  { value: "blogs/thumbnail", label: "Blogs - Thumbnail" },
+  { value: "products", label: "Products" },
+  { value: "user-avatars", label: "User Avatars" },
+];
 
 interface ImageSelectorProps {
   isOpen: boolean;
@@ -30,6 +41,35 @@ export default function ImageSelector({
   const [selectedImage, setSelectedImage] = useState<ImageResponse | null>(
     currentImage || null
   );
+  const [isCustomGalleryFolder, setIsCustomGalleryFolder] = useState(false);
+  const [selectedGalleryFolder, setSelectedGalleryFolder] = useState(
+    folder || ALL_FOLDERS_VALUE
+  );
+  const [customGalleryFolder, setCustomGalleryFolder] = useState("");
+
+  const activeSelectedImage = selectedImage || currentImage || null;
+
+  const handleModalClose = () => {
+    setSelectedImage(null);
+    setActiveTab("gallery");
+    setSelectedGalleryFolder(folder || ALL_FOLDERS_VALUE);
+    setIsCustomGalleryFolder(false);
+    setCustomGalleryFolder("");
+    onClose();
+  };
+
+  const effectiveGalleryFolder = useMemo(() => {
+    if (isCustomGalleryFolder) {
+      const customValue = customGalleryFolder.trim();
+      return customValue || undefined;
+    }
+
+    if (selectedGalleryFolder === ALL_FOLDERS_VALUE) {
+      return undefined;
+    }
+
+    return selectedGalleryFolder;
+  }, [customGalleryFolder, isCustomGalleryFolder, selectedGalleryFolder]);
 
   if (!isOpen) return null;
 
@@ -38,9 +78,9 @@ export default function ImageSelector({
   };
 
   const handleConfirm = () => {
-    if (selectedImage) {
-      onSelect(selectedImage);
-      onClose();
+    if (activeSelectedImage) {
+      onSelect(activeSelectedImage);
+      handleModalClose();
     }
   };
 
@@ -57,7 +97,7 @@ export default function ImageSelector({
           <h2 className="text-2xl font-bold text-gray-800">Select Image</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleModalClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -117,12 +157,53 @@ export default function ImageSelector({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === "gallery" ? (
-            <ImageGallery
-              onSelect={handleSelect}
-              selectedImage={selectedImage}
-              folder={folder}
-              entityType={entityType}
-            />
+            <div className="space-y-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                  Gallery folder filter
+                </label>
+
+                <div className="space-y-2">
+                  <select
+                    value={isCustomGalleryFolder ? "custom" : selectedGalleryFolder}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") {
+                        setIsCustomGalleryFolder(true);
+                      } else {
+                        setIsCustomGalleryFolder(false);
+                        setSelectedGalleryFolder(e.target.value);
+                        setCustomGalleryFolder("");
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    {folderOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                    <option value="custom">Custom folder...</option>
+                  </select>
+
+                  {isCustomGalleryFolder && (
+                    <input
+                      type="text"
+                      value={customGalleryFolder}
+                      onChange={(e) => setCustomGalleryFolder(e.target.value)}
+                      placeholder="e.g., campaigns/summer"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <ImageGallery
+                onSelect={handleSelect}
+                selectedImage={activeSelectedImage}
+                folder={effectiveGalleryFolder}
+                entityType={entityType}
+              />
+            </div>
           ) : (
             <ImageUpload
               onUploadComplete={handleUploadComplete}
@@ -136,17 +217,17 @@ export default function ImageSelector({
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t bg-gray-50">
-          {selectedImage ? (
+          {activeSelectedImage ? (
             <div className="flex items-center gap-3">
               <img
-                src={selectedImage.cloudinaryUrl}
-                alt={selectedImage.fileName}
+                src={activeSelectedImage.cloudinaryUrl}
+                alt={activeSelectedImage.fileName}
                 className="w-12 h-12 object-cover rounded"
               />
               <div className="text-sm">
-                <p className="font-medium text-gray-800">{selectedImage.fileName}</p>
+                <p className="font-medium text-gray-800">{activeSelectedImage.fileName}</p>
                 <p className="text-gray-500">
-                  {selectedImage.width} × {selectedImage.height}
+                  {activeSelectedImage.width} × {activeSelectedImage.height}
                 </p>
               </div>
             </div>
@@ -157,7 +238,7 @@ export default function ImageSelector({
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleModalClose}
               className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium"
             >
               Cancel
@@ -165,7 +246,7 @@ export default function ImageSelector({
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={!selectedImage}
+              disabled={!activeSelectedImage}
               className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Select Image

@@ -8,6 +8,7 @@ import { blogApi, Blog, informationApi, PaginationResult, Information } from "@/
 import { BLOG_STATUS } from "@/lib/constants/api";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
 import { formatDateLong } from "@/lib/utils/string/format";
+import { getBlogExcerpt, getBlogImageUrl } from "@/lib/utils";
 import OptimizedImage from "@/app/components/common/OptimizedImage";
 import NewsCard from "../cards/NewsCard";
 import { FeaturedNewsCardSkeleton, NewsCardSkeleton } from "../common/Skeletons";
@@ -17,6 +18,46 @@ import viTranslations from "@/locales/vi.json";
 const translations = {
   en: enTranslations,
   vi: viTranslations,
+};
+
+const LATEST_NEWS_CACHE_KEY = "pharma:latest-news:v1";
+const LATEST_NEWS_CACHE_TTL = 5 * 60 * 1000;
+
+interface LatestNewsCachePayload {
+  expiresAt: number;
+  items: Blog[];
+}
+
+const readLatestNewsCache = (): Blog[] | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(LATEST_NEWS_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as LatestNewsCachePayload;
+    if (!parsed?.expiresAt || !Array.isArray(parsed.items)) return null;
+
+    if (Date.now() > parsed.expiresAt) {
+      window.sessionStorage.removeItem(LATEST_NEWS_CACHE_KEY);
+      return null;
+    }
+
+    return parsed.items;
+  } catch {
+    return null;
+  }
+};
+
+const writeLatestNewsCache = (items: Blog[]) => {
+  if (typeof window === "undefined") return;
+
+  const payload: LatestNewsCachePayload = {
+    expiresAt: Date.now() + LATEST_NEWS_CACHE_TTL,
+    items,
+  };
+
+  window.sessionStorage.setItem(LATEST_NEWS_CACHE_KEY, JSON.stringify(payload));
 };
 
 export default function LatestNews() {
@@ -34,6 +75,13 @@ export default function LatestNews() {
 
   const fetchLatestNews = async () => {
     setLoading(true);
+
+    const cached = readLatestNewsCache();
+    if (cached) {
+      setNewsArticles(cached);
+      setLoading(false);
+      return;
+    }
     
     try {
       // Get categories
@@ -86,6 +134,7 @@ export default function LatestNews() {
         });
         
         setNewsArticles(sortedBlogs);
+        writeLatestNewsCache(sortedBlogs);
       }
     } catch (error) {
       console.error('Error fetching latest news:', error);
@@ -101,13 +150,7 @@ export default function LatestNews() {
   };
 
   const getExcerpt = (blog: Blog): string => {
-    if (!blog.sections || blog.sections.length === 0) return '';
-    const content = getLocalizedText(
-      blog.sections[0]?.content || '',
-      blog.sections[0]?.content_en,
-      language
-    );
-    return content.replace(/<[^>]*>/g, '').substring(0, 200);
+    return getBlogExcerpt(blog, language, 200);
   };
 
   // Pagination logic
@@ -178,7 +221,7 @@ export default function LatestNews() {
             <div className="grid md:grid-cols-8 gap-8 overflow-hidden group hover:shadow-xl transition-all">
               <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
                 <OptimizedImage
-                  src={currentArticles[0].image?.cloudinaryUrl || '/images/placeholder.jpg'}
+                  src={getBlogImageUrl(currentArticles[0]) || '/images/placeholder.jpg'}
                   alt={getLocalizedText(currentArticles[0].title, currentArticles[0].title_en, language)}
                   preset="cardLarge"
                   className="w-full h-full object-cover"

@@ -114,14 +114,7 @@ export default function BlogPreview({
           </div>
         )}
 
-        <div className={`${isMobile ? 'p-8' : 'p-12 md:p-24 md:pt-20'} max-w-4xl mx-auto`}>
-          {/* Category / Breadcrumb */}
-          <div className="flex items-center gap-2 text-[10px] font-black text-primary-900 uppercase tracking-[0.2em] mb-8">
-            <span className="bg-primary-50 px-2 py-1 rounded">{category}</span>
-            <span className="text-gray-200">/</span>
-            <span className="text-gray-400">Tin tức chuyên sâu</span>
-          </div>
-
+        <div className={`${isMobile ? 'p-8' : 'p-8'} max-w-4xl mx-auto`}>
           {/* Title */}
           <h1 className={`${isMobile ? 'text-3xl' : 'text-5xl md:text-7xl'} font-black text-gray-900 leading-[1.1] mb-10 tracking-tighter`}>
             {title}

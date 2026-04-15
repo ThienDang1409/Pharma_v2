@@ -113,6 +113,8 @@ export const API_ENDPOINTS = {
   AUTH_RESET_PASSWORD: '/auth/reset-password',
   AUTH_CHANGE_PASSWORD: '/auth/change-password',
   AUTH_PROFILE: '/auth/profile',
+  // Contact endpoint
+  CONTACT_SUBMIT: '/contact',
 } as const;
 
 // HTTP Status Codes

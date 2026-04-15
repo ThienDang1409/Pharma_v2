@@ -3,11 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { getLocalizedText, stripHtmlTags } from "@/lib/utils/string/i18n";
+import { getLocalizedText } from "@/lib/utils/string/i18n";
 import { formatDate } from "@/lib/utils/string/format";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
 import { blogApi, Blog, Information } from "@/lib/api";
 import { BLOG_STATUS } from "@/lib/constants/api";
+import { getBlogExcerpt, getBlogImageUrl, getCategoryPreview } from "@/lib/utils";
+import OptimizedImage from "@/app/components/common/OptimizedImage";
 import type { PaginationResult } from "@/lib/types";
 
 export default function BlogPage() {
@@ -36,11 +38,9 @@ export default function BlogPage() {
           // Extract unique categories from blogs
           const categoryMap = new Map<string, Information>();
           blogs.forEach((blog) => {
-            if (blog.informationId && typeof blog.informationId === 'object') {
-              const info = blog.informationId as Information;
-              if (info._id && !categoryMap.has(info._id)) {
-                categoryMap.set(info._id, info);
-              }
+            const info = getCategoryPreview(blog.informationId) as Information | null;
+            if (info?._id && !categoryMap.has(info._id)) {
+              categoryMap.set(info._id, info);
             }
           });
           
@@ -130,9 +130,10 @@ export default function BlogPage() {
                 {/* Image */}
                 <div className="relative h-64 overflow-hidden bg-gray-200">
                   {blog.image ? (
-                    <img
-                      src={blog.image.cloudinaryUrl}
+                    <OptimizedImage
+                      src={getBlogImageUrl(blog)}
                       alt={blog.title}
+                      preset="cardMedium"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   ) : (
@@ -142,17 +143,20 @@ export default function BlogPage() {
                   )}
 
                   {/* Category Badge */}
-                  {blog.informationId && typeof blog.informationId === 'object' && (
-                    <div className="absolute top-4 left-4">
+                  {(() => {
+                    const category = getCategoryPreview(blog.informationId);
+                    if (!category) return null;
+
+                    return <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
                         {getLocalizedText(
-                          blog.informationId.name,
-                          blog.informationId.name_en,
+                          category.name,
+                          category.name_en,
                           language
                         )}
                       </span>
-                    </div>
-                  )}
+                    </div>;
+                  })()}
                 </div>
 
                 {/* Content */}
@@ -162,16 +166,9 @@ export default function BlogPage() {
                   </h2>
 
                   {/* Excerpt */}
-                  {blog.sections && blog.sections.length > 0 && (
+                  {getBlogExcerpt(blog, language, 150) && (
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {stripHtmlTags(
-                        getLocalizedText(
-                          blog.sections[0].content,
-                          blog.sections[0].content_en,
-                          language
-                        ),
-                        150
-                      )}
+                      {getBlogExcerpt(blog, language, 150)}
                     </p>
                   )}
 
