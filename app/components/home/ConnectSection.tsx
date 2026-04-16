@@ -286,7 +286,7 @@ export default function ConnectSection({ compact = false }: ConnectSectionProps)
                     loading="lazy"
                     allowFullScreen
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Pharma Test Office Map"
+                    title="VietAnh Instruments Map"
                   />
                 </div>
 

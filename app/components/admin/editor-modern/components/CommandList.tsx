@@ -2,7 +2,6 @@
 import React, {
   useState,
   useEffect,
-  useCallback,
   useImperativeHandle,
   forwardRef,
 } from 'react';
@@ -17,8 +16,8 @@ import {
   Image,
   Code,
   Minus,
-  MessageSquare,
   AlertCircle,
+  Columns2,
   Table as TableIcon,
   CheckSquare,
 } from 'lucide-react';
@@ -68,7 +67,17 @@ export const CommandList = forwardRef((props: any, ref) => {
   }));
 
   const getIcon = (title: string) => {
-    switch (title.toLowerCase()) {
+    const normalizedTitle = title.toLowerCase();
+
+    if (normalizedTitle.startsWith('layout:')) {
+      return <Columns2 size={18} />;
+    }
+
+    if (normalizedTitle === 'related products' || normalizedTitle === 'related articles') {
+      return <TableIcon size={18} />;
+    }
+
+    switch (normalizedTitle) {
       case 'heading 1': return <Heading1 size={18} />;
       case 'heading 2': return <Heading2 size={18} />;
       case 'heading 3': return <Heading3 size={18} />;
@@ -91,7 +100,7 @@ export const CommandList = forwardRef((props: any, ref) => {
       <div className="px-3 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50 rounded-lg mb-2">
          Chèn nội dung
       </div>
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5 overflow-y-auto max-h-60">
         {props.items.length ? (
           props.items.map((item: any, index: number) => (
             <button

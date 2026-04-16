@@ -372,7 +372,7 @@ export default function Header() {
               </svg>
               <span className="font-semibold text-lg">{language.toUpperCase()}</span>
             </button>
-            <div className="text-gray-700">
+            <div className="text-black">
               <span className="font-semibold">{t.header.company}</span>
             </div>
           </div>
@@ -498,7 +498,7 @@ export default function Header() {
                 <span className="font-semibold">{language.toUpperCase()}</span>
               </button>
 
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-black">
                 <span className="font-semibold">{t.header.company}</span>
               </div>
               <button className="md:hidden">
@@ -554,7 +554,7 @@ export default function Header() {
                                     <div className="absolute inset-0 bg-white/35" />
                                   </div>
 
-                                  <div className="w-[36%] px-4 py-3 border-y border-[#d1d1d1] self-center max-h-[360px] overflow-y-auto">
+                                  <div className="w-[36%] px-4 py-3 border-y border-[#d1d1d1]  max-h-[360px] overflow-y-auto">
                                     <div className="space-y-3">
                                       {rootBlogs ? (
                                         rootBlogs.length > 0 ? (
@@ -597,7 +597,7 @@ export default function Header() {
                                           <div className="absolute inset-0 bg-white/20" />
                                         </div>
 
-                                        <div className="w-[36%] border-y border-[#d1d1d1] py-4 px-2 self-center max-h-[360px] overflow-y-auto">
+                                        <div className="w-[36%] border-y border-[#d1d1d1] py-4 px-2 max-h-[360px] overflow-y-auto">
                                           <div className="space-y-3">
                                             <Link
                                               href={`/category/${child.slug}`}

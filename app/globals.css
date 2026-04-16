@@ -181,3 +181,8 @@ body {
   font-weight: bold;
   text-align: left;
 }
+
+.rendered-content table td[data-border-style="none"],
+.rendered-content table th[data-border-style="none"] {
+  border: none !important;
+}

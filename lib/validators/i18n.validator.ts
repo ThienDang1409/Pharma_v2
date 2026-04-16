@@ -271,8 +271,10 @@ export const CreateBlogSchemaI18n = (lang: I18nLanguage = 'vi') =>
       .array(BlogSectionSchemaI18n(lang), { message: getMessage('blog.sections.minItems', lang) })
       .optional(),
     author: z
-      .string({ message: getMessage('author.required', lang) })
-      .max(100, getMessage('author.maxLength', lang)),
+      .string()
+      .max(100, getMessage('author.maxLength', lang))
+      .optional()
+      .or(z.literal('')),
     informationId: z
       .string({ message: getMessage('category.required', lang) }),
     image: z.string().optional().or(z.literal('')),
@@ -288,7 +290,7 @@ export const UpdateBlogSchemaI18n = (lang: I18nLanguage = 'vi') =>
 // Blog Section Schema
 export const BlogSectionSchemaI18n = (lang: I18nLanguage = 'vi') =>
   z.object({
-    title: z.string({ message: getMessage('blog.section.title.required', lang) }).min(1, getMessage('blog.section.title.required', lang)),
+    title: z.string().optional().or(z.literal('')),
     title_en: z.string().optional(),
     slug: z.string({ message: getMessage('blog.section.slug.required', lang) }).optional().or(z.literal('')),
     type: z.string({ message: getMessage('blog.section.type.required', lang) }),

@@ -132,7 +132,7 @@ export interface InformationPreviewDto {
 // Match: backend_ts/src/modules/blog/blog.dto.ts
 
 export interface BlogSection {
-  title: string;
+  title?: string;
   title_en?: string;
   slug?: string;
   type: string;

@@ -1,21 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
 import ConnectSection from "@/app/components/home/ConnectSection";
+import RelatedCategoryCards from "@/app/components/blog/RelatedCategoryCards";
 import { getLocalizedText } from "@/lib/utils/string/i18n";
 import { formatDateLong } from "@/lib/utils/string/format";
+import enTranslations from "@/locales/en.json";
+import viTranslations from "@/locales/vi.json";
 import { blogApi, type Blog } from "@/lib/api";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
-import { getBlogExcerpt, getBlogId, getBlogImageUrl, getCategoryId } from "@/lib/utils";
+import {
+  buildSectionMeta,
+  getBlogExcerpt,
+  getBlogId,
+  getBlogImageUrl,
+  getCategoryId,
+  getSectionLocalizedContent,
+} from "@/lib/utils";
+
+const translations = {
+  en: enTranslations,
+  vi: viTranslations,
+};
 
 export default function BlogDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { language } = useLanguage();
   const slug = params?.slug as string;
+  const t = translations[language];
 
   const [blog, setBlog] = useState<Blog | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
@@ -24,6 +40,21 @@ export default function BlogDetailPage() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [isNavSticky, setIsNavSticky] = useState(false);
   const [, setIsProductCategory] = useState(false);
+
+  const sectionMeta = useMemo(
+    () => buildSectionMeta(blog?.sections, language),
+    [blog?.sections, language]
+  );
+
+  const navigableSections = useMemo(
+    () => sectionMeta.filter((item) => item.hasDisplayTitle),
+    [sectionMeta]
+  );
+
+  const navigableSectionAnchors = useMemo(
+    () => new Set(navigableSections.map((item) => item.anchor)),
+    [navigableSections]
+  );
 
   async function fetchBlogBySlug() {
     setLoading(true);
@@ -126,9 +157,10 @@ export default function BlogDetailPage() {
   };
 
   // Scroll to section
-  const scrollToSection = (sectionSlug: string) => {
-    setActiveSection(sectionSlug);
-    const element = document.getElementById(`section-${sectionSlug}`);
+  const scrollToSection = (sectionAnchor: string) => {
+    if (!sectionAnchor) return;
+    setActiveSection(sectionAnchor);
+    const element = document.getElementById(`section-${sectionAnchor}`);
     if (element) {
       const offset = 120; // Offset for sticky header
       const elementPosition = element.getBoundingClientRect().top;
@@ -192,9 +224,7 @@ export default function BlogDetailPage() {
 
   // IntersectionObserver to detect active section
   useEffect(() => {
-    if (!blog) return;
-
-    const sections = blog.sections || [];
+    if (!sectionMeta.length) return;
 
     const observerOptions = {
       root: null,
@@ -206,7 +236,9 @@ export default function BlogDetailPage() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const sectionId = entry.target.id.replace("section-", "");
-          setActiveSection(sectionId);
+          if (navigableSectionAnchors.has(sectionId)) {
+            setActiveSection(sectionId);
+          }
         }
       });
     };
@@ -214,14 +246,13 @@ export default function BlogDetailPage() {
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
     // Observe all sections
-    sections.forEach((section, index) => {
-      const sectionAnchor = section.slug || `section-${index + 1}`;
-      const element = document.getElementById(`section-${sectionAnchor}`);
+    sectionMeta.forEach(({ anchor }) => {
+      const element = document.getElementById(`section-${anchor}`);
       if (element) observer.observe(element);
     });
 
     return () => observer.disconnect();
-  }, [blog]);
+  }, [navigableSectionAnchors, sectionMeta]);
 
   // Detect if navigation is sticky
   useEffect(() => {
@@ -253,7 +284,6 @@ export default function BlogDetailPage() {
     return null;
   }
 
-  const sections = blog.sections || [];
   const shouldShowContactForm = (blog.slug || slug || "").toLowerCase().includes("contact");
 
   return (
@@ -266,12 +296,11 @@ export default function BlogDetailPage() {
             alt={blog.title}
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-white/40" />
 
           {/* Title */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="container mx-auto px-6 md:px-30">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 max-w-3xl">
+          <div className="relative px-12 py-12 md:absolute md:inset-0 md:flex md:items-start ">
+            <div className="max-w-[550px] md:ml-12 md:bg-white/80 md:p-10 md:shadow-sm">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4 md:mb-6 leading-tight">
                 {blog.title}
               </h1>
             </div>
@@ -283,7 +312,7 @@ export default function BlogDetailPage() {
         <div className="container mx-auto px-6 md:px-30">
           <div className="flex items-center gap-2 text-white text-sm md:text-base">
             <Link href="/" className="hover:underline font-medium">
-              Home
+              {t.common.home}
             </Link>
             <span className="text-white/80">›</span>
             <span className="font-medium">{getLocalizedText(blog.title, blog.title_en, language)}</span>
@@ -292,54 +321,58 @@ export default function BlogDetailPage() {
       </div>
 
       {/* Section Tabs Navigation - Sticky */}
-      <div className={`border-b-2 border-t-2 border-gray-200 bg-white sticky top-[60px] md:top-0 z-40 transition-all duration-300 ${isNavSticky ? "shadow-md" : ""
-        }`}>
-        <div className="container mx-auto px-6 md:px-12">
-          {/* Title - Shows when sticky */}
-          {isNavSticky && (
-            <div className="py-3 ">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-900 text-center line-clamp-1">
-                {getLocalizedText(blog.title, blog.title_en, language)}
-              </h2>
-            </div>
-          )}
+      {navigableSections.length > 0 && (
+        <div className={`border-b-1 border-w- border-t-1 pt-4 border-gray-200 bg-white sticky top-[60px] md:top-0 z-40 transition-all duration-300 ${isNavSticky ? "shadow-md" : "max-w-[70%] mx-auto"
+          }`}>
+          <div className="container mx-auto px-6 md:px-8">
+            {/* Title - Shows when sticky */}
+            {isNavSticky && (
+              <div className="py-3">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-900 text-center line-clamp-1">
+                  {getLocalizedText(blog.title, blog.title_en, language)}
+                </h2>
+              </div>
+            )}
 
-          {/* Navigation Tabs */}
-          <div className="flex items-center justify-center gap-8 md:gap-16 overflow-x-auto">
-            {sections
-              .filter((section) => section.title) // Only show sections with titles
-              .map((section, index) => {
-                const sectionAnchor = section.slug || `section-${index + 1}`;
-                return <button
-                  key={index}
-                  onClick={() => scrollToSection(sectionAnchor)}
-                  className={`text-base md:text-md pb-2 border-b-4 transition-all whitespace-nowrap cursor-pointer ${activeSection === sectionAnchor
+            {/* Navigation Tabs */}
+            <div className="flex items-center justify-center gap-8 md:gap-16 overflow-x-auto">
+              {navigableSections.map(({ anchor, displayTitle, index }) => (
+                <button
+                  key={`${anchor}-${index}`}
+                  onClick={() => scrollToSection(anchor)}
+                  className={`text-base md:text-md pb-2 border-b-4 transition-all whitespace-nowrap cursor-pointer ${activeSection === anchor
                     ? "text-primary-800 border-primary-800 font-semibold"
                     : "text-primary-900 border-transparent hover:text-primary-800 hover:border-primary-800 hover:font-semibold"
                     }`}
                 >
-                  {section.title}
+                  {displayTitle}
                 </button>
-              })}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Content Area */}
       <div className="container mx-auto w-[70%] py-12 md:py-16">
         <div className="max-w-6xl mx-auto">
           {/* Main Content Container */}
           <div className=" ">
+            <div className="border-b border-gray-200 py-8 text-start">
+            <h1 className="text-3xl md:text-3l font-bold text-gray-900 leading-tight">
+              {getLocalizedText(blog.title, blog.title_en, language)}
+            </h1>
+          </div>
             {/* Author and Date Info at Top */}
             <div className="pt-8 pb-6 border-b border-gray-200 flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4 text-gray-600">
-                <span className="flex items-center gap-2">
+                {/* <span className="flex items-center gap-2">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
                   <span className="font-semibold">{blog.author}</span>
                 </span>
-                <span className="text-gray-400">•</span>
+                <span className="text-gray-400">•</span> */}
                 <span className="flex items-center gap-2">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1h2a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2h2z" clipRule="evenodd" />
@@ -365,41 +398,52 @@ export default function BlogDetailPage() {
 
             </div>
 
-            <div className=" mx-auto">
               {/* Show blog title if first section has no title */}
-              {sections[0] && !sections[0].title && (
+            {/* <div className=" mx-auto">
+              {sectionMeta[0] && !sectionMeta[0].hasDisplayTitle && (
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-4 mb-8">
                   {getLocalizedText(blog.title, blog.title_en, language)}
                 </h2>
               )}
-            </div>
+            </div> */}
 
             {/* All Sections */}
-            {sections.map((section, index) => {
-              // Check if this is a special section (only title, no content)
-              const isSpecialSection = section.title && !section.content;
-              const isRelatedArticles = section.title?.toLowerCase().includes('related articles');
-              const isRelatedProducts = section.title?.toLowerCase().includes('related products');
+            {sectionMeta.map(({ section, index, anchor, displayTitle, hasDisplayTitle }) => {
+              const localizedContent = getSectionLocalizedContent(section, language);
+              const hasLocalizedContent = Boolean(localizedContent?.trim());
 
-              // Regular section with content
-              const sectionAnchor = section.slug || `section-${index + 1}`;
+              if (!hasDisplayTitle && !hasLocalizedContent) {
+                return null;
+              }
+
+              const normalizedTitle = displayTitle.toLowerCase();
+
+              // Check if this is a special section (only title, no content)
+              const isSpecialSection = hasDisplayTitle && !hasLocalizedContent;
+              const isRelatedArticles =
+                normalizedTitle.includes("related articles") ||
+                normalizedTitle.includes("bài viết liên quan") ||
+                normalizedTitle.includes("tin liên quan");
+              const isRelatedProducts =
+                normalizedTitle.includes("related products") ||
+                normalizedTitle.includes("sản phẩm liên quan");
 
               if (!isSpecialSection) {
                 return (
                   <div
                     key={index}
-                    id={`section-${sectionAnchor}`}
+                    id={`section-${anchor}`}
                     className="py-10 border-b border-gray-200 last:border-b-0"
                   >
                     {/* Section Title - only show if exists */}
-                    {section.title && (
+                    {hasDisplayTitle && (
                       <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-6">
-                        {getLocalizedText(section.title, section.title_en, language)}
+                        {displayTitle}
                       </h2>
                     )}
 
                     {/* Section Content with Rich Formatting */}
-                    {section.content && (
+                    {hasLocalizedContent && (
                       <div
                         className="prose prose-lg md:prose-xl max-w-none rendered-content
                           prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
@@ -419,7 +463,7 @@ export default function BlogDetailPage() {
                           prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:border prose-th:border-gray-300
                           prose-td:p-3 prose-td:border prose-td:border-gray-300
                         "
-                        dangerouslySetInnerHTML={{ __html: applySlashEmbeds(getLocalizedText(section.content, section.content_en, language)) }}
+                        dangerouslySetInnerHTML={{ __html: applySlashEmbeds(localizedContent) }}
                       />
                     )}
                   </div>
@@ -429,9 +473,9 @@ export default function BlogDetailPage() {
               // Special section: Related Articles
               if (isRelatedArticles && relatedBlogs.length > 0) {
                 return (
-                  <div key={index} id={`section-${sectionAnchor}`} className="py-10 border-b border-gray-200">
+                  <div key={index} id={`section-${anchor}`} className="py-10 border-b border-gray-200">
                     <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">
-                      {getLocalizedText(section.title, section.title_en, language)}
+                      {displayTitle}
                     </h2>
                     <div className="space-y-3">
                       {relatedBlogs.map((relatedBlog) => (
@@ -456,9 +500,9 @@ export default function BlogDetailPage() {
               // Special section: Related Products
               if (isRelatedProducts && relatedProducts.length > 0) {
                 return (
-                  <div key={index} id={`section-${sectionAnchor}`} className="py-10">
+                  <div key={index} id={`section-${anchor}`} className="py-10">
                     <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">
-                      {getLocalizedText(section.title, section.title_en, language)}
+                      {displayTitle}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {relatedProducts.map((product) => {
@@ -515,16 +559,22 @@ export default function BlogDetailPage() {
             })}
           </div>
 
+          <RelatedCategoryCards
+            category={blog.informationId}
+            relatedBlogs={relatedBlogs}
+            relatedProducts={relatedProducts}
+          />
+
           {/* Back Button */}
           <div className="mt-12 text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 border  border-primary-900 text-gray-700 font-semibold rounded-lg hover:bg-primary-900 hover:text-white transition-colors shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2 px-6 py-3 border  border-primary-900 text-primary-900 font-semibold rounded-lg hover:bg-primary-900 hover:text-white transition-colors shadow-md hover:shadow-lg"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              BACK TO HOME
+              {t.pages.search.backToHome}
             </Link>
           </div>
         </div>

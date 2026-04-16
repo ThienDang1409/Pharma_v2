@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pharma Test - High-Value Testing Equipment",
+  title: "VietAnh Instruments - High-Value Testing Equipment",
   description:
     "Leading manufacturer of high-value testing equipment for the pharmaceutical, food and cosmetics industry worldwide. Made in Germany.",
 };

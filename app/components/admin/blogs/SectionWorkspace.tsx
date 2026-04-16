@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Eye,
   GripVertical,
@@ -12,12 +12,11 @@ import {
   Columns2,
   Rows3,
   Monitor,
-  X,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import TiptapEditor from "@/app/components/admin/editor/TiptapEditor";
-import BlogPreview from "@/app/components/admin/editor-modern/BlogPreview";
+import BlogPreview from "./BlogPreview";
 import type { BlogSection } from "@/lib/api";
 
 type Language = "vi" | "en";
@@ -90,18 +89,6 @@ export default function SectionWorkspace({
 
   const activeSection =
     activeSectionIndex !== null ? sections[activeSectionIndex] || null : null;
-
-  const effectivePreviewContent = useMemo(() => {
-    return sections
-      .map((section) => {
-        const preferred =
-          previewLanguage === "en"
-            ? section.content_en || section.content
-            : section.content || section.content_en;
-        return preferred || "";
-      })
-      .join('<div class="my-10 h-px bg-gray-100"></div>');
-  }, [previewLanguage, sections]);
 
   const effectivePreviewTitle =
     previewLanguage === "en"
@@ -188,7 +175,11 @@ export default function SectionWorkspace({
   const renderEditorPanel = (language: Language) => {
     if (activeSectionIndex === null || !activeSection) return null;
     const isVi = language === "vi";
-    const activeLang = sectionLanguages[activeSectionIndex] || "vi";
+    const isFixedLanguageMode =
+      modalViewMode === "split-languages" || modalViewMode === "triple";
+    const activeLang = isFixedLanguageMode
+      ? language
+      : sectionLanguages[activeSectionIndex] || "vi";
 
     return (
       <div className="flex flex-col h-full min-h-0">
@@ -198,14 +189,16 @@ export default function SectionWorkspace({
             <button
               type="button"
               onClick={() => onSetSectionLanguage(activeSectionIndex, "vi")}
-              className={`px-2.5 py-1 text-[10px] font-black rounded-md transition-all ${activeLang === "vi" ? "bg-gray-900 text-white" : "text-gray-500"}`}
+              disabled={isFixedLanguageMode}
+              className={`px-2.5 py-1 text-[10px] font-black rounded-md transition-all ${activeLang === "vi" ? "bg-gray-900 text-white" : isFixedLanguageMode ? "text-gray-400" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"} ${isFixedLanguageMode ? "cursor-default" : ""}`}
             >
               VI
             </button>
             <button
               type="button"
               onClick={() => onSetSectionLanguage(activeSectionIndex, "en")}
-              className={`px-2.5 py-1 text-[10px] font-black rounded-md transition-all ${activeLang === "en" ? "bg-gray-900 text-white" : "text-gray-500"}`}
+              disabled={isFixedLanguageMode}
+              className={`px-2.5 py-1 text-[10px] font-black rounded-md transition-all ${activeLang === "en" ? "bg-gray-900 text-white" : isFixedLanguageMode ? "text-gray-400" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"} ${isFixedLanguageMode ? "cursor-default" : ""}`}
             >
               EN
             </button>
@@ -225,11 +218,10 @@ export default function SectionWorkspace({
                   type="button"
                   onClick={() => onTranslateToVietnamese(activeSectionIndex)}
                   disabled={translatingSectionIndex === activeSectionIndex}
-                  className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg inline-flex items-center gap-1 transition-all ${
-                    translatingSectionIndex === activeSectionIndex
+                  className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg inline-flex items-center gap-1 transition-all ${translatingSectionIndex === activeSectionIndex
                       ? "bg-primary-100 text-primary-900 animate-pulse"
                       : "bg-green-50 text-green-700 hover:bg-green-100"
-                  }`}
+                    }`}
                 >
                   <Sparkles size={10} className={translatingSectionIndex === activeSectionIndex ? "animate-spin" : ""} />
                   EN→VI
@@ -248,11 +240,10 @@ export default function SectionWorkspace({
                   type="button"
                   onClick={() => onTranslateToEnglish(activeSectionIndex)}
                   disabled={translatingSectionIndex === activeSectionIndex}
-                  className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg inline-flex items-center gap-1 transition-all ${
-                    translatingSectionIndex === activeSectionIndex
+                  className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg inline-flex items-center gap-1 transition-all ${translatingSectionIndex === activeSectionIndex
                       ? "bg-primary-100 text-primary-900 animate-pulse"
                       : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                  }`}
+                    }`}
                 >
                   <Sparkles size={10} className={translatingSectionIndex === activeSectionIndex ? "animate-spin" : ""} />
                   VI→EN
@@ -270,7 +261,11 @@ export default function SectionWorkspace({
               onSectionChange(activeSectionIndex, isVi ? "content" : "content_en", value)
             }
             onImageUpload={onImageUpload}
-            placeholder={isVi ? "Nhập nội dung tiếng Việt..." : "Enter section content in English..."}
+            placeholder={
+              isVi
+                ? "Nhập nội dung tiếng Việt (bắt buộc)..."
+                : "Enter section content in English (required)..."
+            }
           />
         </div>
       </div>
@@ -329,13 +324,12 @@ export default function SectionWorkspace({
                   setDraggingIndex(null);
                   setDragOverIndex(null);
                 }}
-                className={`admin-card border transition-all duration-150 ${
-                  draggingIndex === index
+                className={`admin-card border transition-all duration-150 ${draggingIndex === index
                     ? "border-primary-200 bg-primary-50/40 opacity-70"
                     : dragOverIndex === index && draggingIndex !== index
                       ? "border-primary-400 bg-primary-50"
                       : "border-gray-200"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3 p-3">
                   {/* Drag handle */}
@@ -352,7 +346,7 @@ export default function SectionWorkspace({
                       type="text"
                       value={title}
                       onChange={(e) => onSectionTitleChange(index, e.target.value)}
-                      placeholder={`Tiêu đề section ${index + 1}...`}
+                      placeholder={`Tiêu đề section ${index + 1} (không bắt buộc)...`}
                       className="w-full text-sm font-black text-gray-900 bg-transparent border-none outline-none placeholder:text-gray-300 truncate"
                       onClick={(e) => e.stopPropagation()}
                     />
@@ -404,7 +398,7 @@ export default function SectionWorkspace({
           <div className="absolute inset-0 flex flex-col bg-white">
 
             {/* ── 1. Modal top nav bar (sticky) ── */}
-            <div className="shrink-0 px-4 py-2.5 border-b border-gray-200 bg-white flex items-center justify-between gap-3 shadow-sm">
+            <div className="shrink-0 px-4 py-4 border-b border-gray-200 bg-white flex items-center relative justify-between gap-3 shadow-sm">
               <button
                 type="button"
                 onClick={() => { setIsDeleteConfirmOpen(false); setActiveSectionIndex(null); }}
@@ -413,13 +407,31 @@ export default function SectionWorkspace({
                 <ChevronLeft size={14} /> Quay lại
               </button>
 
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+              {/* <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <span className="px-2 py-1 bg-gray-100 rounded-lg font-black text-gray-700">
                   {activeSectionIndex + 1} / {sections.length}
                 </span>
                 <span className="hidden sm:block text-gray-400 truncate max-w-[200px]">
                   {activeSection.title || activeSection.title_en || "Section mới"}
                 </span>
+              </div> */}
+              <div className="shrink-0 absolute left-1/2 transform -translate-x-1/2 py-2.5 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mx-auto">
+                  <input
+                    type="text"
+                    value={activeSection.title || ""}
+                    onChange={(e) => onSectionTitleChange(activeSectionIndex, e.target.value)}
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-black text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                    placeholder="🇻🇳 Tiêu đề section (VI - không bắt buộc)"
+                  />
+                  <input
+                    type="text"
+                    value={activeSection.title_en || ""}
+                    onChange={(e) => onSectionChange(activeSectionIndex, "title_en", e.target.value)}
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-black text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                    placeholder="🇬🇧 Section title (EN - optional)"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
@@ -448,25 +460,7 @@ export default function SectionWorkspace({
               </div>
             </div>
 
-            {/* ── 2. Title bar (sticky, under nav) ── */}
-            <div className="shrink-0 px-4 py-2.5 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-w-5xl mx-auto">
-                <input
-                  type="text"
-                  value={activeSection.title || ""}
-                  onChange={(e) => onSectionTitleChange(activeSectionIndex, e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-black text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
-                  placeholder="🇻🇳 Tiêu đề section (VI)"
-                />
-                <input
-                  type="text"
-                  value={activeSection.title_en || ""}
-                  onChange={(e) => onSectionChange(activeSectionIndex, "title_en", e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-black text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
-                  placeholder="🇬🇧 Section title (EN)"
-                />
-              </div>
-            </div>
+
 
             {/* ── 3. Editor area (flex-1, scrolls independently) ── */}
             <div className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -477,25 +471,28 @@ export default function SectionWorkspace({
               )}
 
               {modalViewMode === "split-languages" && (
-                <div className="flex-1 min-h-0 overflow-hidden grid grid-cols-1 xl:grid-cols-2 divide-x divide-gray-200">
+                <div className="flex-1 min-h-0  min-h-0 w-[95%] mx-auto overflow-hidden grid grid-cols-1 xl:grid-cols-2 divide-x divide-gray-200">
                   <div className="min-h-0 overflow-hidden flex flex-col">{renderEditorPanel("vi")}</div>
                   <div className="min-h-0 overflow-hidden flex flex-col">{renderEditorPanel("en")}</div>
                 </div>
               )}
 
               {modalViewMode === "split-preview" && (
-                <div className="flex-1 min-h-0 overflow-hidden grid grid-cols-1 xl:grid-cols-2 divide-x divide-gray-200">
+                <div className="flex-1 min-h-0  min-h-0 w-[95%] mx-auto overflow-hidden grid grid-cols-1 xl:grid-cols-2 divide-x divide-gray-200">
                   <div className="min-h-0 overflow-hidden flex flex-col">
                     {renderEditorPanel(sectionLanguages[activeSectionIndex] || "vi")}
                   </div>
                   <div className="min-h-0 mt-12 overflow-y-auto custom-scrollbar bg-gray-50">
                     <BlogPreview
-                      content={effectivePreviewContent}
+                      sections={sections}
                       title={effectivePreviewTitle}
+                      titleVi={previewTitleVi}
+                      titleEn={previewTitleEn}
                       author={previewAuthor}
                       image={previewImage}
                       tags={previewTags}
                       categoryId={previewCategoryId}
+                      language={previewLanguage}
                     />
                   </div>
                 </div>
@@ -504,28 +501,34 @@ export default function SectionWorkspace({
               {modalViewMode === "preview-only" && (
                 <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-gray-50">
                   <BlogPreview
-                    content={effectivePreviewContent}
+                    sections={sections}
                     title={effectivePreviewTitle}
+                    titleVi={previewTitleVi}
+                    titleEn={previewTitleEn}
                     author={previewAuthor}
                     image={previewImage}
                     tags={previewTags}
                     categoryId={previewCategoryId}
+                    language={previewLanguage}
                   />
                 </div>
               )}
 
               {modalViewMode === "triple" && (
-                <div className="flex-1 min-h-0 overflow-hidden grid grid-cols-1 2xl:grid-cols-3 divide-x divide-gray-200">
+                <div className="flex-1 min-h-0 overflow-hidden  min-h-0 w-[95%] mx-auto grid grid-cols-1 2xl:grid-cols-3 divide-x divide-gray-200">
                   <div className="min-h-0 overflow-hidden flex flex-col">{renderEditorPanel("vi")}</div>
                   <div className="min-h-0 overflow-hidden flex flex-col">{renderEditorPanel("en")}</div>
                   <div className="min-h-0 overflow-y-auto custom-scrollbar bg-gray-50">
                     <BlogPreview
-                      content={effectivePreviewContent}
+                      sections={sections}
                       title={effectivePreviewTitle}
+                      titleVi={previewTitleVi}
+                      titleEn={previewTitleEn}
                       author={previewAuthor}
                       image={previewImage}
                       tags={previewTags}
                       categoryId={previewCategoryId}
+                      language={previewLanguage}
                     />
                   </div>
                 </div>
@@ -598,9 +601,8 @@ export default function SectionWorkspace({
                         key={mode}
                         type="button"
                         onClick={() => { setModalViewMode(mode); setShowViewMenu(false); }}
-                        className={`w-full px-3 py-2 rounded-xl text-left text-xs font-black uppercase tracking-widest inline-flex items-center gap-2 transition-all ${
-                          modalViewMode === mode ? "bg-primary-900 text-white" : "text-gray-600 hover:bg-gray-50"
-                        }`}
+                        className={`w-full px-3 py-2 rounded-xl text-left text-xs font-black uppercase tracking-widest inline-flex items-center gap-2 transition-all ${modalViewMode === mode ? "bg-primary-900 text-white" : "text-gray-600 hover:bg-gray-50"
+                          }`}
                       >
                         {icon} {label}
                       </button>

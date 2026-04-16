@@ -22,7 +22,7 @@
     "home": "Trang chủ"
   },
   "header": {
-    "company": "Tập đoàn Pharma Test",
+    "company": "VietAnh Instruments",
     "search": "Tìm kiếm..."
   },
   "navigation": {
@@ -34,7 +34,7 @@
     "services": "Dịch vụ"
   },
   "footer": {
-    "copyright": "© 2024 Pharma Test. Tất cả các quyền được bảo lưu.",
+    "copyright": "© 2024 VietAnh Instruments. Tất cả các quyền được bảo lưu.",
     "followUs": "Theo dõi chúng tôi",
     "address": "Địa chỉ",
     "phone": "Điện thoại",
@@ -43,7 +43,7 @@
     "privacy": "Chính sách bảo mật",
     "terms": "Điều khoản sử dụng",
     "warranty": "Đăng ký bảo hành",
-    "memberOfPharmaGroup": "THÀNH VIÊN CỦA NHÓM PHARMA TEST"
+    "memberOfPharmaGroup": "THÀNH VIÊN CỦA NHÓM VietAnh Instruments"
   },
   "errors": {
     "notFound": "Không tìm thấy trang",

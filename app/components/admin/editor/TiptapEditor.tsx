@@ -1685,7 +1685,7 @@ export default function TiptapEditor({
   return (
     <div className="border border-gray-300 rounded-lg flex flex-col relative overflow-visible bg-white h-full min-h-[520px]">
       {/* ─── Toolbar ─── */}
-      <div className="relative bg-white border-b border-gray-300 p-2 flex flex-wrap content-start gap-1 min-h-[104px] shadow-sm overflow-visible sticky top-0 z-40 rounded-t-lg">
+      <div className="relative bg-white border-b border-gray-300 p-2 flex flex-wrap content-start gap-1 min-h-[120px] shadow-sm overflow-y-scroll sticky top-0 z-40 rounded-t-lg">
         {/* Text style */}
         <ToolBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
           <strong>B</strong>
@@ -1767,7 +1767,7 @@ export default function TiptapEditor({
 
         {/* Table Insert */}
         <ToolBtn
-          onClick={() => editor.chain().focus().insertTable({ rows: 2, cols: 3, withHeaderRow: false }).run()}
+          onClick={() => editor.chain().focus().insertTable({ rows: 1, cols: 2, withHeaderRow: false }).run()}
           title="Insert table"
         >
           ⊞ Table

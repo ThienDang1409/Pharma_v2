@@ -110,7 +110,7 @@ export default function EventsPage() {
     {
       id: 4,
       title:
-        "Recap from the PHARMA TEST GROUP Asian Sales Seminar 2019 in Krabi, Thailand",
+        "Recap from the VietAnh Instruments",
       link: "/impressions/asian-sales-seminar-2019",
     },
     {
@@ -167,7 +167,7 @@ export default function EventsPage() {
               >
                 upcoming events
               </Link>{" "}
-              in Germany and around the world where Pharma Test or one of our
+              in Germany and around the world where VietAnh Instruments or one of our
               global partner companies will be exhibiting. We are looking
               forward to meeting you!
             </p>

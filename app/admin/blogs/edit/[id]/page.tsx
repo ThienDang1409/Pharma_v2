@@ -439,6 +439,7 @@ function AdminEditNewsPageContent() {
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-green-50 text-green-600 rounded-lg"><Save size={13} /></div>
                   <h3 className="text-[11px] font-extrabold text-gray-600 uppercase tracking-widest">Xuất bản</h3>
+                  <span className="text-[10px] font-bold text-gray-400">Không bắt buộc</span>
                 </div>
                 <div className="flex justify-between gap-2">
                   <div className="flex-1">
@@ -449,7 +450,7 @@ function AdminEditNewsPageContent() {
                       ]}
                       value={formData.status}
                       onChange={(value) => setFormData((prev) => ({ ...prev, status: value as "draft" | "published" }))}
-                      placeholder="Trạng thái..."
+                      placeholder="Trạng thái (không bắt buộc)..."
                       className="font-bold text-sm"
                     />
                   </div>
@@ -472,6 +473,7 @@ function AdminEditNewsPageContent() {
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><User size={13} /></div>
                   <h3 className="text-[11px] font-extrabold text-gray-600 uppercase tracking-widest">Tác giả</h3>
+                  <span className="text-[10px] font-bold text-gray-400">Không bắt buộc</span>
                 </div>
                 <input
                   type="text"
@@ -479,9 +481,8 @@ function AdminEditNewsPageContent() {
                   name="author"
                   value={formData.author}
                   onChange={handleInputChange}
-                  required
                   className="admin-input font-bold text-sm py-2"
-                  placeholder="Tên tác giả..."
+                  placeholder="Tên tác giả (không bắt buộc)..."
                 />
               </div>
 
@@ -490,6 +491,7 @@ function AdminEditNewsPageContent() {
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><FolderTree size={13} /></div>
                   <h3 className="text-[11px] font-extrabold text-gray-600 uppercase tracking-widest">Danh mục</h3>
+                  <span className="text-[10px] font-bold text-red-500">Bắt buộc</span>
                 </div>
                 <button
                   type="button"
@@ -497,7 +499,7 @@ function AdminEditNewsPageContent() {
                   className="admin-input font-bold text-sm py-2 text-left flex items-center justify-between"
                 >
                   <span className={`truncate ${formData.informationId ? "text-gray-900" : "text-gray-400"}`}>
-                    {formData.informationId ? getCategoryPath(formData.informationId) : "Chọn danh mục..."}
+                    {formData.informationId ? getCategoryPath(formData.informationId) : "Chọn danh mục (bắt buộc)..."}
                   </span>
                   <ChevronLeft className={`w-4 h-4 shrink-0 transition-transform ${showCategoryDropdown ? "-rotate-90" : "rotate-180"}`} />
                 </button>
@@ -514,6 +516,7 @@ function AdminEditNewsPageContent() {
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-teal-50 text-teal-600 rounded-lg"><Tag size={13} /></div>
                   <h3 className="text-[11px] font-extrabold text-gray-600 uppercase tracking-widest">Tags</h3>
+                  <span className="text-[10px] font-bold text-gray-400">Không bắt buộc</span>
                 </div>
                 <div className="flex gap-2">
                   <input
@@ -522,7 +525,7 @@ function AdminEditNewsPageContent() {
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyPress={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
                     className="admin-input font-bold text-sm py-2 min-w-0"
-                    placeholder="Nhập tag..."
+                    placeholder="Nhập tag (không bắt buộc)..."
                   />
                   <button type="button" onClick={handleAddTag} className="px-3 bg-gray-900 text-white rounded-xl font-black text-xs uppercase shrink-0">+</button>
                 </div>
@@ -570,7 +573,7 @@ function AdminEditNewsPageContent() {
               {/* Titles 2 cột */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
                 <div>
-                  <label className="admin-label text-xs mb-1">🇻🇳 Tiêu đề (VI) <span className="text-red-500">*</span></label>
+                  <label className="admin-label text-xs mb-1">🇻🇳 Tiêu đề (VI) <span className="text-red-500">(bắt buộc)</span></label>
                   <input
                     type="text"
                     name="title"
@@ -582,7 +585,7 @@ function AdminEditNewsPageContent() {
                   />
                 </div>
                 <div>
-                  <label className="admin-label text-xs mb-1">🇬🇧 Title (EN)</label>
+                  <label className="admin-label text-xs mb-1">🇬🇧 Title (EN) <span className="text-gray-400">(không bắt buộc)</span></label>
                   <input
                     type="text"
                     name="title_en"
@@ -597,7 +600,7 @@ function AdminEditNewsPageContent() {
               {/* Excerpts 2 cột */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="admin-label text-xs mb-1">Mô tả ngắn (VI)</label>
+                  <label className="admin-label text-xs mb-1">Mô tả ngắn (VI) <span className="text-gray-400">(không bắt buộc)</span></label>
                   <textarea
                     name="excerpt"
                     value={formData.excerpt || ""}
@@ -608,7 +611,7 @@ function AdminEditNewsPageContent() {
                   />
                 </div>
                 <div>
-                  <label className="admin-label text-xs mb-1">Excerpt (EN)</label>
+                  <label className="admin-label text-xs mb-1">Excerpt (EN) <span className="text-gray-400">(không bắt buộc)</span></label>
                   <textarea
                     name="excerpt_en"
                     value={formData.excerpt_en || ""}
@@ -623,7 +626,7 @@ function AdminEditNewsPageContent() {
               {/* Slug */}
               <div className="border-t border-gray-100 pt-4">
                 <label className="admin-label text-xs mb-1 flex items-center gap-1 text-primary-700">
-                  <Link2 size={11} /> URL Slug <span className="text-red-500">*</span>
+                  <Link2 size={11} /> URL Slug <span className="text-gray-400">(không bắt buộc)</span>
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-[10px] font-black text-gray-400 tracking-widest uppercase shadow-sm shrink-0">/blog/</div>
@@ -632,8 +635,8 @@ function AdminEditNewsPageContent() {
                     name="slug"
                     value={formData.slug}
                     onChange={handleInputChange}
-                    required
                     className="admin-input font-black text-primary-900 border-primary-900/20 py-2 text-sm"
+                    placeholder="tu-dong-tu-tieu-de (không bắt buộc)"
                   />
                 </div>
               </div>
@@ -643,15 +646,15 @@ function AdminEditNewsPageContent() {
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><ImageIcon size={13} /></div>
                   <h3 className="text-[11px] font-extrabold text-gray-600 uppercase tracking-widest">Ảnh đại diện</h3>
+                  <span className="text-[10px] font-bold text-gray-400">Không bắt buộc</span>
                 </div>
                 <ImageField
-                  label="Kéo thả hoặc chọn ảnh"
+                  label="Kéo thả hoặc chọn ảnh (không bắt buộc)"
                   value={formData.image}
                   onChange={(imageId, imageData) => {
                     setFormData((prev) => ({ ...prev, image: imageId || "" }));
                     setPreviewImageUrl(imageData?.cloudinaryUrl || "");
                   }}
-                  required
                 />
               </div>
             </div>

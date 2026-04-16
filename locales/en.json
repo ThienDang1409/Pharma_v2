@@ -22,7 +22,7 @@
     "home": "Home"
   },
   "header": {
-    "company": "Tel Pharma Test Group",
+    "company": "VietAnh Instruments",
     "search": "Search..."
   },
   "navigation": {
@@ -34,7 +34,7 @@
     "services": "Services"
   },
   "footer": {
-    "copyright": "© 2024 Pharma Test. All rights reserved.",
+    "copyright": "© 2024 VietAnh Instruments. All rights reserved.",
     "followUs": "Follow Us",
     "address": "Address",
     "phone": "Phone",
@@ -43,7 +43,7 @@
     "privacy": "Privacy",
     "terms": "Terms of Use",
     "warranty": "Warranty Registration",
-    "memberOfPharmaGroup": "MEMBER OF THE PHARMA TEST GROUP"
+    "memberOfPharmaGroup": "MEMBER OF THE VietAnh Instruments GROUP"
   },
   "errors": {
     "notFound": "Page not found",

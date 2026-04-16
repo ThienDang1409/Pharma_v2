@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { blogApi } from "@/lib/api";
+import { blogApi, informationApi } from "@/lib/api";
 import type { Blog } from "@/lib/api";
 import { BLOG_STATUS } from "@/lib/constants/api";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
@@ -31,16 +31,59 @@ export default function BlogSlider() {
   const t = translations[language];
 
   useEffect(() => {
+    const resolveNewsCategoryId = async (): Promise<string | null> => {
+      const newsBySlug = await apiFetch(() => informationApi.getBySlug("news"), {
+        logErrors: false,
+      });
+
+      const newsBySlugId = newsBySlug?.information?._id;
+      if (newsBySlugId) {
+        return newsBySlugId;
+      }
+
+      const categoriesResult = await apiFetch(() => informationApi.getAll(), {
+        logErrors: false,
+      });
+      const categories = categoriesResult?.items || [];
+
+      const fallbackNewsCategory = categories.find((category) => {
+        const slug = category.slug?.toLowerCase();
+        const viName = category.name?.toLowerCase();
+        const enName = category.name_en?.toLowerCase();
+
+        return slug === "news" || viName?.includes("news") || enName?.includes("news");
+      });
+
+      return fallbackNewsCategory?._id || null;
+    };
+
     const fetchLatestBlogs = async () => {
       setLoading(true);
+
+      const newsCategoryId = await resolveNewsCategoryId();
+      if (!newsCategoryId) {
+        setBlogs([]);
+        setLoading(false);
+        return;
+      }
       
       await apiFetch(
-        () => blogApi.getAll({ status: BLOG_STATUS.PUBLISHED }),
+        () => blogApi.getAll({
+          informationId: newsCategoryId,
+          includeDescendants: true,
+          status: BLOG_STATUS.PUBLISHED,
+          limit: 20,
+        }),
         {
           onSuccess: (response) => {
-            // Handle both nested API response and direct PaginationResult
             const items = response?.items || [];
-            const latestBlogs = items.slice(0, 7);
+            const latestBlogs = [...items]
+              .sort((a, b) => {
+                const aDate = new Date(a.createdAt || 0).getTime();
+                const bDate = new Date(b.createdAt || 0).getTime();
+                return bDate - aDate;
+              })
+              .slice(0, 7);
             setBlogs(latestBlogs);
           },
           onError: () => setBlogs([]),
@@ -50,7 +93,7 @@ export default function BlogSlider() {
       setLoading(false);
     };
 
-    fetchLatestBlogs();
+    void fetchLatestBlogs();
   }, []);
 
   if (loading) {
@@ -98,7 +141,7 @@ export default function BlogSlider() {
               {/* Content */}
               <div className="relative px-12 py-12 md:absolute md:inset-0 md:flex md:items-start ">
                 <div className="container mx-auto md:px-8">
-                  <div className="max-w-[550px] md:ml-12 md:bg-white/30 md:p-10 md:shadow-sm">
+                  <div className="max-w-[550px] md:ml-12 md:bg-white/80 md:p-10 md:shadow-sm">
                     {/* Title */}
                     <h2 className="text-3xl md:text-4xl font-bold text-black mb-4 md:mb-6 leading-tight">
                       {blog.title}

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import ModernTiptapEditor from "./ModernTiptapEditor";
-import BlogPreview from "./BlogPreview";
+import BlogPreview from "@/app/components/admin/blogs/BlogPreview";
 import {
   Save,
   Eye,
@@ -263,6 +263,7 @@ export default function ModernBlogForm({
               image={formData.image}
               tags={formData.tags}
               isMobile={isPreviewMobile}
+              language={activeTab === 'en' ? 'en' : 'vi'}
             />
           </section>
         )}

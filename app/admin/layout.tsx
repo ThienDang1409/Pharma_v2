@@ -111,11 +111,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="p-8 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-900/20">
-                <span className="text-xl font-bold italic">P</span>
+                <span className="text-xl font-bold italic">V</span>
               </div>
               {sidebarOpen && (
                 <div className="flex flex-col">
-                  <span className="text-xl font-black tracking-tighter text-gray-900 leading-none">Pharma Test</span>
+                  <span className="text-xl font-black tracking-tighter text-gray-900 leading-none">VietAnh Instruments</span>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Medical Editorial V2.0</span>
                 </div>
               )}
