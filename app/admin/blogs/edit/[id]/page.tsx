@@ -383,7 +383,7 @@ function AdminEditNewsPageContent() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm">
+      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm supports-[backdrop-filter]:bg-white/92 supports-[backdrop-filter]:backdrop-blur-sm">
         <div className="container mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <Link
@@ -573,25 +573,25 @@ function AdminEditNewsPageContent() {
               {/* Titles 2 cột */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
                 <div>
-                  <label className="admin-label text-xs mb-1">🇻🇳 Tiêu đề (VI) <span className="text-red-500">(bắt buộc)</span></label>
+                  <label className="admin-label text-md mb-1">🇻🇳 Tiêu đề (VI) <span className="text-red-500">(bắt buộc)</span></label>
                   <input
                     type="text"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
                     required
-                    className="admin-input font-black text-base py-2.5"
+                    className="admin-input text-base py-2.5"
                     placeholder="Nhập tiêu đề tiếng Việt..."
                   />
                 </div>
                 <div>
-                  <label className="admin-label text-xs mb-1">🇬🇧 Title (EN) <span className="text-gray-400">(không bắt buộc)</span></label>
+                  <label className="admin-label text-md mb-1">🇬🇧 Title (EN) <span className="text-gray-400">(không bắt buộc)</span></label>
                   <input
                     type="text"
                     name="title_en"
                     value={formData.title_en || ""}
                     onChange={handleInputChange}
-                    className="admin-input font-black text-base py-2.5"
+                    className="admin-input text-base py-2.5"
                     placeholder="Enter English title..."
                   />
                 </div>
@@ -600,7 +600,7 @@ function AdminEditNewsPageContent() {
               {/* Excerpts 2 cột */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="admin-label text-xs mb-1">Mô tả ngắn (VI) <span className="text-gray-400">(không bắt buộc)</span></label>
+                  <label className="admin-label text-md mb-1">Mô tả ngắn (VI) <span className="text-gray-400">(không bắt buộc)</span></label>
                   <textarea
                     name="excerpt"
                     value={formData.excerpt || ""}
@@ -611,7 +611,7 @@ function AdminEditNewsPageContent() {
                   />
                 </div>
                 <div>
-                  <label className="admin-label text-xs mb-1">Excerpt (EN) <span className="text-gray-400">(không bắt buộc)</span></label>
+                  <label className="admin-label text-md mb-1">Excerpt (EN) <span className="text-gray-400">(không bắt buộc)</span></label>
                   <textarea
                     name="excerpt_en"
                     value={formData.excerpt_en || ""}
@@ -625,7 +625,7 @@ function AdminEditNewsPageContent() {
 
               {/* Slug */}
               <div className="border-t border-gray-100 pt-4">
-                <label className="admin-label text-xs mb-1 flex items-center gap-1 text-primary-700">
+                <label className="admin-label text-md mb-1 flex items-center gap-1 text-primary-700">
                   <Link2 size={11} /> URL Slug <span className="text-gray-400">(không bắt buộc)</span>
                 </label>
                 <div className="flex items-center gap-2">

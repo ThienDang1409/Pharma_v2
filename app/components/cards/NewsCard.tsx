@@ -19,27 +19,29 @@ export default function NewsCard({ article, formatDate }: NewsCardProps) {
   const { language } = useLanguage();
   const t = translations[language];
   return (
-    <div className=" overflow-hidden group hover:shadow-xl transition-shadow">
-      <div className="relative h-56 bg-gray-100 overflow-hidden">
-        <OptimizedImage
-          src={article.image?.cloudinaryUrl}
-          alt={article.title}
-          preset="cardMedium"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+    <Link href={`/blog/${article.slug}`}>
+      <div className=" overflow-hidden group hover:shadow-xl transition-shadow">
+        <div className="relative h-56 bg-gray-100 overflow-hidden">
+          <OptimizedImage
+            src={article.image?.cloudinaryUrl}
+            alt={article.title}
+            preset="cardMedium"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+        <div className="p-6">
+          <p className="text-gray-700 text-sm mb-2">{formatDate(article.publishedAt)}</p>
+          <h3 className="text-lg font-bold text-gray-800 mb-4 group-hover:text-secondary-900 transition-colors line-clamp-2">
+            {article.title}
+          </h3>
+          <div
+
+            className="text-primary-900 hover:text-primary-800 font-semibold flex items-center gap-2"
+          >
+            <span>&#62; {t.pages.readMore}</span>
+          </div>
+        </div>
       </div>
-      <div className="p-6">
-        <p className="text-gray-700 text-sm mb-2">{formatDate(article.publishedAt)}</p>
-        <h3 className="text-lg font-bold text-gray-800 mb-4 group-hover:text-secondary-900 transition-colors line-clamp-2">
-          {article.title}
-        </h3>
-        <Link
-          href={`/blog/${article.slug}`}
-          className="text-primary-900 hover:text-primary-800 font-semibold flex items-center gap-2"
-        >
-          <span>&#62; {t.pages.readMore}</span>
-        </Link>
-      </div>
-    </div>
+    </Link>
   );
 }

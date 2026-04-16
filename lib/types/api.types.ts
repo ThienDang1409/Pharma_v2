@@ -19,6 +19,15 @@ export interface PaginationResult<T> {
   total: number;
 }
 
+export interface DashboardOverview {
+  totalCategories: number;
+  totalBlogs: number;
+  publishedBlogs: number;
+  draftBlogs: number;
+  totalImages: number;
+  unusedImages: number;
+}
+
 // ==================== IMAGE TYPES ====================
 // Match: backend_ts/src/modules/image/image.dto.ts
 

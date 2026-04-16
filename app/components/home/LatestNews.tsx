@@ -218,7 +218,7 @@ export default function LatestNews() {
         <div className="grid gap-8">
           {/* Featured Article */}
           {currentArticles[0] && (
-            <div className="grid md:grid-cols-8 gap-8 overflow-hidden group hover:shadow-xl transition-all">
+            <div className=" md:grid-cols-8 hidden md:grid gap-8 overflow-hidden group hover:shadow-xl transition-all">
               <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
                 <OptimizedImage
                   src={getBlogImageUrl(currentArticles[0]) || '/images/placeholder.jpg'}
@@ -246,6 +246,13 @@ export default function LatestNews() {
               </div>
             </div>
           )}
+
+          <div className="md:hidden"> 
+            <NewsCard 
+              article={currentArticles[0]} 
+              formatDate={formatDate} 
+            />
+          </div>
 
           {/* Regular Articles Grid */}
           {currentArticles.length > 1 && (

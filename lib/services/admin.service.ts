@@ -1,31 +1,26 @@
-import { blogApi, informationApi } from "@/lib/api";
+import { dashboardApi } from "@/lib/api";
 
 export interface AdminOverview {
-  totalBlogs: number;
-  totalPublishedBlogs: number;
-  totalDraftBlogs: number;
   totalCategories: number;
+  totalBlogs: number;
+  publishedBlogs: number;
+  draftBlogs: number;
+  totalImages: number;
+  unusedImages: number;
 }
 
 export const adminService = {
   async getOverview(): Promise<AdminOverview> {
-    const [blogsResponse, categoriesResponse] = await Promise.all([
-      blogApi.getAll({ page: 1, limit: 1_000 }),
-      informationApi.getAll({ page: 1, limit: 1_000 }),
-    ]);
-
-    const blogs = blogsResponse.data?.items ?? [];
-    const totalBlogs = blogsResponse.data?.total ?? 0;
-    const totalCategories = categoriesResponse.data?.total ?? 0;
-
-    const published = blogs.filter((item) => item.status === "published").length;
-    const draft = blogs.filter((item) => item.status === "draft").length;
+    const response = await dashboardApi.getOverview();
+    const overview = response.data?.overview;
 
     return {
-      totalBlogs,
-      totalPublishedBlogs: published,
-      totalDraftBlogs: draft,
-      totalCategories,
+      totalCategories: overview?.totalCategories || 0,
+      totalBlogs: overview?.totalBlogs || 0,
+      publishedBlogs: overview?.publishedBlogs || 0,
+      draftBlogs: overview?.draftBlogs || 0,
+      totalImages: overview?.totalImages || 0,
+      unusedImages: overview?.unusedImages || 0,
     };
   },
 };

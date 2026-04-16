@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
 import ConnectSection from "@/app/components/home/ConnectSection";
 import RelatedCategoryCards from "@/app/components/blog/RelatedCategoryCards";
+import RelatedProductsCarousel from "@/app/components/blog/RelatedProductsCarousel";
 import { getLocalizedText } from "@/lib/utils/string/i18n";
 import { formatDateLong } from "@/lib/utils/string/format";
 import enTranslations from "@/locales/en.json";
@@ -14,7 +15,6 @@ import { blogApi, type Blog } from "@/lib/api";
 import { apiFetch } from "@/lib/utils/api/apiHelper";
 import {
   buildSectionMeta,
-  getBlogExcerpt,
   getBlogId,
   getBlogImageUrl,
   getCategoryId,
@@ -27,6 +27,11 @@ const translations = {
 };
 
 export default function BlogDetailPage() {
+  const RELATED_PRODUCTS_FETCH_LIMIT = 24;
+  const RELATED_PRODUCTS_DISPLAY_LIMIT = 14;
+  const RELATED_PRODUCTS_EMBED_LIMIT = 8;
+  const RELATED_ARTICLES_DISPLAY_LIMIT = 3;
+
   const params = useParams();
   const router = useRouter();
   const { language } = useLanguage();
@@ -40,6 +45,7 @@ export default function BlogDetailPage() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [isNavSticky, setIsNavSticky] = useState(false);
   const [, setIsProductCategory] = useState(false);
+  const navStickySentinelRef = useRef<HTMLDivElement | null>(null);
 
   const sectionMeta = useMemo(
     () => buildSectionMeta(blog?.sections, language),
@@ -74,35 +80,51 @@ export default function BlogDetailPage() {
           setBlog(currentBlog);
           setIsProductCategory(currentBlog.isProduct || false);
 
-          // Fetch all published blogs for related content
-          await apiFetch(
-            () => blogApi.getAll({ status: 'published', limit: 1000 }),
-            {
-              onSuccess: (paginationData) => {
-                const allBlogs = paginationData?.items || [];
-                const categoryId = getCategoryId(currentBlog.informationId);
-                const sameCategoryBlogs = allBlogs.filter(
-                  (b) =>
-                    getBlogId(b) !== getBlogId(currentBlog) &&
-                    getCategoryId(b.informationId) === categoryId
-                );
+          // Fetch related content by exact category with small payloads
+          const categoryId = getCategoryId(currentBlog.informationId);
+          if (!categoryId) {
+            setRelatedBlogs([]);
+            setRelatedProducts([]);
+            return;
+          }
 
-                // Related blogs in same category (non-product)
-                const related = sameCategoryBlogs
-                  .filter((b) => b.isProduct === false)
-                  .slice(0, 3);
-                setRelatedBlogs(related);
+          const [relatedBlogsResult, relatedProductsResult] = await Promise.all([
+            apiFetch(
+              () =>
+                blogApi.getAllExactCategory({
+                  informationId: categoryId,
+                  status: 'published',
+                  isProduct: false,
+                  page: 1,
+                  limit: 12,
+                }),
+              { logErrors: false }
+            ),
+            apiFetch(
+              () =>
+                blogApi.getAllExactCategory({
+                  informationId: categoryId,
+                  status: 'published',
+                  isProduct: true,
+                  page: 1,
+                  limit: RELATED_PRODUCTS_FETCH_LIMIT,
+                }),
+              { logErrors: false }
+            ),
+          ]);
 
-                // Related products in same category
-                const relatedProductsList = sameCategoryBlogs.filter((b) => b.isProduct === true);
-                setRelatedProducts(relatedProductsList.slice(0, 4));
-              },
-              onError: () => {
-                setRelatedBlogs([]);
-                setRelatedProducts([]);
-              },
-            }
-          );
+          const currentBlogId = getBlogId(currentBlog);
+
+          const related = (relatedBlogsResult?.items || [])
+            .filter((item) => getBlogId(item) !== currentBlogId)
+            .slice(0, RELATED_ARTICLES_DISPLAY_LIMIT);
+
+          const relatedProductsList = (relatedProductsResult?.items || [])
+            .filter((item) => getBlogId(item) !== currentBlogId)
+            .slice(0, RELATED_PRODUCTS_DISPLAY_LIMIT);
+
+          setRelatedBlogs(related);
+          setRelatedProducts(relatedProductsList);
         },
         onError: () => {
           router.push("/blog");
@@ -119,6 +141,7 @@ export default function BlogDetailPage() {
     }
 
     const cards = relatedProducts
+      .slice(0, RELATED_PRODUCTS_EMBED_LIMIT)
       .map((product) => {
         const title = getLocalizedText(product.title, product.title_en, language);
         const imageUrl = getBlogImageUrl(product);
@@ -256,14 +279,23 @@ export default function BlogDetailPage() {
 
   // Detect if navigation is sticky
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsNavSticky(scrollY > 700); // Sticky after hero section
-    };
+    const sentinel = navStickySentinelRef.current;
+    if (!sentinel) return;
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsNavSticky(!entry.isIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0,
+        rootMargin: "-64px 0px 0px 0px",
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [blog?._id]);
 
   const formatDate = (dateInput: string | Date) => {
     return formatDateLong(dateInput, language === "vi" ? "vi-VN" : "en-US");
@@ -290,7 +322,7 @@ export default function BlogDetailPage() {
     <div className="min-h-screen">
       {/* Hero Banner with Title */}
       {blog.image?.cloudinaryUrl && (
-        <div className="relative w-full h-[600px] bg-gray-100 overflow-hidden">
+        <div className="relative w-full h-64 md:h-[600px] bg-gray-100 overflow-hidden">
           <img
             src={getBlogImageUrl(blog)}
             alt={blog.title}
@@ -298,7 +330,7 @@ export default function BlogDetailPage() {
           />
 
           {/* Title */}
-          <div className="relative px-12 py-12 md:absolute md:inset-0 md:flex md:items-start ">
+          <div className="relative px-12 py-12 hidden md:absolute md:inset-0 md:flex md:items-start ">
             <div className="max-w-[550px] md:ml-12 md:bg-white/80 md:p-10 md:shadow-sm">
               <h1 className="text-3xl md:text-4xl font-bold text-black mb-4 md:mb-6 leading-tight">
                 {blog.title}
@@ -308,7 +340,7 @@ export default function BlogDetailPage() {
         </div>)}
 
       {/* Breadcrumb Navigation - Golden Yellow Background */}
-      <div className="bg-third-500 py-4 shadow-sm mb-10">
+      <div className="bg-third-500 py-4 shadow-sm mb-2">
         <div className="container mx-auto px-6 md:px-30">
           <div className="flex items-center gap-2 text-white text-sm md:text-base">
             <Link href="/" className="hover:underline font-medium">
@@ -320,14 +352,16 @@ export default function BlogDetailPage() {
         </div>
       </div>
 
+      <div ref={navStickySentinelRef} className="h-px w-full" aria-hidden="true" />
+
       {/* Section Tabs Navigation - Sticky */}
       {navigableSections.length > 0 && (
-        <div className={`border-b-1 border-w- border-t-1 pt-4 border-gray-200 bg-white sticky top-[60px] md:top-0 z-40 transition-all duration-300 ${isNavSticky ? "shadow-md" : "max-w-[70%] mx-auto"
+        <div className={`border-b-1 border-w- border-t-1 pt-4 border-gray-200 bg-white sticky top-[60px] md:top-0 z-40 transition-all duration-300 ${isNavSticky ? "shadow-md" : "md:max-w-[70%] mx-auto"
           }`}>
-          <div className="container mx-auto px-6 md:px-8">
+          <div className="container mx-auto px-1">
             {/* Title - Shows when sticky */}
             {isNavSticky && (
-              <div className="py-3">
+              <div className="py-1">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-900 text-center line-clamp-1">
                   {getLocalizedText(blog.title, blog.title_en, language)}
                 </h2>
@@ -354,18 +388,18 @@ export default function BlogDetailPage() {
       )}
 
       {/* Content Area */}
-      <div className="container mx-auto w-[70%] py-12 md:py-16">
+      <div className="container mx-auto w-[95%] md:w-[70%] py-4 md:py-8">
         <div className="max-w-6xl mx-auto">
           {/* Main Content Container */}
           <div className=" ">
-            <div className="border-b border-gray-200 py-8 text-start">
+            <div className=" py-4 text-start">
             <h1 className="text-3xl md:text-3l font-bold text-gray-900 leading-tight">
               {getLocalizedText(blog.title, blog.title_en, language)}
             </h1>
           </div>
             {/* Author and Date Info at Top */}
-            <div className="pt-8 pb-6 border-b border-gray-200 flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4 text-gray-600">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4 text-gray-600 italic text-sm">
                 {/* <span className="flex items-center gap-2">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -374,7 +408,7 @@ export default function BlogDetailPage() {
                 </span>
                 <span className="text-gray-400">•</span> */}
                 <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1h2a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2h2z" clipRule="evenodd" />
                   </svg>
                   {formatDate(blog.createdAt)}
@@ -436,11 +470,11 @@ export default function BlogDetailPage() {
                     className="py-10 border-b border-gray-200 last:border-b-0"
                   >
                     {/* Section Title - only show if exists */}
-                    {hasDisplayTitle && (
+                    {/* {hasDisplayTitle && (
                       <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-6">
                         {displayTitle}
                       </h2>
-                    )}
+                    )} */}
 
                     {/* Section Content with Rich Formatting */}
                     {hasLocalizedContent && (
@@ -504,51 +538,11 @@ export default function BlogDetailPage() {
                     <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">
                       {displayTitle}
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {relatedProducts.map((product) => {
-                        const description = getBlogExcerpt(product, language, 100);
-                        const imageUrl = getBlogImageUrl(product);
-
-                        return (
-                          <Link
-                            key={product._id}
-                            href={`/blog/${product.slug}`}
-                            className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
-                          >
-                            <div className="relative h-48 bg-gray-50 overflow-hidden flex items-center justify-center p-4">
-                              {imageUrl ? (
-                                <img
-                                  src={imageUrl}
-                                  alt={getLocalizedText(product.title, product.title_en, language)}
-                                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-4 flex-1 flex flex-col">
-                              <h3 className="font-bold text-lg text-gray-900 mb-1">
-                                {getLocalizedText(product.title, product.title_en, language)}
-                              </h3>
-                              {description && (
-                                <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-1">
-                                  {description}
-                                </p>
-                              )}
-                              <div className="text-primary-600 text-sm font-medium group-hover:text-primary-800 inline-flex items-center mt-auto">
-                                Details
-                                <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                    <div className="overflow-hidden">
+                      <RelatedProductsCarousel
+                        products={relatedProducts}
+                        language={language}
+                      />
                     </div>
                   </div>
                 );

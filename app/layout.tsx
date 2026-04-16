@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/app/context/LanguageContext";
 import { AuthProvider } from "@/app/context/AuthContext";
 import { ToastProvider } from "@/app/context/ToastContext";
 import ToastContainer from "@/app/components/common/ToastContainer";
+import SmoothScroll from "@/app/components/common/SmoothScroll";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
+        <SmoothScroll />
         <ToastProvider>
           <AuthProvider>
             <LanguageProvider>

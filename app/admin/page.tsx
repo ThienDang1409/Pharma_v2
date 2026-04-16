@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { informationApi, blogApi, imageApi, Information } from "@/lib/api";
-import { BLOG_STATUS } from "@/lib/constants/api";
+import { informationApi, dashboardApi, Information } from "@/lib/api";
 import { getApiErrorFeedback } from "@/lib/utils";
 import { 
   FolderTree, 
@@ -39,41 +38,22 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      // Fetch categories
-      const categoriesResponse = await informationApi.getAll();
+      const [overviewResponse, categoriesResponse] = await Promise.all([
+        dashboardApi.getOverview(),
+        informationApi.getAll({ page: 1, limit: 1000 }),
+      ]);
+
       const categories = categoriesResponse.data?.items || [];
+      const overview = overviewResponse.data?.overview;
       setCategories(categories);
 
-      // Fetch blogs
-      const blogsResponse = await blogApi.getAll();
-      const blogs = blogsResponse.data?.items || [];
-      
-      // Fetch images
-      const imagesResponse = await imageApi.getAll({ limit: 1 });
-      const imagePagination = imagesResponse.data;
-      
-      // Fetch unused images count
-      const unusedImagesResponse = await imageApi.getAll({ unusedOnly: true, limit: 1 });
-      const unusedImagePagination = unusedImagesResponse.data;
-      
-      const rootCategories = (categories || []).filter(
-        (cat) => !cat.parentId || cat.parentId === null || cat.parentId === "null"
-      );
-
-      const publishedCount = (blogs || []).filter(
-        (b) => b.status === BLOG_STATUS.PUBLISHED
-      ).length;
-      const draftCount = (blogs || []).filter(
-        (b) => b.status === BLOG_STATUS.DRAFT
-      ).length;
-
       setStats({
-        totalCategories: rootCategories.length,
-        totalBlogs: blogs?.length || 0,
-        publishedBlogs: publishedCount,
-        draftBlogs: draftCount,
-        totalImages: imagePagination?.total || 0,
-        unusedImages: unusedImagePagination?.total || 0,
+        totalCategories: overview?.totalCategories || 0,
+        totalBlogs: overview?.totalBlogs || 0,
+        publishedBlogs: overview?.publishedBlogs || 0,
+        draftBlogs: overview?.draftBlogs || 0,
+        totalImages: overview?.totalImages || 0,
+        unusedImages: overview?.unusedImages || 0,
       });
     } catch (error) {
       const feedback = getApiErrorFeedback(error);

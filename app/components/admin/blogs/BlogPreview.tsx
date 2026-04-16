@@ -56,8 +56,6 @@ export default function BlogPreview({
   const previewScrollRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedTitle = useMemo(() => {
-    const explicitTitle = title.trim();
-    if (explicitTitle) return explicitTitle;
 
     const localizedTitle = getLocalizedText(
       (titleVi || "").trim(),

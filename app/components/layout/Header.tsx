@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { informationApi, Information, blogApi, Blog } from "@/lib/api";
 import { useLanguage } from "@/app/context/LanguageContext";
@@ -26,11 +26,12 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
   const [categoryBlogs, setCategoryBlogs] = useState<Record<string, Blog[]>>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileOpenSubmenu, setMobileOpenSubmenu] = useState<string | null>(null);
+  const lastScrollYRef = useRef(0);
+  const scrollTickingRef = useRef(false);
+  const closeTimeoutRef = useRef<number | null>(null);
 
   async function fetchCategories() {
     await apiFetch(
@@ -50,32 +51,49 @@ export default function Header() {
 
   useEffect(() => {
     return () => {
-      if (closeTimeout) {
-        clearTimeout(closeTimeout);
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
       }
     };
-  }, [closeTimeout]);
+  }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+    let rafId = 0;
 
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down - hide header unless search is open
-        if (!isSearchOpen) {
-          setIsHeaderVisible(false);
-        }
-      } else {
-        // Scrolling up - always show header
-        setIsHeaderVisible(true);
+    const handleScroll = () => {
+      if (scrollTickingRef.current) {
+        return;
       }
 
-      setLastScrollY(currentScrollY);
+      scrollTickingRef.current = true;
+      rafId = window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const lastScrollY = lastScrollYRef.current;
+
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          // Scrolling down - hide header unless search is open
+          if (!isSearchOpen) {
+            setIsHeaderVisible(false);
+          }
+        } else {
+          // Scrolling up - always show header
+          setIsHeaderVisible(true);
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        scrollTickingRef.current = false;
+      });
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY, isSearchOpen]);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+      scrollTickingRef.current = false;
+    };
+  }, [isSearchOpen]);
 
   const fetchBlogsForCategory = async (categoryId: string) => {
     // Skip if already fetched
@@ -213,10 +231,20 @@ export default function Header() {
     }
   };
 
+  const toggleSearchPanel = () => {
+    setIsSearchOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setIsHeaderVisible(true);
+      }
+      return next;
+    });
+  };
+
   const handleMouseEnter = (categoryId: string, hasChildren?: boolean) => {
-    if (closeTimeout) {
-      clearTimeout(closeTimeout);
-      setCloseTimeout(null);
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
     }
     setOpenDropdown(categoryId);
 
@@ -256,10 +284,13 @@ export default function Header() {
   };
 
   const handleMouseLeave = () => {
-    const timeout = setTimeout(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+
+    closeTimeoutRef.current = window.setTimeout(() => {
       setOpenDropdown(null);
     }, 150); // 150ms delay
-    setCloseTimeout(timeout);
   };
 
   const toggleMobileSubmenu = (categoryId: string) => {
@@ -273,7 +304,7 @@ export default function Header() {
       <div className="flex items-center justify-between px-4 py-3">
         {/* Search Icon - Left */}
         <button
-          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          onClick={toggleSearchPanel}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           aria-label="Search"
         >
@@ -723,7 +754,7 @@ export default function Header() {
 
               {/* Search Icon */}
               <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                onClick={toggleSearchPanel}
                 className="ml-6 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                 aria-label="Search"
               >

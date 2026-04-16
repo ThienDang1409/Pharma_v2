@@ -35,28 +35,28 @@ export default function CategoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const t = translations[language];
-  
+
   // Get root parent category to determine type
   const getRootParent = (cat: Information | null): Information | null => {
     if (!cat) return null;
     let root = cat;
     let current: Information | undefined = cat;
-    
+
     while (current) {
       root = current;
       current = allCategories.find((c) => c._id === current?.parentId);
     }
-    
+
     return root;
   };
-  
+
   const rootCategory = getRootParent(category);
-  
+
   // Detect if this is a news or products category based on root parent
   const isNewsCategory = rootCategory?.slug.includes('news') || false;
   const isProductsCategory = rootCategory?.slug.includes('products') || false;
   const hasSubcategories = subcategories.length > 0;
-  
+
   // News categories show 10 items per page (1 featured + 9 grid), others show 12
   const productsPerPage = isNewsCategory && !hasSubcategories ? 10 : 12;
 
@@ -165,7 +165,7 @@ export default function CategoryPage() {
   const handleSubcategoryClick = (subcategory: Information) => {
     // Check if this subcategory has children
     const hasChildren = allCategories.some((cat) => cat.parentId === subcategory._id);
-    
+
     if (hasChildren) {
       // Navigate to subcategory page if it has children
       window.location.href = `/category/${subcategory.slug}`;
@@ -206,7 +206,7 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Banner */}
-      <div className="relative w-full h-[600px] bg-gray-100 overflow-hidden">
+      <div className="relative w-full h-64 md:h-[600px] bg-gray-100 overflow-hidden">
         {category.image && (
           <img
             src={extractImageUrl(category.image)}
@@ -215,7 +215,7 @@ export default function CategoryPage() {
           />
         )}
         <div className="absolute inset-0 bg-white/40" />
-        
+
         {/* Title */}
         <div className="absolute inset-0 flex items-center">
           <div className="container mx-auto px-6 md:px-30">
@@ -280,11 +280,10 @@ export default function CategoryPage() {
                   <button
                     key={subcat._id}
                     onClick={() => handleSubcategoryClick(subcat)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 uppercase text-sm ${
-                      selectedSubcategory === subcat._id
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 uppercase text-sm ${selectedSubcategory === subcat._id
                         ? "bg-primary-600 text-white shadow-md"
                         : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     {getLocalizedText(subcat.name, subcat.name_en, language)}
                   </button>
@@ -317,7 +316,7 @@ export default function CategoryPage() {
               )}
             </h2>
             {!selectedSubcategory && (
-              <p className="text-gray-600">
+              <p className="text-gray-600 hidden md:block">
                 {products.length} {isProductsCategory ? t.common.products : t.common.articles} {t.common.found}
               </p>
             )}
@@ -331,7 +330,7 @@ export default function CategoryPage() {
                   href={`/blog/${currentProducts[0].slug}`}
                   className="block mb-8"
                 >
-                  <div className="grid md:grid-cols-8 gap-8 bg-white rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-all">
+                  <div className="hidden md:grid md:grid-cols-8 gap-8 bg-white rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-all">
                     <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
                       {currentProducts[0].image ? (
                         <OptimizedImage
@@ -368,20 +367,26 @@ export default function CategoryPage() {
                 </Link>
               )}
 
+              <div className="md:hidden">
+                <NewsCard
+                  article={currentProducts[0]}
+                  formatDate={formatDate}
+                />
+              </div>
+
               {/* Products/News Grid */}
               <div
-                className={`grid grid-cols-1 sm:grid-cols-2 ${
-                  isNewsCategory && !hasSubcategories
+                className={`grid grid-cols-1 sm:grid-cols-2 ${isNewsCategory && !hasSubcategories
                     ? 'lg:grid-cols-3'
                     : 'lg:grid-cols-3 xl:grid-cols-4'
-                } gap-6`}
+                  } gap-6`}
               >
                 {currentProducts
                   .slice(isNewsCategory && !hasSubcategories && currentPage === 1 ? 1 : 0)
                   .map((product) => (
                     isNewsCategory && !hasSubcategories ? (
-                      <NewsCard 
-                        key={product._id} 
+                      <NewsCard
+                        key={product._id}
                         article={product}
                         formatDate={formatDate}
                       />
@@ -413,11 +418,10 @@ export default function CategoryPage() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-4 py-2 border rounded-lg transition-colors ${
-                            currentPage === page
+                          className={`px-4 py-2 border rounded-lg transition-colors ${currentPage === page
                               ? "bg-primary-600 text-white border-primary-600"
                               : "border-gray-300 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           {page}
                         </button>

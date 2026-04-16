@@ -115,6 +115,8 @@ export const API_ENDPOINTS = {
   AUTH_PROFILE: '/auth/profile',
   // Contact endpoint
   CONTACT_SUBMIT: '/contact',
+  // Dashboard endpoints
+  DASHBOARD_OVERVIEW: '/dashboard/overview',
 } as const;
 
 // HTTP Status Codes

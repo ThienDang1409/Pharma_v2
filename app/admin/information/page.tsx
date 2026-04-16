@@ -427,15 +427,25 @@ export default function InformationPage() {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const submitData = {
-      name: formData.name,
-      name_en: formData.name_en,
-      slug: formData.slug,
-      description: formData.description || undefined,
-      description_en: formData.description_en || undefined,
-      image: formData.image || undefined,
-      parentId: formData.parentId || undefined,
-    };
+    const submitData = editingCategory
+      ? {
+          name: formData.name,
+          name_en: formData.name_en,
+          slug: formData.slug,
+          description: formData.description,
+          description_en: formData.description_en,
+          image: formData.image,
+          parentId: formData.parentId === "" ? null : formData.parentId,
+        }
+      : {
+          name: formData.name,
+          name_en: formData.name_en,
+          slug: formData.slug,
+          description: formData.description || undefined,
+          description_en: formData.description_en || undefined,
+          image: formData.image || undefined,
+          parentId: formData.parentId === "" ? null : formData.parentId,
+        };
 
     const schema = editingCategory
       ? UpdateInformationSchemaI18n(language)

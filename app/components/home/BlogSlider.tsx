@@ -224,7 +224,7 @@ export default function BlogSlider() {
         }
 
         .swiper-pagination {
-          bottom: 20px !important;
+          bottom: 10px !important;
         }
 
         @media (max-width: 767px) {
@@ -234,7 +234,7 @@ export default function BlogSlider() {
           }
 
           .swiper-pagination {
-            bottom: 170px !important;
+            bottom: 370px !important;
           }
         }
       `}</style>

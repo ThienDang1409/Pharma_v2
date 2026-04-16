@@ -82,6 +82,7 @@ export default function SectionWorkspace({
 }: SectionWorkspaceProps) {
   const [activeSectionIndex, setActiveSectionIndex] = useState<number | null>(null);
   const [modalViewMode, setModalViewMode] = useState<ModalViewMode>("editor");
+  const [previewPanelLanguage, setPreviewPanelLanguage] = useState<Language>(previewLanguage);
   const [showViewMenu, setShowViewMenu] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -90,6 +91,11 @@ export default function SectionWorkspace({
   const activeSection =
     activeSectionIndex !== null ? sections[activeSectionIndex] || null : null;
 
+  const hasPreviewPane =
+    modalViewMode === "split-preview" ||
+    modalViewMode === "preview-only" ||
+    modalViewMode === "triple";
+
   const effectivePreviewTitle =
     previewLanguage === "en"
       ? previewTitleEn || previewTitleVi || "Untitled"
@@ -97,14 +103,16 @@ export default function SectionWorkspace({
 
   const openSectionEditor = useCallback((index: number) => {
     setActiveSectionIndex(index);
+    setPreviewPanelLanguage(sectionLanguages[index] || previewLanguage);
     setIsDeleteConfirmOpen(false);
     setShowViewMenu(false);
-  }, []);
+  }, [previewLanguage, sectionLanguages]);
 
   const handleAddAndOpen = useCallback(() => {
     const newIndex = sections.length;
     onAddSection();
     onSetSectionLanguage(newIndex, "vi");
+    setPreviewPanelLanguage("vi");
     setActiveSectionIndex(newIndex);
     setModalViewMode("editor");
     setIsDeleteConfirmOpen(false);
@@ -113,21 +121,25 @@ export default function SectionWorkspace({
 
   const handlePrevSection = useCallback(() => {
     if (activeSectionIndex === null || activeSectionIndex <= 0) return;
-    setActiveSectionIndex(activeSectionIndex - 1);
+    const targetIndex = activeSectionIndex - 1;
+    setActiveSectionIndex(targetIndex);
+    setPreviewPanelLanguage(sectionLanguages[targetIndex] || previewLanguage);
     setIsDeleteConfirmOpen(false);
     setShowViewMenu(false);
-  }, [activeSectionIndex]);
+  }, [activeSectionIndex, previewLanguage, sectionLanguages]);
 
   const handleNextSection = useCallback(() => {
     if (activeSectionIndex === null) return;
     if (activeSectionIndex < sections.length - 1) {
-      setActiveSectionIndex(activeSectionIndex + 1);
+      const targetIndex = activeSectionIndex + 1;
+      setActiveSectionIndex(targetIndex);
+      setPreviewPanelLanguage(sectionLanguages[targetIndex] || previewLanguage);
       setIsDeleteConfirmOpen(false);
       setShowViewMenu(false);
       return;
     }
     handleAddAndOpen();
-  }, [activeSectionIndex, handleAddAndOpen, sections.length]);
+  }, [activeSectionIndex, handleAddAndOpen, previewLanguage, sectionLanguages, sections.length]);
 
   const removeSectionAt = useCallback(
     (index: number) => {
@@ -394,7 +406,7 @@ export default function SectionWorkspace({
 
       {/* ── FULLSCREEN SECTION EDITOR MODAL ── */}
       {activeSection && activeSectionIndex !== null && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] bg-black/50">
           <div className="absolute inset-0 flex flex-col bg-white">
 
             {/* ── 1. Modal top nav bar (sticky) ── */}
@@ -415,7 +427,7 @@ export default function SectionWorkspace({
                   {activeSection.title || activeSection.title_en || "Section mới"}
                 </span>
               </div> */}
-              <div className="shrink-0 absolute left-1/2 transform -translate-x-1/2 py-2.5 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm">
+              <div className="shrink-0 absolute left-1/2 transform -translate-x-1/2 py-2.5 border-b border-gray-100 bg-gray-50">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mx-auto">
                   <input
                     type="text"
@@ -435,6 +447,25 @@ export default function SectionWorkspace({
               </div>
 
               <div className="flex items-center gap-2">
+                {hasPreviewPane && (
+                  <div className="inline-flex bg-white rounded-lg p-0.5 border border-gray-200 shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewPanelLanguage("vi")}
+                      className={`px-2.5 py-1 text-[10px] font-black rounded-md transition-all ${previewPanelLanguage === "vi" ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
+                    >
+                      Preview VI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewPanelLanguage("en")}
+                      className={`px-2.5 py-1 text-[10px] font-black rounded-md transition-all ${previewPanelLanguage === "en" ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
+                    >
+                      Preview EN
+                    </button>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={handlePrevSection}
@@ -492,7 +523,7 @@ export default function SectionWorkspace({
                       image={previewImage}
                       tags={previewTags}
                       categoryId={previewCategoryId}
-                      language={previewLanguage}
+                      language={previewPanelLanguage}
                     />
                   </div>
                 </div>
@@ -509,7 +540,7 @@ export default function SectionWorkspace({
                     image={previewImage}
                     tags={previewTags}
                     categoryId={previewCategoryId}
-                    language={previewLanguage}
+                    language={previewPanelLanguage}
                   />
                 </div>
               )}
@@ -528,7 +559,7 @@ export default function SectionWorkspace({
                       image={previewImage}
                       tags={previewTags}
                       categoryId={previewCategoryId}
-                      language={previewLanguage}
+                      language={previewPanelLanguage}
                     />
                   </div>
                 </div>

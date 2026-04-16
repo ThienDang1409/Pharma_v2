@@ -161,7 +161,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           )}
 
           {/* Sidebar Footer / User Profile Summary */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white/50 backdrop-blur-sm">
+          <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white supports-[backdrop-filter]:bg-white/70 supports-[backdrop-filter]:backdrop-blur-sm">
             <div className={`flex items-center ${sidebarOpen ? "gap-3" : "justify-center"}`}>
               {user?.avatar ? (
                 <img src={user.avatar} alt={user.name} className="w-11 h-11 rounded-2xl object-cover shadow-sm border-2 border-white" />
@@ -190,7 +190,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Main Content */}
         <div className={`flex-1 flex flex-col ${sidebarOpen ? "ml-72" : "ml-24"} transition-all duration-500 ease-in-out`}>
           {/* Top Header */}
-          <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-30 border-b border-gray-200 px-10 py-5">
+          <header className="bg-white sticky top-0 z-30 border-b border-gray-200 px-10 py-5 supports-[backdrop-filter]:bg-white/85 supports-[backdrop-filter]:backdrop-blur-sm">
             <div className="flex items-center justify-between gap-10">
               {/* Search Bar */}
               <div className="flex flex-col">
@@ -275,7 +275,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </header>
 
           {/* Page Content */}
-          <main className="p-10 flex-1 overflow-auto custom-scrollbar">
+          <main className="p-4 flex-1 overflow-auto custom-scrollbar">
             {children}
           </main>
         </div>

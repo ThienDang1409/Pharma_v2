@@ -1,18 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function BackToTop() {
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const showBackToTopRef = useRef(false);
+  const tickingRef = useRef(false);
 
   // Show button when page is scrolled down
   useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
+    let rafId = 0;
+
+    const updateVisibility = () => {
+      const shouldShow = window.scrollY > 300;
+      if (shouldShow !== showBackToTopRef.current) {
+        showBackToTopRef.current = shouldShow;
+        setShowBackToTop(shouldShow);
+      }
+      tickingRef.current = false;
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const handleScroll = () => {
+      if (tickingRef.current) {
+        return;
+      }
+
+      tickingRef.current = true;
+      rafId = window.requestAnimationFrame(updateVisibility);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+      tickingRef.current = false;
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -27,7 +52,7 @@ export default function BackToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-8 rouded-full border-2 border border-primary-900 right-8 z-50 bg-white hover:bg-primary-800 hover:text-white text-primary-900 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+      className="fixed bottom-8 right-8 z-50 border-2 border-primary-900 bg-white p-3 text-primary-900 rounded-full shadow-lg transition-all duration-300 hover:bg-primary-800 hover:text-white hover:shadow-xl group cursor-pointer"
       aria-label="Back to top"
     >
       <svg

@@ -7,6 +7,7 @@ export { authApi } from "./authApi";
 export { blogApi } from "./blogApi";
 export { informationApi } from "./informationApi";
 export { contactApi } from "./contactApi";
+export { dashboardApi } from "./dashboardApi";
 export { http } from "./http";
 
 // Export types for convenience
