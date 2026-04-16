@@ -159,6 +159,11 @@ body {
 /* ==========================================================================
    Tiptap Rendered Content Table Styles (Preview & Frontend)
    ========================================================================== */
+.rendered-content {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .rendered-content table {
   width: 100% !important;
   min-width: 100% !important;

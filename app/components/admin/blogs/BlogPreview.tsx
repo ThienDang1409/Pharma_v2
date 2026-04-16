@@ -303,7 +303,7 @@ export default function BlogPreview({
             <div className="max-w-6xl mx-auto">
               <div>
                 <div className="border-b border-gray-200 py-8 text-start">
-                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight break-words [overflow-wrap:anywhere]">
                     {resolvedTitle}
                   </h1>
                 </div>
@@ -380,14 +380,14 @@ export default function BlogPreview({
                         className="py-10 border-b border-gray-200 last:border-b-0"
                       >
                         {hasDisplayTitle && (
-                          <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-6">
+                          <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-6 break-words [overflow-wrap:anywhere]">
                             {displayTitle}
                           </h2>
                         )}
 
                         {hasLocalizedContent && (
                           <div
-                            className="prose prose-lg md:prose-xl max-w-none rendered-content
+                            className="prose prose-lg md:prose-xl max-w-none rendered-content break-words [overflow-wrap:anywhere] [&_*]:break-words [&_*]:[overflow-wrap:anywhere]
                               prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
                               prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
                               prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
@@ -423,7 +423,7 @@ export default function BlogPreview({
                           {displayTitle}
                         </h2>
                         <div
-                          className="prose prose-base max-w-none rendered-content"
+                          className="prose prose-base max-w-none rendered-content break-words [overflow-wrap:anywhere] [&_*]:break-words [&_*]:[overflow-wrap:anywhere]"
                           dangerouslySetInnerHTML={{ __html: renderRelatedArticlesHtml }}
                         />
                       </div>
@@ -441,7 +441,7 @@ export default function BlogPreview({
                           {displayTitle}
                         </h2>
                         <div
-                          className="prose prose-base max-w-none rendered-content"
+                          className="prose prose-base max-w-none rendered-content break-words [overflow-wrap:anywhere] [&_*]:break-words [&_*]:[overflow-wrap:anywhere]"
                           dangerouslySetInnerHTML={{ __html: renderRelatedProductsHtml }}
                         />
                       </div>

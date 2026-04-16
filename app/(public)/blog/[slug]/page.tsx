@@ -445,7 +445,7 @@ export default function BlogDetailPage() {
                     {/* Section Content with Rich Formatting */}
                     {hasLocalizedContent && (
                       <div
-                        className="prose prose-lg md:prose-xl max-w-none rendered-content
+                        className="prose prose-lg md:prose-xl max-w-none rendered-content break-words [overflow-wrap:anywhere] [&_*]:break-words [&_*]:[overflow-wrap:anywhere]
                           prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
                           prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
                           prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
