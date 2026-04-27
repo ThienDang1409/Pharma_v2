@@ -6,37 +6,62 @@ import { AuthProvider } from "@/app/context/AuthContext";
 import { ToastProvider } from "@/app/context/ToastContext";
 import ToastContainer from "@/app/components/common/ToastContainer";
 import SmoothScroll from "@/app/components/common/SmoothScroll";
+import { siteMetadataBase } from "@/lib/seo/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { getCurrentLanguageFromRequest } from "@/lib/seo/language";
+import { getSeoRouteCopy } from "@/lib/seo/copy";
+import { buildOrganizationJsonLd } from "@/lib/seo/schema";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "vietnamese"],
 });
 
-export const metadata: Metadata = {
-  title: "VietAnh Instruments - High-Value Testing Equipment",
-  description:
-    "Leading manufacturer of high-value testing equipment for the pharmaceutical, food and cosmetics industry worldwide. Made in Germany.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const language = await getCurrentLanguageFromRequest();
+  const copy = getSeoRouteCopy(language);
 
-export default function RootLayout({
+  const localizedMetadata = buildPageMetadata({
+    title: copy.homeTitle,
+    description: copy.homeDescription,
+    path: "/",
+    language,
+  });
+
+  return {
+    ...localizedMetadata,
+    metadataBase: siteMetadataBase,
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const language = await getCurrentLanguageFromRequest();
+  const organizationJsonLd = JSON.stringify(
+    buildOrganizationJsonLd(language)
+  ).replace(/</g, "\\u003c");
+
   return (
-    <html lang="vi">
+    <html lang={language}>
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
         <SmoothScroll />
         <ToastProvider>
           <AuthProvider>
-            <LanguageProvider>
+            <LanguageProvider initialLanguage={language}>
               {children}
               <ToastContainer />
             </LanguageProvider>
           </AuthProvider>
         </ToastProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: organizationJsonLd }}
+        />
       </body>
     </html>
   );

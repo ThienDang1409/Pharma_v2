@@ -279,6 +279,8 @@ export default function BlogDetailPage() {
 
   // Detect if navigation is sticky
   useEffect(() => {
+    if (loading) return;
+
     const sentinel = navStickySentinelRef.current;
     if (!sentinel) return;
 
@@ -289,13 +291,13 @@ export default function BlogDetailPage() {
       {
         root: null,
         threshold: 0,
-        rootMargin: "-64px 0px 0px 0px",
+        rootMargin: `-64px 0px 0px 0px`,
       }
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [blog?._id]);
+  }, [loading, blog?._id]);
 
   const formatDate = (dateInput: string | Date) => {
     return formatDateLong(dateInput, language === "vi" ? "vi-VN" : "en-US");
@@ -316,12 +318,14 @@ export default function BlogDetailPage() {
     return null;
   }
 
+  const showHeroTitle = Boolean(blog.image?.cloudinaryUrl);
+  const ContentHeadingTag = showHeroTitle ? "h2" : "h1";
   const shouldShowContactForm = (blog.slug || slug || "").toLowerCase().includes("contact");
 
   return (
     <div className="min-h-screen">
       {/* Hero Banner with Title */}
-      {blog.image?.cloudinaryUrl && (
+      {showHeroTitle && (
         <div className="relative w-full h-64 md:h-[600px] bg-gray-100 overflow-hidden">
           <img
             src={getBlogImageUrl(blog)}
@@ -393,10 +397,10 @@ export default function BlogDetailPage() {
           {/* Main Content Container */}
           <div className=" ">
             <div className=" py-4 text-start">
-            <h1 className="text-3xl md:text-3l font-bold text-gray-900 leading-tight">
-              {getLocalizedText(blog.title, blog.title_en, language)}
-            </h1>
-          </div>
+              <ContentHeadingTag className="text-3xl md:text-3xl font-bold text-gray-900 leading-tight">
+                {getLocalizedText(blog.title, blog.title_en, language)}
+              </ContentHeadingTag>
+            </div>
             {/* Author and Date Info at Top */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4 text-gray-600 italic text-sm">
