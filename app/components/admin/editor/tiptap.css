@@ -244,6 +244,7 @@
 .ProseMirror img {
   max-width: 100%;
   height: auto;
+  min-width: 150px;
   border-radius: 0.5em;
   display: block;
   /* Prevent image from stretching in flex/grid context */
@@ -324,28 +325,31 @@
 }
 
 /* ─── Table Wrapper — enables horizontal scroll on small screens ─── */
-.ProseMirror .tableWrapper,
-.ProseMirror>table {
+.ProseMirror .tableWrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   display: block;
   width: 100%;
 }
 
+.ProseMirror>table{
+  width: 100% !important;
+}
+
 /* ─── Table Core ────────────────────────────────────────────── */
 .ProseMirror table {
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
-  width: 100%;
-  min-width: 100%;
+  table-layout: auto;
+  width: 100% !important;
+  min-width: auto !important;
   margin: 1em 0;
   overflow: hidden;
 }
 
 .ProseMirror .tableWrapper table {
   width: 100% !important;
-  min-width: 100% !important;
+  /* min-width: 100% !important; */
 }
 
 /* Keep table expanded after deleting columns down to one */
@@ -381,6 +385,25 @@
   padding: 0.5em;
   vertical-align: middle;
   text-align: center;
+}
+
+/* Image cells — equal width distribution (50% each for 2-column image tables) */
+/* .ProseMirror table td:has(> img),
+.ProseMirror table th:has(> img) {
+  width: 50%;
+  max-width: none;
+  min-width: 0;
+} */
+
+/* Image table columns — equal width distribution (only for tables with images) */
+.ProseMirror table:has(td > img, th > img) colgroup col:not(:only-child) {
+  max-width: 50% !important;
+  width: auto !important;
+}
+/* Text cells — allow flexible resizing */
+.ProseMirror table td:not(:has(> img)),
+.ProseMirror table th:not(:has(> img)) {
+  max-width: none;
 }
 
 /* Mixed content: image + text inside same cell */

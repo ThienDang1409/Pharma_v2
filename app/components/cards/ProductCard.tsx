@@ -7,6 +7,7 @@ import OptimizedImage from "@/app/components/common/OptimizedImage";
 import enTranslations from "@/locales/en.json";
 import viTranslations from "@/locales/vi.json";
 import { extractImageUrl } from "@/lib/utils/image/image-handler";
+import { getLocalizedText } from "@/lib/utils/string/i18n";
 
 const translations = {
   en: enTranslations,
@@ -20,10 +21,11 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  // Extract description from first section if available
-  const description = product.sections?.[0]?.content
-    ? product.sections[0].content.replace(/<[^>]*>/g, '').substring(0, 150)
-    : '';
+
+  // Extract localized description from first section if available
+  const description = product.excerpt
+    ? getLocalizedText(product.excerpt, product.excerpt_en, language)
+    : null;
 
   return (
     <Link
@@ -43,7 +45,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Product Info */}
       <div className="p-5 flex-1 flex flex-col">
         <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
-          {product.title}
+          {getLocalizedText(product.title, product.title_en, language)}
         </h3>
         {description && (
           <p className="text-sm text-gray-600 mb-4 line-clamp-3 flex-1">

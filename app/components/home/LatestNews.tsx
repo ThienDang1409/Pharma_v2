@@ -66,7 +66,7 @@ export default function LatestNews() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const t = translations[language];
-  
+
   const articlesPerPage = 4; // 1 featured + 3 regular
 
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function LatestNews() {
       setLoading(false);
       return;
     }
-    
+
     try {
       // Get categories
       const categoriesResult = await apiFetch(
@@ -91,27 +91,27 @@ export default function LatestNews() {
           onError: () => setNewsArticles([]),
         }
       );
-      
+
       if (!categoriesResult) {
         setNewsArticles([]);
         setLoading(false);
         return;
       }
-      
+
       const categories = (categoriesResult as unknown as PaginationResult<Information>)?.items || [];
-      
+
       // Find News category
       const newsCategory = categories.find(
         (cat) => cat.slug === 'news' || cat.name.toLowerCase().includes('news')
       );
-      
+
       if (!newsCategory) {
         console.error('News category not found');
         setNewsArticles([]);
         setLoading(false);
         return;
       }
-      
+
       // Fetch blogs
       const blogsResult = await apiFetch(
         () => blogApi.getAll({
@@ -122,17 +122,17 @@ export default function LatestNews() {
           onError: () => setNewsArticles([]),
         }
       );
-      
+
       if (blogsResult) {
         const blogs = (blogsResult as unknown as PaginationResult<Blog>)?.items || [];
-        
+
         // Sort by createdAt descending (newest first)
         const sortedBlogs = blogs.sort((a: Blog, b: Blog) => {
           const dateA = new Date(a.createdAt || 0).getTime();
           const dateB = new Date(b.createdAt || 0).getTime();
           return dateB - dateA;
         });
-        
+
         setNewsArticles(sortedBlogs);
         writeLatestNewsCache(sortedBlogs);
       }
@@ -181,10 +181,10 @@ export default function LatestNews() {
               <div className="h-px bg-primary-200 w-24 md:w-64"></div>
             </div>
           </div>
-          
+
           {/* Featured Skeleton */}
           <FeaturedNewsCardSkeleton />
-          
+
           {/* Grid Skeletons */}
           <div className="grid gap-8 mt-12">
             {[...Array(3)].map((_, i) => (
@@ -218,39 +218,55 @@ export default function LatestNews() {
         <div className="grid gap-8">
           {/* Featured Article */}
           {currentArticles[0] && (
-            <div className=" md:grid-cols-8 hidden md:grid gap-8 overflow-hidden group hover:shadow-xl transition-all">
-              <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
-                <OptimizedImage
-                  src={getBlogImageUrl(currentArticles[0]) || '/images/placeholder.jpg'}
-                  alt={getLocalizedText(currentArticles[0].title, currentArticles[0].title_en, language)}
-                  preset="cardLarge"
-                  className="w-full h-full object-cover"
-                />
+
+            <Link
+              href={`/blog/${currentArticles[0].slug}`}>
+              <div className=" md:grid-cols-8 hidden md:grid gap-8 overflow-hidden hover:cursor-pointer group hover:shadow-xl transition-all">
+                <div className="relative col-span-5 md:h-130 bg-gray-100 overflow-hidden">
+                  <OptimizedImage
+                    src={getBlogImageUrl(currentArticles[0]) || '/images/placeholder.jpg'}
+                    alt={getLocalizedText(currentArticles[0].title, currentArticles[0].title_en, language)}
+                    preset="cardLarge"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6 md:p-8 col-span-3 flex flex-col justify-start">
+                  <p className="text-primary-700 text-sm mb-2">
+                    {formatDate(currentArticles[0].createdAt)}
+                  </p>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 group-hover:text-primary-600 transition-colors">
+                    {getLocalizedText(currentArticles[0].title, currentArticles[0].title_en, language)}
+                  </h3>
+                  <p className="text-gray-600 mb-6 line-clamp-4">
+                    {getExcerpt(currentArticles[0]) || t.pages.noDescription}
+                  </p>
+                  <div
+                    className="text-primary-900 text-sm group-hover:text-gray-800 font-semibold flex items-center gap-2"
+                  >
+                    {t.pages.readMore}
+                    <svg
+                      className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-6 md:p-8 col-span-3 flex flex-col justify-start">
-                <p className="text-primary-700 text-sm mb-2">
-                  {formatDate(currentArticles[0].createdAt)}
-                </p>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 group-hover:text-primary-600 transition-colors">
-                  {getLocalizedText(currentArticles[0].title, currentArticles[0].title_en, language)}
-                </h3>
-                <p className="text-gray-600 mb-6 line-clamp-4">
-                  {getExcerpt(currentArticles[0]) || t.pages.noDescription}
-                </p>
-                <Link
-                  href={`/blog/${currentArticles[0].slug}`}
-                  className="text-primary-900 text-sm group-hover:text-gray-800 font-semibold flex items-center gap-2"
-                >
-                  <span>&#62;  {t.pages.readMore}</span>
-                </Link>
-              </div>
-            </div>
+            </Link>
           )}
 
-          <div className="md:hidden"> 
-            <NewsCard 
-              article={currentArticles[0]} 
-              formatDate={formatDate} 
+          <div className="md:hidden">
+            <NewsCard
+              article={currentArticles[0]}
+              formatDate={formatDate}
             />
           </div>
 
@@ -258,10 +274,10 @@ export default function LatestNews() {
           {currentArticles.length > 1 && (
             <div className="grid md:grid-cols-3 gap-8">
               {currentArticles.slice(1, 4).map((article) => (
-                <NewsCard 
-                  key={article._id} 
-                  article={article} 
-                  formatDate={formatDate} 
+                <NewsCard
+                  key={article._id}
+                  article={article}
+                  formatDate={formatDate}
                 />
               ))}
             </div>
@@ -290,11 +306,10 @@ export default function LatestNews() {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`px-4 py-2 border rounded-lg transition-colors ${
-                      currentPage === page
-                        ? "bg-primary-600 text-white border-primary-600"
-                        : "border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className={`px-4 py-2 border rounded-lg transition-colors ${currentPage === page
+                      ? "bg-primary-600 text-white border-primary-600"
+                      : "border-gray-300 hover:bg-gray-50"
+                      }`}
                   >
                     {page}
                   </button>

@@ -158,14 +158,54 @@ body {
 }
 
 /* ==========================================================================
+   Swiper Rendered Content Table Styles (Preview & Frontend)
+   ========================================================================== */
+
+.swiper-wrapper {
+  padding-bottom: 24px !important;
+}
+
+/* ==========================================================================
    Tiptap Rendered Content Table Styles (Preview & Frontend)
    ========================================================================== */
-.rendered-content {
+
+
+/*  .rendered-content {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+.rendered-content ul,
+.rendered-content ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
 
-.rendered-content table {
+.rendered-content ul {
+  list-style-type: disc;
+}
+
+.rendered-content ol {
+  list-style-type: decimal;
+}
+
+.rendered-content.prose ul ul {
+  list-style-type: circle;
+}
+
+.rendered-content.prose ol ol {
+  list-style-type: lower-alpha;
+}
+
+.rendered-content li {
+  display: list-item;
+  margin: 0.35rem 0;
+}
+
+.rendered-content li > p {
+  margin: 0;
+} */
+
+/* .rendered-content table {
   width: 100% !important;
   min-width: 100% !important;
   table-layout: fixed;
@@ -191,4 +231,4 @@ body {
 .rendered-content table td[data-border-style="none"],
 .rendered-content table th[data-border-style="none"] {
   border: none !important;
-}
+} */

@@ -273,6 +273,7 @@ export default function SectionWorkspace({
               onSectionChange(activeSectionIndex, isVi ? "content" : "content_en", value)
             }
             onImageUpload={onImageUpload}
+            defaultCategoryId={previewCategoryId}
             placeholder={
               isVi
                 ? "Nhập nội dung tiếng Việt (bắt buộc)..."

@@ -10,6 +10,7 @@ import {
   getSectionLocalizedContent,
 } from "@/lib/utils";
 import { formatDateLong } from "@/lib/utils/string/format";
+import "../editor/tiptap.css";
 
 type PreviewLanguage = "vi" | "en";
 
@@ -274,7 +275,7 @@ export default function BlogPreview({
           ref={previewScrollRef}
           className="h-full overflow-y-auto custom-scrollbar bg-white"
         >
-          {navigationSections.length > 0 && (
+          {/* {navigationSections.length > 0 && (
             <div className="border-b border-t border-gray-200 pt-4 bg-white sticky top-0 z-20">
               <div className="container mx-auto px-6 md:px-8">
                 <div className="flex items-center justify-center gap-8 md:gap-16 overflow-x-auto">
@@ -295,18 +296,18 @@ export default function BlogPreview({
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
-          <div className="container mx-auto w-[70%] py-12 md:py-16">
+          <div className="container mx-auto w-[70%] py-2 md:py-4">
             <div className="max-w-6xl mx-auto">
               <div>
-                <div className="border-b border-gray-200 py-8 text-start">
+                <div className=" py-2 text-start">
                   <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight break-words [overflow-wrap:anywhere]">
                     {resolvedTitle}
                   </h1>
                 </div>
 
-                <div className="pt-8 pb-6 border-b border-gray-200 flex items-center justify-between flex-wrap gap-4">
+                <div className="pt-2 pb-6  flex items-center justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-4 text-gray-600">
                     {/* <span className="flex items-center gap-2">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -375,20 +376,15 @@ export default function BlogPreview({
                       <div
                         key={`${anchor}-${index}`}
                         id={`preview-section-${anchor}`}
-                        className="py-10 border-b border-gray-200 last:border-b-0"
+                        className="py-1  last:border-b-0"
                       >
-                        {hasDisplayTitle && (
-                          <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-6 break-words [overflow-wrap:anywhere]">
-                            {displayTitle}
-                          </h2>
-                        )}
 
                         {hasLocalizedContent && (
                           <div
-                            className="prose prose-lg md:prose-xl max-w-none rendered-content break-words [overflow-wrap:anywhere] [&_*]:break-words [&_*]:[overflow-wrap:anywhere]
+                            className="ProseMirror prose prose-lg md:prose-xl max-w-none rendered-content break-words [overflow-wrap:anywhere] [&_*]:break-words [&_*]:[overflow-wrap:anywhere]
                               prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
                               prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
-                              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
+                              prose-p:text-gray-700
                               prose-a:text-primary-600 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline hover:prose-a:text-primary-700 prose-a:transition-colors
                               prose-strong:text-gray-900 prose-strong:font-bold
                               prose-em:italic prose-em:text-gray-700
@@ -399,9 +395,6 @@ export default function BlogPreview({
                               prose-img:rounded-lg prose-img:shadow-md prose-img:my-6 prose-img:w-full
                               prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:text-primary-700
                               prose-pre:bg-gray-900 prose-pre:text-white prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:my-6
-                              prose-table:w-full prose-table:border-collapse prose-table:my-6 prose-table:table-fixed
-                              prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:border prose-th:border-gray-300
-                              prose-td:p-3 prose-td:border prose-td:border-gray-300
                             "
                             dangerouslySetInnerHTML={{ __html: applyEmbeds(contentHtml) }}
                           />

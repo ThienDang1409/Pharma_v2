@@ -352,7 +352,7 @@ export default function CategoryPage() {
                         {formatDate(currentProducts[0].createdAt)}
                       </p>
                       <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 group-hover:text-primary-600 transition-colors">
-                        {currentProducts[0].title}
+                        {getLocalizedText(currentProducts[0].title, currentProducts[0].title_en, language)}
                       </h3>
                       <p className="text-gray-600 mb-6 line-clamp-4">
                         {currentProducts[0].sections?.[0]?.content

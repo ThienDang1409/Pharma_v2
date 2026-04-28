@@ -1,1078 +1,65 @@
-// "use client";
-
-// import { useEditor, EditorContent } from "@tiptap/react";
-// import StarterKit from "@tiptap/starter-kit";
-// import Placeholder from "@tiptap/extension-placeholder";
-// import Image from "@tiptap/extension-image";
-// import { TextStyle } from "@tiptap/extension-text-style";
-// import { Color } from "@tiptap/extension-color";
-// import { Table } from "@tiptap/extension-table";
-// import { TableRow } from "@tiptap/extension-table-row";
-// import { TableHeader } from "@tiptap/extension-table-header";
-// import { TableCell } from "@tiptap/extension-table-cell";
-// import TextAlign from "@tiptap/extension-text-align";
-// import Link from "@tiptap/extension-link";
-// import { useCallback, useState, useEffect } from "react";
-// import SlashCommand from "../editor-modern/extensions/SlashCommand";
-// import suggestion from "../editor-modern/extensions/Suggestion";
-// import "./tiptap.css";
-
-// interface TiptapEditorProps {
-//   content: string;
-//   onChange: (content: string) => void;
-//   placeholder?: string;
-//   onImageUpload?: (file: File) => Promise<string>;
-// }
-
-// export default function TiptapEditor({
-//   content,
-//   onChange,
-//   placeholder = "Write your content here...",
-//   onImageUpload,
-// }: TiptapEditorProps) {
-//   const [showColorPicker, setShowColorPicker] = useState(false);
-//   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
-//   const [showCellMenu, setShowCellMenu] = useState(false);
-//   const [cellMenuPosition, setCellMenuPosition] = useState({ x: 0, y: 0 });
-//   const [selectedColor, setSelectedColor] = useState("#000000");
-//   const [selectedBgColor, setSelectedBgColor] = useState("#ffffff");
-//   const [isUploadingImage, setIsUploadingImage] = useState(false);
-//   const [showLinkDialog, setShowLinkDialog] = useState(false);
-//   const [linkUrl, setLinkUrl] = useState("");
-//   const [linkText, setLinkText] = useState("");
-
-//   const colors = [
-//     "#000000", // Black
-//     "#ffffff", // White
-//     "#dc2626", // Red
-//     "#ea580c", // Orange
-//     "#ca8a04", // Yellow
-//     "#16a34a", // Green
-//     "#0284c7", // Blue
-//     "#9333ea", // Purple
-//     "#db2777", // Pink
-//     "#64748b", // Gray
-//   ];
-
-//   const bgColors = [
-//     "#ffffff", // White
-//     "#f3f4f6", // Light Gray
-//     "#dbeafe", // Light Blue
-//     "#dcfce7", // Light Green
-//     "#fef3c7", // Light Yellow
-//     "#fee2e2", // Light Red
-//     "#fce7f3", // Light Pink
-//     "#e0e7ff", // Light Indigo
-//     "#fef9c3", // Pale Yellow
-//     "#d1fae5", // Pale Green
-//   ];
-
-//   const editor = useEditor({
-//     immediatelyRender: false,
-//     extensions: [
-//       StarterKit,
-//       TextStyle,
-//       Color,
-//       TextAlign.configure({
-//         types: ['heading', 'paragraph', 'tableHeader', 'tableCell'],
-//         alignments: ['left', 'center', 'right', 'justify'],
-//       }),
-//       Link.configure({
-//         openOnClick: false,
-//         HTMLAttributes: {
-//           class: 'text-primary-600 underline hover:text-primary-800 cursor-pointer',
-//         },
-//       }),
-//       Placeholder.configure({
-//         placeholder,
-//       }),
-//       Image.configure({
-//         HTMLAttributes: {
-//           class: "max-w-full h-auto rounded",
-//         },
-//       }),
-//       Table.configure({
-//         resizable: true,
-//       }),
-//       TableRow,
-//       SlashCommand.configure({
-//         suggestion,
-//       }),
-//       TableHeader.extend({
-//         addAttributes() {
-//           return {
-//             ...this.parent?.(),
-//             backgroundColor: {
-//               default: null,
-//               parseHTML: (element) =>
-//                 element.getAttribute("data-background-color"),
-//               renderHTML: (attributes) => {
-//                 if (!attributes.backgroundColor) {
-//                   return {};
-//                 }
-//                 return {
-//                   "data-background-color": attributes.backgroundColor,
-//                 };
-//               },
-//             },
-//             borderStyle: {
-//               default: null,
-//               parseHTML: (element) => element.getAttribute("data-border-style"),
-//               renderHTML: (attributes) => {
-//                 if (!attributes.borderStyle) {
-//                   return {};
-//                 }
-//                 return {
-//                   "data-border-style": attributes.borderStyle,
-//                 };
-//               },
-//             },
-//           };
-//         },
-//         renderHTML({ HTMLAttributes }) {
-//           const styles = [];
-
-//           if (HTMLAttributes["data-background-color"]) {
-//             styles.push(
-//               `background-color: ${HTMLAttributes["data-background-color"]}`
-//             );
-//           }
-
-//           if (HTMLAttributes["data-border-style"]) {
-//             if (HTMLAttributes["data-border-style"] === "none") {
-//               styles.push("border: none !important");
-//             } else {
-//               styles.push("border: 2px solid #d1d5db");
-//             }
-//           }
-
-//           if (styles.length > 0) {
-//             HTMLAttributes.style = styles.join("; ");
-//           }
-
-//           return ["th", HTMLAttributes, 0];
-//         },
-//       }),
-//       TableCell.extend({
-//         addAttributes() {
-//           return {
-//             ...this.parent?.(),
-//             backgroundColor: {
-//               default: null,
-//               parseHTML: (element) =>
-//                 element.getAttribute("data-background-color"),
-//               renderHTML: (attributes) => {
-//                 if (!attributes.backgroundColor) {
-//                   return {};
-//                 }
-//                 return {
-//                   "data-background-color": attributes.backgroundColor,
-//                 };
-//               },
-//             },
-//             borderStyle: {
-//               default: null,
-//               parseHTML: (element) => element.getAttribute("data-border-style"),
-//               renderHTML: (attributes) => {
-//                 if (!attributes.borderStyle) {
-//                   return {};
-//                 }
-//                 return {
-//                   "data-border-style": attributes.borderStyle,
-//                 };
-//               },
-//             },
-//           };
-//         },
-//         renderHTML({ HTMLAttributes }) {
-//           const styles = [];
-
-//           if (HTMLAttributes["data-background-color"]) {
-//             styles.push(
-//               `background-color: ${HTMLAttributes["data-background-color"]}`
-//             );
-//           }
-
-//           if (HTMLAttributes["data-border-style"]) {
-//             if (HTMLAttributes["data-border-style"] === "none") {
-//               styles.push("border: none !important");
-//             } else {
-//               styles.push("border: 2px solid #d1d5db");
-//             }
-//           }
-
-//           if (styles.length > 0) {
-//             HTMLAttributes.style = styles.join("; ");
-//           }
-
-//           return ["td", HTMLAttributes, 0];
-//         },
-//       }),
-//     ],
-//     content,
-//     editorProps: {
-//       attributes: {
-//         class:
-//           "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[300px] max-w-none p-4",
-//       },
-//       handleDOMEvents: {
-//         contextmenu: (view, event) => {
-//           const { state } = view;
-//           const { selection } = state;
-//           const { $from } = selection;
-
-//           // Check if we're in a table cell
-//           if (
-//             $from.parent.type.name === "tableCell" ||
-//             $from.parent.type.name === "tableHeader"
-//           ) {
-//             event.preventDefault();
-//             setCellMenuPosition({ x: event.clientX, y: event.clientY });
-//             setShowCellMenu(true);
-//             return true;
-//           }
-//           return false;
-//         },
-//       },
-//     },
-//     onUpdate: ({ editor }) => {
-//       onChange(editor.getHTML());
-//     },
-//   });
-
-//   // Update editor content if content prop changes from outside
-//   useEffect(() => {
-//     if (editor && content !== editor.getHTML()) {
-//       editor.commands.setContent(content);
-//     }
-//   }, [content, editor]);
-
-//   const addImage = useCallback(() => {
-//     const url = window.prompt("Enter image URL:");
-//     if (url && editor) {
-//       editor.chain().focus().setImage({ src: url }).run();
-//     }
-//   }, [editor]);
-
-//   const handleImageUpload = useCallback(async () => {
-//     const input = document.createElement("input");
-//     input.type = "file";
-//     input.accept = "image/*";
-//     input.onchange = async (e) => {
-//       const file = (e.target as HTMLInputElement).files?.[0];
-//       if (file && editor) {
-//         try {
-//           setIsUploadingImage(true);
-//           if (onImageUpload) {
-//             // Use custom upload handler if provided
-//             const url = await onImageUpload(file);
-//             editor.chain().focus().setImage({ src: url }).run();
-//           } else {
-//             // Fallback to data URL
-//             const reader = new FileReader();
-//             reader.onload = (event) => {
-//               const url = event.target?.result as string;
-//               editor.chain().focus().setImage({ src: url }).run();
-//             };
-//             reader.readAsDataURL(file);
-//           }
-//         } catch (error) {
-//           console.error("Error uploading image:", error);
-//           alert("Failed to upload image");
-//         } finally {
-//           setIsUploadingImage(false);
-//         }
-//       }
-//     };
-//     input.click();
-//   }, [editor, onImageUpload]);
-
-//   // Link handlers
-//   const openLinkDialog = useCallback(() => {
-//     const previousUrl = editor?.getAttributes('link').href || '';
-//     const selectedText = editor?.state.doc.textBetween(
-//       editor.state.selection.from,
-//       editor.state.selection.to
-//     ) || '';
-
-//     setLinkUrl(previousUrl);
-//     setLinkText(selectedText);
-//     setShowLinkDialog(true);
-//   }, [editor]);
-
-//   const setLink = useCallback(() => {
-//     if (!editor) return;
-
-//     if (!linkUrl) {
-//       editor.chain().focus().unsetLink().run();
-//       setShowLinkDialog(false);
-//       return;
-//     }
-
-//     // If there's link text, insert it first
-//     if (linkText && !editor.state.selection.empty === false) {
-//       editor.chain().focus().insertContent(linkText).run();
-//     }
-
-//     // Add http:// if no protocol specified
-//     const url = linkUrl.startsWith('http://') || linkUrl.startsWith('https://') 
-//       ? linkUrl 
-//       : `https://${linkUrl}`;
-
-//     editor
-//       .chain()
-//       .focus()
-//       .extendMarkRange('link')
-//       .setLink({ href: url })
-//       .run();
-
-//     setShowLinkDialog(false);
-//     setLinkUrl('');
-//     setLinkText('');
-//   }, [editor, linkUrl, linkText]);
-
-//   const unsetLink = useCallback(() => {
-//     if (editor) {
-//       editor.chain().focus().unsetLink().run();
-//     }
-//   }, [editor]);
-
-//   const setColor = useCallback(
-//     (color: string) => {
-//       if (editor) {
-//         editor.chain().focus().setColor(color).run();
-//         setSelectedColor(color);
-//         setShowColorPicker(false);
-//       }
-//     },
-//     [editor]
-//   );
-
-//   const unsetColor = useCallback(() => {
-//     if (editor) {
-//       editor.chain().focus().unsetColor().run();
-//       setShowColorPicker(false);
-//     }
-//   }, [editor]);
-
-//   const setCellBackgroundColor = useCallback(
-//     (color: string) => {
-//       if (editor) {
-//         editor.chain().focus().setCellAttribute("backgroundColor", color).run();
-//         setSelectedBgColor(color);
-//         setShowBgColorPicker(false);
-//       }
-//     },
-//     [editor]
-//   );
-
-//   const toggleCellBorder = useCallback(
-//     (borderStyle: string) => {
-//       if (editor) {
-//         if (borderStyle === "none") {
-//           editor.chain().focus().setCellAttribute("borderStyle", "none").run();
-//         } else {
-//           editor.chain().focus().setCellAttribute("borderStyle", "solid").run();
-//         }
-//       }
-//     },
-//     [editor]
-//   );
-
-//   const mergeCells = useCallback(() => {
-//     if (editor) {
-//       editor.chain().focus().mergeCells().run();
-//     }
-//   }, [editor]);
-
-//   const splitCell = useCallback(() => {
-//     if (editor) {
-//       editor.chain().focus().splitCell().run();
-//     }
-//   }, [editor]);
-
-//   if (!editor) {
-//     return null;
-//   }
-
-//   return (
-//     <div className="border border-gray-300 rounded-lg overflow-scroll">
-//       {/* Toolbar */}
-//       <div className="bg-white border-b border-gray-300 p-2 flex flex-wrap gap-1 shadow-sm">
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().toggleBold().run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 font-bold text-gray-700 border transition-colors ${
-//             editor.isActive("bold")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           B
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().toggleItalic().run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 italic text-gray-700 border transition-colors ${
-//             editor.isActive("italic")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           I
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().toggleStrike().run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 line-through text-gray-700 border transition-colors ${
-//             editor.isActive("strike")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           S
-//         </button>
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         <button
-//           type="button"
-//           onClick={() =>
-//             editor.chain().focus().toggleHeading({ level: 1 }).run()
-//           }
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("heading", { level: 1 })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           H1
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() =>
-//             editor.chain().focus().toggleHeading({ level: 2 }).run()
-//           }
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("heading", { level: 2 })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           H2
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() =>
-//             editor.chain().focus().toggleHeading({ level: 3 }).run()
-//           }
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("heading", { level: 3 })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           H3
-//         </button>
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().toggleBulletList().run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("bulletList")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           • List
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("orderedList")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           1. List
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("blockquote")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//         >
-//           Quote
-//         </button>
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         {/* Text Alignment */}
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().setTextAlign('left').run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive({ textAlign: 'left' })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//           title="Align Left"
-//         >
-//           ⬅
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().setTextAlign('center').run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive({ textAlign: 'center' })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//           title="Align Center"
-//         >
-//           ↔
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().setTextAlign('right').run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive({ textAlign: 'right' })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//           title="Align Right"
-//         >
-//           ➡
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive({ textAlign: 'justify' })
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//           title="Justify"
-//         >
-//           ⬌
-//         </button>
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         {/* Link Controls */}
-//         <button
-//           type="button"
-//           onClick={openLinkDialog}
-//           className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border transition-colors ${
-//             editor.isActive("link")
-//               ? "bg-blue-100 border-blue-300"
-//               : "border-transparent"
-//           }`}
-//           title="Add/Edit Link"
-//         >
-//           🔗
-//         </button>
-//         {editor.isActive("link") && (
-//           <button
-//             type="button"
-//             onClick={unsetLink}
-//             className="px-3 py-1.5 rounded hover:bg-red-50 text-red-600 border border-transparent hover:border-red-300"
-//             title="Remove Link"
-//           >
-//             ⛔
-//           </button>
-//         )}
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         {/* Text Color Picker */}
-//         <div className="relative">
-//           <button
-//             type="button"
-//             onClick={() => setShowColorPicker(!showColorPicker)}
-//             className="px-3 py-1.5 rounded hover:bg-blue-50 flex items-center gap-1 text-gray-700 border border-transparent"
-//           >
-//             <span>A</span>
-//             <div
-//               className="w-4 h-0.5 rounded"
-//               style={{ backgroundColor: selectedColor }}
-//             ></div>
-//           </button>
-//           {showColorPicker && (
-//             <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10">
-//               <div className="grid grid-cols-5 gap-2 mb-2">
-//                 {colors.map((color) => (
-//                   <button
-//                     key={color}
-//                     type="button"
-//                     onClick={() => setColor(color)}
-//                     className="w-8 h-8 rounded border-2 border-gray-300 hover:border-gray-500 transition-colors"
-//                     style={{ backgroundColor: color }}
-//                     title={color}
-//                   />
-//                 ))}
-//               </div>
-//               <div className="border-t border-gray-200 pt-2 space-y-2">
-//                 <input
-//                   type="color"
-//                   value={selectedColor}
-//                   onChange={(e) => setColor(e.target.value)}
-//                   className="w-full h-8 rounded cursor-pointer"
-//                 />
-//                 <button
-//                   type="button"
-//                   onClick={unsetColor}
-//                   className="w-full px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
-//                 >
-//                   Reset Color
-//                 </button>
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         {/* Table Controls */}
-//         <button
-//           type="button"
-//           onClick={() =>
-//             editor
-//               .chain()
-//               .focus()
-//               .insertTable({ rows: 1, cols: 2, withHeaderRow: false})
-//               .run()
-//           }
-//           className="px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent"
-//           title="Insert table"
-//         >
-//           ⊞ Table
-//         </button>
-//         {editor.isActive("table") && (
-//           <>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().addColumnBefore().run()}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Add column before"
-//             >
-//               ←Col
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().addColumnAfter().run()}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Add column after"
-//             >
-//               Col→
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().deleteColumn().run()}
-//               className="px-2 py-1.5 rounded hover:bg-red-50 text-red-600 border border-transparent text-xs"
-//               title="Delete column"
-//             >
-//               ✕Col
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().addRowBefore().run()}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Add row before"
-//             >
-//               ↑Row
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().addRowAfter().run()}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Add row after"
-//             >
-//               Row↓
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().deleteRow().run()}
-//               className="px-2 py-1.5 rounded hover:bg-red-50 text-red-600 border border-transparent text-xs"
-//               title="Delete row"
-//             >
-//               ✕Row
-//             </button>
-//             <button
-//               type="button"
-//               onClick={mergeCells}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Merge cells"
-//             >
-//               ⊕Merge
-//             </button>
-//             <button
-//               type="button"
-//               onClick={splitCell}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Split cell"
-//             >
-//               ⊟Split
-//             </button>
-//             <div className="w-px bg-gray-300 mx-0.5"></div>
-//             {/* Cell Background Color Picker */}
-//             <div className="relative">
-//               <button
-//                 type="button"
-//                 onClick={() => setShowBgColorPicker(!showBgColorPicker)}
-//                 className="px-2 py-1.5 rounded hover:bg-blue-50 flex items-center gap-1 text-gray-700 border border-transparent text-xs"
-//                 title="Cell background color"
-//               >
-//                 <span>🎨</span>
-//                 <div
-//                   className="w-4 h-4 rounded border border-gray-300"
-//                   style={{ backgroundColor: selectedBgColor }}
-//                 ></div>
-//               </button>
-//               {showBgColorPicker && (
-//                 <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10 w-48">
-//                   <p className="text-xs font-medium text-gray-700 mb-2">
-//                     Cell Background
-//                   </p>
-//                   <div className="grid grid-cols-5 gap-2 mb-2">
-//                     {bgColors.map((color) => (
-//                       <button
-//                         key={color}
-//                         type="button"
-//                         onClick={() => setCellBackgroundColor(color)}
-//                         className="w-8 h-8 rounded border-2 border-gray-300 hover:border-gray-500 transition-colors"
-//                         style={{ backgroundColor: color }}
-//                         title={color}
-//                       />
-//                     ))}
-//                   </div>
-//                   <div className="border-t border-gray-200 pt-2 space-y-2">
-//                     <input
-//                       type="color"
-//                       value={selectedBgColor}
-//                       onChange={(e) => setCellBackgroundColor(e.target.value)}
-//                       className="w-full h-8 rounded cursor-pointer"
-//                     />
-//                     <button
-//                       type="button"
-//                       onClick={() => setCellBackgroundColor("transparent")}
-//                       className="w-full px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-//                     >
-//                       Clear Background
-//                     </button>
-//                   </div>
-//                 </div>
-//               )}
-//             </div>
-//             <button
-//               type="button"
-//               onClick={() => toggleCellBorder("solid")}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Show border"
-//             >
-//               ▭ Border
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => toggleCellBorder("none")}
-//               className="px-2 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-xs"
-//               title="Hide border"
-//             >
-//               ▢ No Border
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => editor.chain().focus().deleteTable().run()}
-//               className="px-2 py-1.5 rounded hover:bg-red-50 text-red-600 border border-transparent text-xs"
-//               title="Delete table"
-//             >
-//               ✕Table
-//             </button>
-//           </>
-//         )}
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         <button
-//           type="button"
-//           onClick={addImage}
-//           className="px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent"
-//           title="Add image from URL"
-//         >
-//           🔗 URL
-//         </button>
-//         <button
-//           type="button"
-//           onClick={handleImageUpload}
-//           disabled={isUploadingImage}
-//           className="px-3 py-1.5 rounded hover:bg-blue-50 disabled:opacity-50 text-gray-700 border border-transparent"
-//           title="Upload image file"
-//         >
-//           {isUploadingImage ? "⏳" : "📤"} Upload
-//         </button>
-//         <div className="w-px bg-gray-300 mx-1"></div>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().undo().run()}
-//           disabled={!editor.can().undo()}
-//           className="px-3 py-1.5 rounded hover:bg-blue-50 disabled:opacity-50 text-gray-700 border border-transparent"
-//         >
-//           ↶ Undo
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => editor.chain().focus().redo().run()}
-//           disabled={!editor.can().redo()}
-//           className="px-3 py-1.5 rounded hover:bg-blue-50 disabled:opacity-50 text-gray-700 border border-transparent"
-//         >
-//           ↷ Redo
-//         </button>
-//       </div>
-
-//       {/* Editor Content */}
-//       <EditorContent className="overflow-scroll max-h-[600px]" editor={editor} />
-
-//       {/* Right-click Context Menu for Table Cells */}
-//       {showCellMenu && (
-//         <>
-//           <div
-//             className="fixed inset-0 z-40"
-//             onClick={() => setShowCellMenu(false)}
-//           />
-//           <div
-//             className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-2 min-w-[200px]"
-//             style={{
-//               left: `${cellMenuPosition.x}px`,
-//               top: `${cellMenuPosition.y}px`,
-//             }}
-//           >
-//             <div className="text-xs font-semibold text-gray-600 px-2 py-1 mb-1">
-//               Cell Options
-//             </div>
-
-//             {/* Background Color */}
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 const color = window.prompt(
-//                   "Enter background color (hex):",
-//                   selectedBgColor
-//                 );
-//                 if (color) {
-//                   setCellBackgroundColor(color);
-//                   setShowCellMenu(false);
-//                 }
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-2 text-sm"
-//             >
-//               <span>🎨</span>
-//               <span>Background Color</span>
-//             </button>
-
-//             {/* Border Options */}
-//             <div className="border-t border-gray-200 my-1"></div>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 toggleCellBorder("solid");
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-2 text-sm"
-//             >
-//               <span>▭</span>
-//               <span>Show Border</span>
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 toggleCellBorder("none");
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-2 text-sm"
-//             >
-//               <span>▢</span>
-//               <span>Hide Border</span>
-//             </button>
-
-//             {/* Cell Actions */}
-//             <div className="border-t border-gray-200 my-1"></div>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 mergeCells();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-2 text-sm"
-//             >
-//               <span>⊕</span>
-//               <span>Merge Cells</span>
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 splitCell();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-2 text-sm"
-//             >
-//               <span>⊟</span>
-//               <span>Split Cell</span>
-//             </button>
-
-//             {/* Row/Column Actions */}
-//             <div className="border-t border-gray-200 my-1"></div>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().addRowBefore().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
-//             >
-//               Insert Row Above
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().addRowAfter().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
-//             >
-//               Insert Row Below
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().addColumnBefore().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
-//             >
-//               Insert Column Left
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().addColumnAfter().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
-//             >
-//               Insert Column Right
-//             </button>
-
-//             {/* Delete Actions */}
-//             <div className="border-t border-gray-200 my-1"></div>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().deleteRow().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm"
-//             >
-//               Delete Row
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().deleteColumn().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm"
-//             >
-//               Delete Column
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => {
-//                 editor.chain().focus().deleteTable().run();
-//                 setShowCellMenu(false);
-//               }}
-//               className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm"
-//             >
-//               Delete Table
-//             </button>
-//           </div>
-//         </>
-//       )}
-
-//       {/* Link Dialog */}
-//       {showLinkDialog && (
-//         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-//           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-//             <h3 className="text-lg font-bold text-gray-900 mb-4">
-//               {editor?.getAttributes('link').href ? 'Edit Link' : 'Add Link'}
-//             </h3>
-
-//             <div className="space-y-4">
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Link Text
-//                 </label>
-//                 <input
-//                   type="text"
-//                   value={linkText}
-//                   onChange={(e) => setLinkText(e.target.value)}
-//                   placeholder="Click here"
-//                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-//                 />
-//                 <p className="text-xs text-gray-500 mt-1">
-//                   Leave blank to use selected text
-//                 </p>
-//               </div>
-
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   URL
-//                 </label>
-//                 <input
-//                   type="text"
-//                   value={linkUrl}
-//                   onChange={(e) => setLinkUrl(e.target.value)}
-//                   placeholder="https://example.com"
-//                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-//                   autoFocus
-//                 />
-//               </div>
-//             </div>
-
-//             <div className="flex gap-2 mt-6">
-//               <button
-//                 type="button"
-//                 onClick={setLink}
-//                 className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-//               >
-//                 {linkUrl ? 'Set Link' : 'Remove Link'}
-//               </button>
-//               <button
-//                 type="button"
-//                 onClick={() => {
-//                   setShowLinkDialog(false);
-//                   setLinkUrl('');
-//                   setLinkText('');
-//                 }}
-//                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-//               >
-//                 Cancel
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
 "use client";
 
+import { Extension } from "@tiptap/core";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import ResizableImage from "tiptap-extension-resize-image";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import { Table } from "@tiptap/extension-table";
+import Highlight from "@tiptap/extension-highlight";
+import Underline from "@tiptap/extension-underline";
+import { Table as TiptapTable } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
-import { useCallback, useState, useEffect } from "react";
-import SlashCommand from "../editor-modern/extensions/SlashCommand";
-import suggestion from "../editor-modern/extensions/Suggestion";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  FileText,
+  Heading1,
+  Heading2,
+  Heading3,
+  Highlighter,
+  Image as ImageIcon,
+  Italic,
+  Link2,
+  Link2Off,
+  List,
+  ListOrdered,
+  Package,
+  Palette,
+  Quote,
+  Redo,
+  Strikethrough,
+  Table as TableIcon,
+  Trash2,
+  Underline as UnderlineIcon,
+  Undo,
+  Upload,
+} from "lucide-react";
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    image: {
+      setImage: (options: { src: string; alt?: string; title?: string }) => ReturnType;
+    };
+  }
+}
+import SlashCommand from "./extensions/SlashCommand";
+import suggestion from "./extensions/Suggestion";
+import { RelatedProducts } from "./extensions/RelatedProducts";
+import { RelatedArticles } from "./extensions/RelatedArticles";
+import { ImageSlider } from "./extensions/ImageSlider";
+import RelatedSelectionModal from "./components/RelatedSelectionModal";
+import ImageSliderModal from "./components/ImageSliderModal";
 import ImageSelector from "../image/ImageSelector";
 import ImageCaption from "./extensions/ImageCaption";
 import ImageOverlayText from "./extensions/ImageOverlayText";
@@ -1085,33 +72,288 @@ interface TiptapEditorProps {
   onChange: (content: string) => void;
   placeholder?: string;
   onImageUpload?: (file: File) => Promise<string>;
+  defaultCategoryId?: string;
+  folder?: string;
+}
+
+interface RelatedModalState {
+  isOpen: boolean;
+  type: "products" | "articles";
+  ids: string[];
+  limit: number;
+  style: string;
+  pos: number | null;
 }
 
 type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+type PickerType = "text" | "highlight" | "cellBg" | null;
+
+const DEFAULT_TEXT_COLOR = "#111827";
+const DEFAULT_HIGHLIGHT_COLOR = "#fef08a";
+const DEFAULT_OVERLAY_BG_COLOR = "#0f172a";
+const DEFAULT_OVERLAY_TEXT_COLOR = "#ffffff";
+
+const FONT_SIZES = ["12", "14", "16", "18", "20", "24", "28", "32"];
+
+const TEXT_COLORS = [
+  "#000000",
+  "#ffffff",
+  // Red shades
+  "#7f1d1d",
+  "#991b1b",
+  "#b91c1c",
+  "#dc2626",
+  "#ef4444",
+  "#f87171",
+  // Orange shades
+  "#7c2d12",
+  "#9a3412",
+  "#c2410c",
+  "#ea580c",
+  "#f97316",
+  "#fb923c",
+  // Yellow shades
+  "#713f12",
+  "#854d0e",
+  "#a16207",
+  "#ca8a04",
+  "#eab308",
+  "#facc15",
+  // Green shades
+  "#14532d",
+  "#166534",
+  "#15803d",
+  "#16a34a",
+  "#22c55e",
+  "#4ade80",
+  // Blue shades
+  "#1e3a8a",
+  "#1d4ed8",
+  "#2563eb",
+  "#3b82f6",
+  "#60a5fa",
+  "#93c5fd",
+  // Purple shades
+  "#581c87",
+  "#6b21a8",
+  "#7e22ce",
+  "#9333ea",
+  "#a855f7",
+  "#c084fc",
+  // Pink shades
+  "#831843",
+  "#9d174d",
+  "#be185d",
+  "#db2777",
+  "#ec4899",
+  "#f472b6",
+  // Gray shades
+  "#111827",
+  "#1f2937",
+  "#374151",
+  "#4b5563",
+  "#6b7280",
+  "#9ca3af",
+];
+
+const HIGHLIGHT_COLORS = [
+  // Red shades
+  "#fee2e2",
+  "#fecaca",
+  "#fca5a5",
+  "#f87171",
+  "#ef4444",
+  // Orange shades
+  "#ffedd5",
+  "#fed7aa",
+  "#fdba74",
+  "#fb923c",
+  "#f97316",
+  // Yellow shades
+  "#fef9c3",
+  "#fef08a",
+  "#fde047",
+  "#facc15",
+  "#eab308",
+  // Green shades
+  "#dcfce7",
+  "#bbf7d0",
+  "#86efac",
+  "#4ade80",
+  "#22c55e",
+  // Blue shades
+  "#dbeafe",
+  "#bfdbfe",
+  "#93c5fd",
+  "#60a5fa",
+  "#3b82f6",
+  // Purple shades
+  "#ede9fe",
+  "#ddd6fe",
+  "#c4b5fd",
+  "#a78bfa",
+  "#8b5cf6",
+  // Pink shades
+  "#fce7f3",
+  "#fbcfe8",
+  "#f9a8d4",
+  "#f472b6",
+  "#ec4899",
+  // Gray shades
+  "#f3f4f6",
+  "#e5e7eb",
+  "#d1d5db",
+  "#9ca3af",
+  "#6b7280",
+];
+
+const TABLE_BG_COLORS = [
+  "#ffffff",
+  "#f8fafc",
+  "#f1f5f9",
+  "#fee2e2",
+  "#ffedd5",
+  "#fef9c3",
+  "#dcfce7",
+  "#dbeafe",
+  "#ede9fe",
+  "#fce7f3",
+  "#e2e8f0",
+  "#fecaca",
+  "#fed7aa",
+  "#fef08a",
+  "#bbf7d0",
+  "#bfdbfe",
+  "#ddd6fe",
+  "#fbcfe8",
+  "#cbd5e1",
+  "#e5e7eb",
+];
+
+const FontSize = Extension.create({
+  name: "fontSize",
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ["textStyle"],
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => (element as HTMLElement).style.fontSize || null,
+            renderHTML: (attributes) => {
+              if (!attributes.fontSize) {
+                return {};
+              }
+              return {
+                style: `font-size: ${attributes.fontSize}`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+});
+
+const isImageLikeNode = (nodeName?: string | null): boolean => {
+  if (!nodeName) return false;
+  return nodeName.toLowerCase().includes("image");
+};
+
+const normalizeOverlayPosition = (value?: string): OverlayPosition => {
+  switch (value) {
+    case "top-left":
+    case "top-right":
+    case "bottom-left":
+    case "bottom-right":
+    case "center":
+      return value;
+    default:
+      return "bottom-left";
+  }
+};
+
+const normalizeFontSize = (value?: string | null): string => {
+  if (!value) return "16";
+  const numericValue = value.replace("px", "").trim();
+  return FONT_SIZES.includes(numericValue) ? numericValue : "16";
+};
+
+function CaptionIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 6h16" />
+      <path d="M4 12h10" />
+      <path d="M4 18h16" />
+    </svg>
+  );
+}
+
+function OverlayIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="14" rx="2" />
+      <path d="M7 11h10" />
+      <path d="M7 15h6" />
+    </svg>
+  );
+}
 
 export default function TiptapEditor({
   content,
   onChange,
   placeholder = "Write your content here...",
   onImageUpload,
+  folder,
+  defaultCategoryId,
 }: TiptapEditorProps) {
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showBgColorPicker, setShowBgColorPicker] = useState(false);
+  const [relatedModal, setRelatedModal] = useState<RelatedModalState>({
+    isOpen: false,
+    type: "products",
+    ids: [],
+    limit: 8,
+    style: "slide",
+    pos: null,
+  });
+  const [imageSliderModal, setImageSliderModal] = useState({
+    isOpen: false,
+    images: [] as any[],
+    autoplay: false,
+    showPagination: true,
+    pos: null as number | null,
+  });
   const [showCellMenu, setShowCellMenu] = useState(false);
   const [cellMenuPosition, setCellMenuPosition] = useState({ x: 0, y: 0 });
-  const [selectedColor, setSelectedColor] = useState("#000000");
+
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_TEXT_COLOR);
+  const [selectedHighlightColor, setSelectedHighlightColor] = useState(DEFAULT_HIGHLIGHT_COLOR);
   const [selectedBgColor, setSelectedBgColor] = useState("#ffffff");
+  const [selectedFontSize, setSelectedFontSize] = useState("16");
+
+  const [openColorPicker, setOpenColorPicker] = useState<PickerType>(null);
+  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
+
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
   const [showCaptionDialog, setShowCaptionDialog] = useState(false);
   const [captionText, setCaptionText] = useState("");
+
   const [showOverlayDialog, setShowOverlayDialog] = useState(false);
   const [overlayText, setOverlayText] = useState("");
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>("bottom-left");
+  const [overlayBackgroundColor, setOverlayBackgroundColor] = useState(DEFAULT_OVERLAY_BG_COLOR);
+  const [overlayTextColor, setOverlayTextColor] = useState(DEFAULT_OVERLAY_TEXT_COLOR);
+
+  const textColorButtonRef = useRef<HTMLButtonElement | null>(null);
+  const highlightColorButtonRef = useRef<HTMLButtonElement | null>(null);
+  const cellBgButtonRef = useRef<HTMLButtonElement | null>(null);
+  const colorPopoverRef = useRef<HTMLDivElement | null>(null);
 
   const uploadImageToCloudinary = useCallback(
     async (file: File): Promise<string> => {
@@ -1142,28 +384,53 @@ export default function TiptapEditor({
       setShowImageSelector(true);
     };
 
+    const openRelatedModal = (event: Event) => {
+      const customEvent = event as CustomEvent<any>;
+      const { type, ids, limit, style, pos } = customEvent.detail;
+      setRelatedModal({
+        isOpen: true,
+        type,
+        ids: ids || [],
+        limit: limit || (type === "products" ? 8 : 3),
+        style: style || (type === "products" ? "slide" : "list"),
+        pos: pos !== undefined ? pos : null,
+      });
+    };
+
+    const openImageSliderModal = (event: Event) => {
+      const customEvent = event as CustomEvent<any>;
+      const { images, autoplay, showPagination, pos } = customEvent.detail;
+      setImageSliderModal({
+        isOpen: true,
+        images: images || [],
+        autoplay: autoplay || false,
+        showPagination: showPagination !== undefined ? showPagination : true,
+        pos: pos !== undefined ? pos : null,
+      });
+    };
+
     window.addEventListener("editor:open-image-picker", openImagePicker);
+    window.addEventListener("editor:open-related-modal", openRelatedModal);
+    window.addEventListener("editor:open-image-slider-modal", openImageSliderModal);
     return () => {
       window.removeEventListener("editor:open-image-picker", openImagePicker);
+      window.removeEventListener("editor:open-related-modal", openRelatedModal);
+      window.removeEventListener("editor:open-image-slider-modal", openImageSliderModal);
     };
   }, []);
-
-  const colors = [
-    "#000000", "#ffffff", "#dc2626", "#ea580c", "#ca8a04",
-    "#16a34a", "#0284c7", "#9333ea", "#db2777", "#64748b",
-  ];
-
-  const bgColors = [
-    "#ffffff", "#f3f4f6", "#dbeafe", "#dcfce7", "#fef3c7",
-    "#fee2e2", "#fce7f3", "#e0e7ff", "#fef9c3", "#d1fae5",
-  ];
 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit,
+      Underline,
+      RelatedProducts,
+      RelatedArticles,
+      ImageSlider,
+      Highlight.configure({ multicolor: true }),
       TextStyle,
       Color,
+      FontSize,
       TextAlign.configure({
         types: ["heading", "paragraph", "tableHeader", "tableCell"],
         alignments: ["left", "center", "right", "justify"],
@@ -1175,16 +442,10 @@ export default function TiptapEditor({
         },
       }),
       Placeholder.configure({ placeholder }),
-      // ResizableImage.configure({
-      //   allowBase64: true,
-      //   HTMLAttributes: {
-      //     class: "max-w-full h-auto rounded transition-all shadow-sm",
-      //   },
-      // }),
       ResizableImage,
       ImageCaption,
       ImageOverlayText,
-      Table.configure({
+      TiptapTable.configure({
         resizable: true,
       }),
       TableRow,
@@ -1270,31 +531,30 @@ export default function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[360px] max-w-none p-4",
+          "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[420px] max-w-none p-4",
       },
-        handleClickOn: (_view, pos, node) => {
-          if (!isImageLikeNode(node.type.name)) {
-            return false;
-          }
+      handleClickOn: (_view, pos, node) => {
+        if (!isImageLikeNode(node.type.name)) {
+          return false;
+        }
 
-          setSelectedImagePos(pos);
-          editor?.commands.setNodeSelection(pos);
-          return true;
-        },
+        setSelectedImagePos(pos);
+        editor?.chain().focus().setNodeSelection(pos).run();
+        return true;
+      },
       handleDOMEvents: {
         contextmenu: (view, event) => {
           const { state } = view;
           const { selection } = state;
           const { $from } = selection;
-          if (
-            $from.parent.type.name === "tableCell" ||
-            $from.parent.type.name === "tableHeader"
-          ) {
+
+          if ($from.parent.type.name === "tableCell" || $from.parent.type.name === "tableHeader") {
             event.preventDefault();
             setCellMenuPosition({ x: event.clientX, y: event.clientY });
             setShowCellMenu(true);
             return true;
           }
+
           return false;
         },
       },
@@ -1334,8 +594,8 @@ export default function TiptapEditor({
         .map((item) => item.getAsFile())
         .filter((file): file is File => Boolean(file));
 
-      const filesFromFileList = Array.from(clipboardEvent.clipboardData?.files || []).filter(
-        (file) => file.type.startsWith("image/")
+      const filesFromFileList = Array.from(clipboardEvent.clipboardData?.files || []).filter((file) =>
+        file.type.startsWith("image/")
       );
 
       const dedupedFiles = [...filesFromItems, ...filesFromFileList].filter(
@@ -1348,9 +608,7 @@ export default function TiptapEditor({
           ) === index
       );
 
-      const files = dedupedFiles;
-
-      if (!files.length) return;
+      if (!dedupedFiles.length) return;
 
       clipboardEvent.preventDefault();
 
@@ -1358,7 +616,7 @@ export default function TiptapEditor({
         setIsUploadingImage(true);
 
         try {
-          for (const file of files) {
+          for (const file of dedupedFiles) {
             await insertUploadedImage(file);
           }
         } catch (error) {
@@ -1377,11 +635,6 @@ export default function TiptapEditor({
       editorDom.removeEventListener("paste", handlePaste);
     };
   }, [editor, insertUploadedImage]);
-
-  const isImageLikeNode = useCallback((nodeName?: string | null): boolean => {
-    if (!nodeName) return false;
-    return nodeName.toLowerCase().includes("image");
-  }, []);
 
   const findImageNodePosition = useCallback((): number | null => {
     if (!editor) return null;
@@ -1416,7 +669,64 @@ export default function TiptapEditor({
     }
 
     return null;
-  }, [editor, isImageLikeNode]);
+  }, [editor]);
+
+  const findAdjacentNodePosition = useCallback(
+    (imagePos: number, targetType: "imageCaption" | "imageOverlayText"): number | null => {
+      if (!editor) return null;
+
+      const imageNode = editor.state.doc.nodeAt(imagePos);
+      if (!imageNode) return null;
+
+      let cursor = imagePos + imageNode.nodeSize;
+      for (let i = 0; i < 4; i += 1) {
+        const candidateNode = editor.state.doc.nodeAt(cursor);
+        if (!candidateNode) break;
+
+        if (candidateNode.type.name === targetType) {
+          return cursor;
+        }
+
+        if (candidateNode.type.name === "imageCaption" || candidateNode.type.name === "imageOverlayText") {
+          cursor += candidateNode.nodeSize;
+          continue;
+        }
+
+        break;
+      }
+
+      return null;
+    },
+    [editor]
+  );
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const syncToolbarState = () => {
+      const textStyleAttrs = editor.getAttributes("textStyle") as {
+        color?: string;
+        fontSize?: string;
+      };
+      const highlightAttrs = editor.getAttributes("highlight") as {
+        color?: string;
+      };
+
+      setSelectedColor(textStyleAttrs.color || DEFAULT_TEXT_COLOR);
+      setSelectedFontSize(normalizeFontSize(textStyleAttrs.fontSize));
+      setSelectedHighlightColor(highlightAttrs.color || DEFAULT_HIGHLIGHT_COLOR);
+      setSelectedImagePos(findImageNodePosition());
+    };
+
+    syncToolbarState();
+    editor.on("selectionUpdate", syncToolbarState);
+    editor.on("transaction", syncToolbarState);
+
+    return () => {
+      editor.off("selectionUpdate", syncToolbarState);
+      editor.off("transaction", syncToolbarState);
+    };
+  }, [editor, findImageNodePosition]);
 
   const openCaptionDialog = useCallback(() => {
     if (!editor) return;
@@ -1427,12 +737,13 @@ export default function TiptapEditor({
       return;
     }
 
-    const imageNode = editor.state.doc.nodeAt(imagePos);
-    const existingCaption = imageNode ? editor.state.doc.nodeAt(imagePos + imageNode.nodeSize) : null;
-    setCaptionText(existingCaption ? existingCaption.textContent || "" : "");
+    const captionPos = findAdjacentNodePosition(imagePos, "imageCaption");
+    const existingCaption = captionPos !== null ? editor.state.doc.nodeAt(captionPos) : null;
+
+    setCaptionText(existingCaption?.textContent || "");
     setSelectedImagePos(imagePos);
     setShowCaptionDialog(true);
-  }, [editor, findImageNodePosition, selectedImagePos]);
+  }, [editor, findAdjacentNodePosition, findImageNodePosition, selectedImagePos]);
 
   const saveCaption = useCallback(() => {
     if (!editor) return;
@@ -1443,34 +754,38 @@ export default function TiptapEditor({
     const imageNode = editor.state.doc.nodeAt(imagePos);
     if (!imageNode) return;
 
-    const captionPos = imagePos + imageNode.nodeSize;
-    const existingNode = editor.state.doc.nodeAt(captionPos);
+    const captionPayload = {
+      type: "imageCaption",
+      content: [{ type: "text", text: captionText.trim() }],
+    };
 
-    if (existingNode?.type.name === "imageCaption") {
+    const existingCaptionPos = findAdjacentNodePosition(imagePos, "imageCaption");
+
+    if (existingCaptionPos !== null) {
+      const existingCaptionNode = editor.state.doc.nodeAt(existingCaptionPos);
+      if (!existingCaptionNode) return;
+
       editor
         .chain()
         .focus()
-        .deleteRange({ from: captionPos, to: captionPos + existingNode.nodeSize })
-        .insertContentAt(captionPos, {
-          type: "imageCaption",
-          content: [{ type: "text", text: captionText.trim() }],
+        .deleteRange({
+          from: existingCaptionPos,
+          to: existingCaptionPos + existingCaptionNode.nodeSize,
         })
-        .setTextSelection(captionPos + 1)
+        .insertContentAt(existingCaptionPos, captionPayload)
+        .setTextSelection(existingCaptionPos + 1)
         .run();
     } else {
       editor
         .chain()
         .focus()
-        .insertContentAt(captionPos, {
-          type: "imageCaption",
-          content: [{ type: "text", text: captionText.trim() }],
-        })
-        .setTextSelection(captionPos + 1)
+        .insertContentAt(imagePos + imageNode.nodeSize, captionPayload)
+        .setTextSelection(imagePos + imageNode.nodeSize + 1)
         .run();
     }
 
     setShowCaptionDialog(false);
-  }, [captionText, editor, findImageNodePosition, selectedImagePos]);
+  }, [captionText, editor, findAdjacentNodePosition, findImageNodePosition, selectedImagePos]);
 
   const openOverlayDialog = useCallback(() => {
     if (!editor) return;
@@ -1481,13 +796,32 @@ export default function TiptapEditor({
       return;
     }
 
-    const imageNode = editor.state.doc.nodeAt(imagePos);
-    const existingOverlay = imageNode ? editor.state.doc.nodeAt(imagePos + imageNode.nodeSize) : null;
-    setOverlayText(existingOverlay ? existingOverlay.textContent || "" : "");
-    setOverlayPosition("bottom-left");
+    const overlayPos = findAdjacentNodePosition(imagePos, "imageOverlayText");
+    const existingOverlay = overlayPos !== null ? editor.state.doc.nodeAt(overlayPos) : null;
+
+    if (existingOverlay?.type.name === "imageOverlayText") {
+      setOverlayText(existingOverlay.textContent || "");
+      setOverlayPosition(normalizeOverlayPosition(existingOverlay.attrs.position));
+      setOverlayBackgroundColor(
+        typeof existingOverlay.attrs.backgroundColor === "string"
+          ? existingOverlay.attrs.backgroundColor
+          : DEFAULT_OVERLAY_BG_COLOR
+      );
+      setOverlayTextColor(
+        typeof existingOverlay.attrs.textColor === "string"
+          ? existingOverlay.attrs.textColor
+          : DEFAULT_OVERLAY_TEXT_COLOR
+      );
+    } else {
+      setOverlayText("");
+      setOverlayPosition("bottom-left");
+      setOverlayBackgroundColor(DEFAULT_OVERLAY_BG_COLOR);
+      setOverlayTextColor(DEFAULT_OVERLAY_TEXT_COLOR);
+    }
+
     setSelectedImagePos(imagePos);
     setShowOverlayDialog(true);
-  }, [editor, findImageNodePosition, selectedImagePos]);
+  }, [editor, findAdjacentNodePosition, findImageNodePosition, selectedImagePos]);
 
   const saveOverlay = useCallback(() => {
     if (!editor) return;
@@ -1498,34 +832,50 @@ export default function TiptapEditor({
     const imageNode = editor.state.doc.nodeAt(imagePos);
     if (!imageNode) return;
 
-    const overlayPos = imagePos + imageNode.nodeSize;
-    const existingNode = editor.state.doc.nodeAt(overlayPos);
+    const overlayPayload = {
+      type: "imageOverlayText",
+      attrs: {
+        position: overlayPosition,
+        backgroundColor: overlayBackgroundColor,
+        textColor: overlayTextColor,
+      },
+      content: [{ type: "text", text: overlayText.trim() }],
+    };
 
-    if (existingNode?.type.name === "imageOverlayText") {
+    const existingOverlayPos = findAdjacentNodePosition(imagePos, "imageOverlayText");
+
+    if (existingOverlayPos !== null) {
+      const existingOverlayNode = editor.state.doc.nodeAt(existingOverlayPos);
+      if (!existingOverlayNode) return;
+
       editor
         .chain()
         .focus()
-        .deleteRange({ from: overlayPos, to: overlayPos + existingNode.nodeSize })
-        .insertContentAt(overlayPos, {
-          type: "imageOverlayText",
-          attrs: { position: overlayPosition },
-          content: [{ type: "text", text: overlayText.trim() }],
+        .deleteRange({
+          from: existingOverlayPos,
+          to: existingOverlayPos + existingOverlayNode.nodeSize,
         })
+        .insertContentAt(existingOverlayPos, overlayPayload)
         .run();
     } else {
       editor
         .chain()
         .focus()
-        .insertContentAt(overlayPos, {
-          type: "imageOverlayText",
-          attrs: { position: overlayPosition },
-          content: [{ type: "text", text: overlayText.trim() }],
-        })
+        .insertContentAt(imagePos + imageNode.nodeSize, overlayPayload)
         .run();
     }
 
     setShowOverlayDialog(false);
-  }, [editor, findImageNodePosition, overlayPosition, overlayText, selectedImagePos]);
+  }, [
+    editor,
+    findAdjacentNodePosition,
+    findImageNodePosition,
+    overlayBackgroundColor,
+    overlayPosition,
+    overlayText,
+    overlayTextColor,
+    selectedImagePos,
+  ]);
 
   const addImage = useCallback(() => {
     setShowImageSelector(true);
@@ -1567,10 +917,8 @@ export default function TiptapEditor({
   const openLinkDialog = useCallback(() => {
     const previousUrl = editor?.getAttributes("link").href || "";
     const selectedText =
-      editor?.state.doc.textBetween(
-        editor.state.selection.from,
-        editor.state.selection.to
-      ) || "";
+      editor?.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to) || "";
+
     setLinkUrl(previousUrl);
     setLinkText(selectedText);
     setShowLinkDialog(true);
@@ -1578,66 +926,101 @@ export default function TiptapEditor({
 
   const setLink = useCallback(() => {
     if (!editor) return;
+
     if (!linkUrl) {
       editor.chain().focus().unsetLink().run();
       setShowLinkDialog(false);
       return;
     }
+
     if (linkText && editor.state.selection.empty) {
       editor.chain().focus().insertContent(linkText).run();
     }
+
     const url =
       linkUrl.startsWith("http://") || linkUrl.startsWith("https://")
         ? linkUrl
         : `https://${linkUrl}`;
+
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
     setShowLinkDialog(false);
     setLinkUrl("");
     setLinkText("");
-  }, [editor, linkUrl, linkText]);
+  }, [editor, linkText, linkUrl]);
 
   const unsetLink = useCallback(() => {
     editor?.chain().focus().unsetLink().run();
   }, [editor]);
 
-  const setColor = useCallback(
-    (color: string) => {
-      if (editor) {
-        editor.chain().focus().setColor(color).run();
-        setSelectedColor(color);
-        setShowColorPicker(false);
+  const setFontSize = useCallback(
+    (value: string) => {
+      if (!editor) return;
+
+      if (value === "default") {
+        editor
+          .chain()
+          .focus()
+          .setMark("textStyle", { fontSize: null })
+          .removeEmptyTextStyle()
+          .run();
+        setSelectedFontSize("16");
+        return;
       }
+
+      editor.chain().focus().setMark("textStyle", { fontSize: `${value}px` }).run();
+      setSelectedFontSize(value);
     },
     [editor]
   );
 
-  const unsetColor = useCallback(() => {
-    if (editor) {
-      editor.chain().focus().unsetColor().run();
-      setShowColorPicker(false);
-    }
+  const setTextColor = useCallback(
+    (color: string, closePicker = true) => {
+      if (!editor) return;
+      editor.chain().focus().setColor(color).run();
+      setSelectedColor(color);
+      if (closePicker) setOpenColorPicker(null);
+    },
+    [editor]
+  );
+
+  const unsetTextColor = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().unsetColor().run();
+    setSelectedColor(DEFAULT_TEXT_COLOR);
+    setOpenColorPicker(null);
+  }, [editor]);
+
+  const setHighlightColor = useCallback(
+    (color: string, closePicker = true) => {
+      if (!editor) return;
+      editor.chain().focus().setHighlight({ color }).run();
+      setSelectedHighlightColor(color);
+      if (closePicker) setOpenColorPicker(null);
+    },
+    [editor]
+  );
+
+  const unsetHighlightColor = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().unsetHighlight().run();
+    setSelectedHighlightColor(DEFAULT_HIGHLIGHT_COLOR);
+    setOpenColorPicker(null);
   }, [editor]);
 
   const setCellBackgroundColor = useCallback(
-    (color: string) => {
-      if (editor) {
-        editor.chain().focus().setCellAttribute("backgroundColor", color).run();
-        setSelectedBgColor(color);
-        setShowBgColorPicker(false);
-      }
+    (color: string, closePicker = true) => {
+      if (!editor) return;
+      editor.chain().focus().setCellAttribute("backgroundColor", color).run();
+      setSelectedBgColor(color);
+      if (closePicker) setOpenColorPicker(null);
     },
     [editor]
   );
 
   const toggleCellBorder = useCallback(
-    (borderStyle: string) => {
-      if (editor) {
-        editor
-          .chain()
-          .focus()
-          .setCellAttribute("borderStyle", borderStyle === "none" ? "none" : "solid")
-          .run();
-      }
+    (borderStyle: "none" | "solid") => {
+      if (!editor) return;
+      editor.chain().focus().setCellAttribute("borderStyle", borderStyle).run();
     },
     [editor]
   );
@@ -1650,9 +1033,157 @@ export default function TiptapEditor({
     editor?.chain().focus().splitCell().run();
   }, [editor]);
 
+  const getPickerAnchor = useCallback((picker: PickerType) => {
+    if (picker === "text") return textColorButtonRef.current;
+    if (picker === "highlight") return highlightColorButtonRef.current;
+    if (picker === "cellBg") return cellBgButtonRef.current;
+    return null;
+  }, []);
+
+  const updatePickerPosition = useCallback(
+    (picker: Exclude<PickerType, null>) => {
+      const anchor = getPickerAnchor(picker);
+      if (!anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      const popupWidth = 312;
+      const popupHeight = 286;
+
+      let left = rect.left;
+      if (left + popupWidth > window.innerWidth - 12) {
+        left = window.innerWidth - popupWidth - 12;
+      }
+      left = Math.max(12, left);
+
+      let top = rect.bottom + 8;
+      if (top + popupHeight > window.innerHeight - 12) {
+        top = rect.top - popupHeight - 8;
+      }
+      top = Math.max(12, top);
+
+      setPickerPosition({ top, left });
+    },
+    [getPickerAnchor]
+  );
+
+  const toggleColorPicker = useCallback(
+    (picker: Exclude<PickerType, null>) => {
+      setOpenColorPicker((previousPicker) => {
+        const nextPicker = previousPicker === picker ? null : picker;
+        if (nextPicker) {
+          requestAnimationFrame(() => updatePickerPosition(nextPicker));
+        }
+        return nextPicker;
+      });
+    },
+    [updatePickerPosition]
+  );
+
+  useEffect(() => {
+    if (!openColorPicker) return;
+
+    const reposition = () => updatePickerPosition(openColorPicker);
+    reposition();
+
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [openColorPicker, updatePickerPosition]);
+
+  useEffect(() => {
+    if (!openColorPicker) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (colorPopoverRef.current?.contains(target)) {
+        return;
+      }
+
+      const anchor = getPickerAnchor(openColorPicker);
+      if (anchor?.contains(target)) {
+        return;
+      }
+
+      setOpenColorPicker(null);
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [getPickerAnchor, openColorPicker]);
+
+  useEffect(() => {
+    if (!openColorPicker) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenColorPicker(null);
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [openColorPicker]);
+
   if (!editor) return null;
 
-  // ─── Toolbar button helper ────────────────────────────────────
+  const currentPickerPalette =
+    openColorPicker === "text"
+      ? TEXT_COLORS
+      : openColorPicker === "highlight"
+        ? HIGHLIGHT_COLORS
+        : openColorPicker === "cellBg"
+          ? TABLE_BG_COLORS
+          : [];
+
+  const currentPickerColor =
+    openColorPicker === "text"
+      ? selectedColor
+      : openColorPicker === "highlight"
+        ? selectedHighlightColor
+        : selectedBgColor;
+
+  const currentPickerLabel =
+    openColorPicker === "text"
+      ? "Text Color"
+      : openColorPicker === "highlight"
+        ? "Highlight Color"
+        : "Cell Background";
+
+  const applyPickerColor = (color: string, closePicker = true) => {
+    if (openColorPicker === "text") {
+      setTextColor(color, closePicker);
+      return;
+    }
+
+    if (openColorPicker === "highlight") {
+      setHighlightColor(color, closePicker);
+      return;
+    }
+
+    if (openColorPicker === "cellBg") {
+      setCellBackgroundColor(color, closePicker);
+    }
+  };
+
+  const resetPickerColor = () => {
+    if (openColorPicker === "text") {
+      unsetTextColor();
+      return;
+    }
+
+    if (openColorPicker === "highlight") {
+      unsetHighlightColor();
+      return;
+    }
+
+    if (openColorPicker === "cellBg") {
+      setCellBackgroundColor("transparent");
+    }
+  };
+
   const ToolBtn = ({
     onClick,
     active,
@@ -1664,220 +1195,540 @@ export default function TiptapEditor({
     onClick: () => void;
     active?: boolean;
     disabled?: boolean;
-    title?: string;
+    title: string;
     className?: string;
-    children: React.ReactNode;
+    children: ReactNode;
   }) => (
     <button
       type="button"
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`px-3 py-1.5 rounded border transition-colors text-sm
-        ${active ? "bg-blue-100 border-blue-300 text-gray-800" : "border-transparent text-gray-700 hover:bg-blue-50"}
-        ${disabled ? "opacity-40 cursor-not-allowed" : ""}
+      className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm transition-colors
+        ${active
+          ? "border-blue-300 bg-blue-100 text-gray-900"
+          : "border-transparent bg-white text-gray-700 hover:bg-blue-50"
+        }
+        ${disabled ? "cursor-not-allowed opacity-40" : ""}
         ${className}`}
     >
       {children}
     </button>
   );
 
+  const ToolGroup = ({ children }: { children: ReactNode }) => (
+    <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1">
+      {children}
+    </div>
+  );
+
+  const isInTable = editor.isActive("table");
+  const isImageSelected = selectedImagePos !== null;
+
   return (
-    <div className="border border-gray-300 rounded-lg flex flex-col relative overflow-visible bg-white h-full min-h-[520px]">
-      {/* ─── Toolbar ─── */}
-      <div className="relative bg-white border-b border-gray-300 p-2 flex flex-wrap content-start gap-1 min-h-[120px] shadow-sm overflow-y-scroll sticky top-0 z-40 rounded-t-lg">
-        {/* Text style */}
-        <ToolBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
-          <strong>B</strong>
-        </ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")}>
-          <em>I</em>
-        </ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")}>
-          <span className="line-through">S</span>
-        </ToolBtn>
+    <div className="border border-gray-300 rounded-lg flex flex-col relative overflow-hidden bg-white h-full min-h-[550px]">
+      <div className="bg-white border-b border-gray-300 p-2 space-y-2 sticky top-0 z-40 rounded-t-lg">
+        <div className="flex flex-wrap items-center gap-2">
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              active={editor.isActive("bold")}
+              title="Bold"
+            >
+              <Bold size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              active={editor.isActive("italic")}
+              title="Italic"
+            >
+              <Italic size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              active={editor.isActive("underline")}
+              title="Underline"
+            >
+              <UnderlineIcon size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              active={editor.isActive("strike")}
+              title="Strike Through"
+            >
+              <Strikethrough size={15} />
+            </ToolBtn>
+          </ToolGroup>
 
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              active={editor.isActive("heading", { level: 1 })}
+              title="Heading 1"
+            >
+              <Heading1 size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              active={editor.isActive("heading", { level: 2 })}
+              title="Heading 2"
+            >
+              <Heading2 size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              active={editor.isActive("heading", { level: 3 })}
+              title="Heading 3"
+            >
+              <Heading3 size={15} />
+            </ToolBtn>
+          </ToolGroup>
 
-        {/* Headings */}
-        <ToolBtn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })}>H1</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })}>H2</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })}>H3</ToolBtn>
+          <ToolGroup>
+            <label className="text-xs font-semibold text-gray-600 pl-1" htmlFor="editor-font-size">
+              Size
+            </label>
+            <select
+              id="editor-font-size"
+              value={selectedFontSize}
+              onChange={(event) => setFontSize(event.target.value)}
+              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 focus:border-blue-400 focus:outline-none"
+              title="Font size"
+            >
+              {FONT_SIZES.map((size) => (
+                <option key={size} value={size}>
+                  {size}px
+                </option>
+              ))}
+            </select>
+          </ToolGroup>
 
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+          <ToolGroup>
+            <button
+              type="button"
+              ref={textColorButtonRef}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => toggleColorPicker("text")}
+              title="Text Color"
+              className="inline-flex items-center gap-1 rounded-md border border-transparent bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-blue-50"
+            >
+              <Palette size={15} />
+              <span className="h-3 w-3 rounded border border-gray-300" style={{ backgroundColor: selectedColor }} />
+            </button>
 
-        {/* Lists */}
-        <ToolBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")}>• List</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")}>1. List</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")}>Quote</ToolBtn>
+            <button
+              type="button"
+              ref={highlightColorButtonRef}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => toggleColorPicker("highlight")}
+              title="Highlight Color"
+              className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm text-gray-700 hover:bg-blue-50 ${editor.isActive("highlight") ? "border-blue-300 bg-blue-100" : "border-transparent bg-white"
+                }`}
+            >
+              <Highlighter size={15} />
+              <span
+                className="h-3 w-3 rounded border border-gray-300"
+                style={{ backgroundColor: selectedHighlightColor }}
+              />
+            </button>
+          </ToolGroup>
+        </div>
 
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+        <div className="flex flex-wrap items-center gap-2">
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => editor.chain().focus().setTextAlign("left").run()}
+              active={editor.isActive({ textAlign: "left" })}
+              title="Align Left"
+            >
+              <AlignLeft size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().setTextAlign("center").run()}
+              active={editor.isActive({ textAlign: "center" })}
+              title="Align Center"
+            >
+              <AlignCenter size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().setTextAlign("right").run()}
+              active={editor.isActive({ textAlign: "right" })}
+              title="Align Right"
+            >
+              <AlignRight size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+              active={editor.isActive({ textAlign: "justify" })}
+              title="Justify"
+            >
+              <AlignJustify size={15} />
+            </ToolBtn>
+          </ToolGroup>
 
-        {/* Text Alignment */}
-        <ToolBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title="Align Left">⬅</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} title="Align Center">↔</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} title="Align Right">➡</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} title="Justify">⬌</ToolBtn>
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              active={editor.isActive("bulletList")}
+              title="Bullet List"
+            >
+              <List size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              active={editor.isActive("orderedList")}
+              title="Ordered List"
+            >
+              <ListOrdered size={15} />
+            </ToolBtn>
+          </ToolGroup>
 
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              active={editor.isActive("blockquote")}
+              title="Quote"
+            >
+              <Quote size={15} />
+            </ToolBtn>
+          </ToolGroup>
 
-        {/* Link */}
-        <ToolBtn onClick={openLinkDialog} active={editor.isActive("link")} title="Add/Edit Link">🔗</ToolBtn>
-        {editor.isActive("link") && (
-          <button
-            type="button"
-            onClick={unsetLink}
-            className="px-3 py-1.5 rounded hover:bg-red-50 text-red-600 border border-transparent hover:border-red-300 text-sm"
-            title="Remove Link"
-          >
-            ⛔
-          </button>
-        )}
+          <ToolGroup>
+            <ToolBtn onClick={openLinkDialog} active={editor.isActive("link")} title="Add/Edit Link">
+              <Link2 size={15} />
+            </ToolBtn>
+            {editor.isActive("link") && (
+              <ToolBtn onClick={unsetLink} title="Remove Link" className="text-red-600 hover:bg-red-50">
+                <Link2Off size={15} />
+              </ToolBtn>
+            )}
+          </ToolGroup>
 
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+              title="Undo"
+            >
+              <Undo size={15} />
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+              title="Redo"
+            >
+              <Redo size={15} />
+            </ToolBtn>
+          </ToolGroup>
+          <ToolGroup>
+            <ToolBtn
+              onClick={() =>
+                editor
+                  .chain()
+                  .focus()
+                  .insertTable({ rows: 1, cols: 2, withHeaderRow: false })
+                  .run()
+              }
+              title="Insert Table"
+            >
+              <TableIcon size={15} />
+              <span className="text-xs">Insert Table</span>
+            </ToolBtn>
+            <ToolBtn onClick={addImage} title="Open Image Library">
+              <ImageIcon size={15} />
+              <span className="text-xs">Library</span>
+            </ToolBtn>
+            <ToolBtn onClick={handleImageUpload} disabled={isUploadingImage} title="Upload Image">
+              <Upload size={15} />
+              <span className="text-xs">Upload</span>
+            </ToolBtn>
+          </ToolGroup>
 
-        {/* Text Color */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowColorPicker(!showColorPicker)}
-            className="px-3 py-1.5 rounded hover:bg-blue-50 flex items-center gap-1 text-gray-700 border border-transparent text-sm"
-          >
-            <span>A</span>
-            <div className="w-4 h-0.5 rounded" style={{ backgroundColor: selectedColor }} />
-          </button>
-          {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[70]">
-              <div className="grid grid-cols-5 gap-2 mb-2">
-                {colors.map((color) => (
-                  <button key={color} type="button" onClick={() => setColor(color)}
-                    className="w-8 h-8 rounded border-2 border-gray-300 hover:border-gray-500"
-                    style={{ backgroundColor: color }} title={color} />
-                ))}
-              </div>
-              <div className="border-t border-gray-200 pt-2 space-y-2">
-                <input type="color" value={selectedColor} onChange={(e) => setColor(e.target.value)} className="w-full h-8 rounded cursor-pointer" />
-                <button type="button" onClick={unsetColor} className="w-full px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Reset Color</button>
-              </div>
-            </div>
+          <ToolGroup>
+            <ToolBtn
+              onClick={() => setRelatedModal(prev => ({ ...prev, isOpen: true, type: "products", ids: [], pos: null }))}
+              active={editor.isActive("relatedProducts")}
+              title="Insert Related Products"
+            >
+              <Package size={15} />
+              <span className="text-xs">Sản phẩm</span>
+            </ToolBtn>
+            <ToolBtn
+              onClick={() => setRelatedModal(prev => ({ ...prev, isOpen: true, type: "articles", ids: [], pos: null }))}
+              active={editor.isActive("relatedArticles")}
+              title="Insert Related Articles"
+            >
+              <FileText size={15} />
+              <span className="text-xs">Bài viết</span>
+            </ToolBtn>
+          </ToolGroup>
+
+
+          {isInTable && (
+            <ToolGroup>
+              <ToolBtn
+                onClick={() => editor.chain().focus().addColumnBefore().run()}
+                title="Add Column Before"
+              >
+                <TableIcon size={15} />
+                <span className="text-xs">+Col L</span>
+              </ToolBtn>
+              <ToolBtn
+                onClick={() => editor.chain().focus().addColumnAfter().run()}
+                title="Add Column After"
+              >
+                <TableIcon size={15} />
+                <span className="text-xs">+Col R</span>
+              </ToolBtn>
+              <ToolBtn
+                onClick={() => editor.chain().focus().addRowBefore().run()}
+                title="Add Row Above"
+              >
+                <TableIcon size={15} />
+                <span className="text-xs">+Row Up</span>
+              </ToolBtn>
+              <ToolBtn
+                onClick={() => editor.chain().focus().addRowAfter().run()}
+                title="Add Row Below"
+              >
+                <TableIcon size={15} />
+                <span className="text-xs">+Row Down</span>
+              </ToolBtn>
+              <ToolBtn onClick={mergeCells} title="Merge Cells">
+                <span className="text-xs font-semibold">Merge</span>
+              </ToolBtn>
+              <ToolBtn onClick={splitCell} title="Split Cell">
+                <span className="text-xs font-semibold">Split</span>
+              </ToolBtn>
+
+              <button
+                type="button"
+                ref={cellBgButtonRef}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => toggleColorPicker("cellBg")}
+                title="Cell Background"
+                className="inline-flex items-center gap-1 rounded-md border border-transparent bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-blue-50"
+              >
+                <Palette size={15} />
+                <span className="h-3 w-3 rounded border border-gray-300" style={{ backgroundColor: selectedBgColor }} />
+              </button>
+
+              <ToolBtn onClick={() => toggleCellBorder("solid")} title="Show Cell Border">
+                <span className="text-xs">Border</span>
+              </ToolBtn>
+              <ToolBtn onClick={() => toggleCellBorder("none")} title="Hide Cell Border">
+                <span className="text-xs">No Border</span>
+              </ToolBtn>
+
+
+            </ToolGroup>
+          )}
+          {isInTable && (
+            <ToolGroup>
+              <ToolBtn
+                onClick={() => editor.chain().focus().deleteColumn().run()}
+                title="Delete Column"
+                className="text-red-600 hover:bg-red-50"
+              >
+                <Trash2 size={15} />
+                <span className="text-xs">Col</span>
+              </ToolBtn>
+              <ToolBtn
+                onClick={() => editor.chain().focus().deleteRow().run()}
+                title="Delete Row"
+                className="text-red-600 hover:bg-red-50"
+              >
+                <Trash2 size={15} />
+                <span className="text-xs">Row</span>
+              </ToolBtn>
+              <ToolBtn
+                onClick={() => editor.chain().focus().deleteTable().run()}
+                title="Delete Table"
+                className="text-red-600 hover:bg-red-50"
+              >
+                <Trash2 size={15} />
+                <span className="text-xs">Table</span>
+              </ToolBtn>
+            </ToolGroup>
+          )
+          }
+
+          {isImageSelected && (
+            <ToolGroup>
+              <ToolBtn onClick={openCaptionDialog} title="Add/Edit Caption">
+                <CaptionIcon />
+                <span className="text-xs">Caption</span>
+              </ToolBtn>
+              <ToolBtn onClick={openOverlayDialog} title="Add/Edit Overlay">
+                <OverlayIcon />
+                <span className="text-xs">Overlay</span>
+              </ToolBtn>
+            </ToolGroup>
           )}
         </div>
 
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+        <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 pt-2">
 
-        {/* Table Insert */}
-        <ToolBtn
-          onClick={() => editor.chain().focus().insertTable({ rows: 1, cols: 2, withHeaderRow: false }).run()}
-          title="Insert table"
-        >
-          ⊞ Table
-        </ToolBtn>
 
-        {/* Table Controls — only visible when inside a table */}
-        {editor.isActive("table") && (
-          <>
-            <ToolBtn onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add column before">←Col</ToolBtn>
-            <ToolBtn onClick={() => editor.chain().focus().addColumnAfter().run()} title="Add column after">Col→</ToolBtn>
-            <ToolBtn onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete column" className="hover:bg-red-50 text-red-600">✕Col</ToolBtn>
-            <ToolBtn onClick={() => editor.chain().focus().addRowBefore().run()} title="Add row before">↑Row</ToolBtn>
-            <ToolBtn onClick={() => editor.chain().focus().addRowAfter().run()} title="Add row after">Row↓</ToolBtn>
-            <ToolBtn onClick={() => editor.chain().focus().deleteRow().run()} title="Delete row" className="hover:bg-red-50 text-red-600">✕Row</ToolBtn>
-            <ToolBtn onClick={mergeCells} title="Merge cells">⊕Merge</ToolBtn>
-            <ToolBtn onClick={splitCell} title="Split cell">⊟Split</ToolBtn>
-
-            <div className="w-px bg-gray-300 mx-0.5 self-stretch" />
-
-            {/* Cell Background Color */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowBgColorPicker(!showBgColorPicker)}
-                className="px-2 py-1.5 rounded hover:bg-blue-50 flex items-center gap-1 text-gray-700 border border-transparent text-xs"
-                title="Cell background color"
-              >
-                <span>🎨</span>
-                <div className="w-4 h-4 rounded border border-gray-300" style={{ backgroundColor: selectedBgColor }} />
-              </button>
-              {showBgColorPicker && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[70] w-48">
-                  <p className="text-xs font-medium text-gray-700 mb-2">Cell Background</p>
-                  <div className="grid grid-cols-5 gap-2 mb-2">
-                    {bgColors.map((color) => (
-                      <button key={color} type="button" onClick={() => setCellBackgroundColor(color)}
-                        className="w-8 h-8 rounded border-2 border-gray-300 hover:border-gray-500"
-                        style={{ backgroundColor: color }} title={color} />
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-200 pt-2 space-y-2">
-                    <input type="color" value={selectedBgColor} onChange={(e) => setCellBackgroundColor(e.target.value)} className="w-full h-8 rounded cursor-pointer" />
-                    <button type="button" onClick={() => setCellBackgroundColor("transparent")} className="w-full px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded">Clear Background</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <ToolBtn onClick={() => toggleCellBorder("solid")} title="Show border">▭ Border</ToolBtn>
-            <ToolBtn onClick={() => toggleCellBorder("none")} title="Hide border">▢ No Border</ToolBtn>
-            <ToolBtn onClick={() => editor.chain().focus().deleteTable().run()} className="hover:bg-red-50 text-red-600" title="Delete table">✕Table</ToolBtn>
-          </>
-        )}
-
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
-
-        {/* Image */}
-        <ToolBtn onClick={addImage} title="Open image library">🖼️ Library</ToolBtn>
-        <button
-          type="button"
-          onClick={handleImageUpload}
-          disabled={isUploadingImage}
-          title="Upload image file"
-          className={`px-3 py-1.5 rounded hover:bg-blue-50 text-gray-700 border border-transparent text-sm ${isUploadingImage ? "opacity-40 cursor-not-allowed" : ""}`}
-        >
-          {isUploadingImage ? "⏳" : "📤"} Upload
-        </button>
-        <ToolBtn onClick={openCaptionDialog} title="Them chu thich cho anh dang chon">📝 Chu thich</ToolBtn>
-        <ToolBtn onClick={openOverlayDialog} title="Them o text de viet de len anh">✍ Overlay</ToolBtn>
-
-        <div className="w-px bg-gray-300 mx-1 self-stretch" />
-
-        {/* Undo/Redo */}
-        <ToolBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>↶ Undo</ToolBtn>
-        <ToolBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>↷ Redo</ToolBtn>
+          {!isInTable && !isImageSelected && (
+            <span className="text-xs text-gray-500 px-1">
+              Chèn bảng/ảnh hoặc chọn một bảng/ảnh để hiện thêm công cụ chi tiết.
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* ─── Editor ─── */}
-      <EditorContent className="flex-1 overflow-y-auto min-h-[420px]" editor={editor} />
+      <EditorContent className="flex-1 overflow-y-auto pb-16 min-h-[420px]" editor={editor} />
 
-      {/* ─── Right-click Context Menu ─── */}
       {showCellMenu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowCellMenu(false)} />
           <div
-            className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-2 min-w-[200px]"
+            className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-2 min-w-[220px]"
             style={{ left: `${cellMenuPosition.x}px`, top: `${cellMenuPosition.y}px` }}
           >
             <div className="text-xs font-semibold text-gray-600 px-2 py-1 mb-1">Cell Options</div>
-            <button type="button" onClick={() => { const c = window.prompt("Enter background color (hex):", selectedBgColor); if (c) { setCellBackgroundColor(c); setShowCellMenu(false); } }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-2 text-sm">🎨 Background Color</button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const color = window.prompt("Enter background color (hex):", selectedBgColor);
+                if (color) {
+                  setCellBackgroundColor(color);
+                  setShowCellMenu(false);
+                }
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Background Color
+            </button>
+
             <div className="border-t border-gray-200 my-1" />
-            <button type="button" onClick={() => { toggleCellBorder("solid"); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">▭ Show Border</button>
-            <button type="button" onClick={() => { toggleCellBorder("none"); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">▢ Hide Border</button>
+
+            <button
+              type="button"
+              onClick={() => {
+                toggleCellBorder("solid");
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Show Border
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                toggleCellBorder("none");
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Hide Border
+            </button>
+
             <div className="border-t border-gray-200 my-1" />
-            <button type="button" onClick={() => { mergeCells(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">⊕ Merge Cells</button>
-            <button type="button" onClick={() => { splitCell(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">⊟ Split Cell</button>
+
+            <button
+              type="button"
+              onClick={() => {
+                mergeCells();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Merge Cells
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                splitCell();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Split Cell
+            </button>
+
             <div className="border-t border-gray-200 my-1" />
-            <button type="button" onClick={() => { editor.chain().focus().addRowBefore().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">Insert Row Above</button>
-            <button type="button" onClick={() => { editor.chain().focus().addRowAfter().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">Insert Row Below</button>
-            <button type="button" onClick={() => { editor.chain().focus().addColumnBefore().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">Insert Column Left</button>
-            <button type="button" onClick={() => { editor.chain().focus().addColumnAfter().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm">Insert Column Right</button>
+
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().addRowBefore().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Insert Row Above
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().addRowAfter().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Insert Row Below
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().addColumnBefore().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Insert Column Left
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().addColumnAfter().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm"
+            >
+              Insert Column Right
+            </button>
+
             <div className="border-t border-gray-200 my-1" />
-            <button type="button" onClick={() => { editor.chain().focus().deleteRow().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm">Delete Row</button>
-            <button type="button" onClick={() => { editor.chain().focus().deleteColumn().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm">Delete Column</button>
-            <button type="button" onClick={() => { editor.chain().focus().deleteTable().run(); setShowCellMenu(false); }} className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm">Delete Table</button>
+
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().deleteRow().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm"
+            >
+              Delete Row
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().deleteColumn().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm"
+            >
+              Delete Column
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().deleteTable().run();
+                setShowCellMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded text-sm"
+            >
+              Delete Table
+            </button>
           </div>
         </>
       )}
 
-      {/* ─── Link Dialog ─── */}
       {showLinkDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl mx-4">
@@ -1887,24 +1738,44 @@ export default function TiptapEditor({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Link Text</label>
-                <input type="text" value={linkText} onChange={(e) => setLinkText(e.target.value)} placeholder="Click here"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <input
+                  type="text"
+                  value={linkText}
+                  onChange={(event) => setLinkText(event.target.value)}
+                  placeholder="Click here"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
                 <p className="text-xs text-gray-500 mt-1">Leave blank to use selected text</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                <input type="text" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://example.com"
+                <input
+                  type="text"
+                  value={linkUrl}
+                  onChange={(event) => setLinkUrl(event.target.value)}
+                  placeholder="https://example.com"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  autoFocus />
+                  autoFocus
+                />
               </div>
             </div>
             <div className="flex gap-2 mt-6">
-              <button type="button" onClick={setLink}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+              <button
+                type="button"
+                onClick={setLink}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              >
                 {linkUrl ? "Set Link" : "Remove Link"}
               </button>
-              <button type="button" onClick={() => { setShowLinkDialog(false); setLinkUrl(""); setLinkText(""); }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLinkDialog(false);
+                  setLinkUrl("");
+                  setLinkText("");
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
                 Cancel
               </button>
             </div>
@@ -1917,14 +1788,16 @@ export default function TiptapEditor({
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">Thêm chú thích ảnh</h3>
-              <p className="text-sm text-gray-500 mt-1">Chọn ảnh đã click, nhập dòng chú thích và lưu để hiển thị ngay phía dưới ảnh.</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Chọn ảnh đã click, nhập dòng chú thích và lưu để hiển thị ngay phía dưới ảnh.
+              </p>
             </div>
             <div className="p-6 space-y-3">
               <label className="block text-sm font-semibold text-gray-700">Nội dung chú thích</label>
               <input
                 type="text"
                 value={captionText}
-                onChange={(e) => setCaptionText(e.target.value)}
+                onChange={(event) => setCaptionText(event.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Nhập chú thích ảnh..."
                 autoFocus
@@ -1956,25 +1829,29 @@ export default function TiptapEditor({
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">Viết đè lên ảnh</h3>
-              <p className="text-sm text-gray-500 mt-1">Tạo một ô text nổi trên ảnh. Bản này là overlay block riêng, chưa phải kéo thả tự do.</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Chọn nội dung, vị trí và màu sắc để tạo overlay block rõ ràng trên ảnh.
+              </p>
             </div>
+
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Nội dung text</label>
                 <textarea
                   value={overlayText}
-                  onChange={(e) => setOverlayText(e.target.value)}
+                  onChange={(event) => setOverlayText(event.target.value)}
                   rows={5}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Nhập text muốn đè lên ảnh..."
                   autoFocus
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Vị trí overlay</label>
                 <select
                   value={overlayPosition}
-                  onChange={(e) => setOverlayPosition(e.target.value as OverlayPosition)}
+                  onChange={(event) => setOverlayPosition(event.target.value as OverlayPosition)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="top-left">Top left</option>
@@ -1984,11 +1861,43 @@ export default function TiptapEditor({
                   <option value="center">Center</option>
                 </select>
 
-                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-                  Nếu bạn muốn kéo thả ô text tự do trên ảnh, mình sẽ nâng cấp thành canvas overlay riêng ở bước tiếp theo.
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Màu nền
+                    <input
+                      type="color"
+                      value={overlayBackgroundColor}
+                      onChange={(event) => setOverlayBackgroundColor(event.target.value)}
+                      className="mt-1 block h-10 w-full cursor-pointer rounded border border-gray-300 bg-white"
+                    />
+                  </label>
+
+                  <label className="text-sm font-semibold text-gray-700">
+                    Màu chữ
+                    <input
+                      type="color"
+                      value={overlayTextColor}
+                      onChange={(event) => setOverlayTextColor(event.target.value)}
+                      className="mt-1 block h-10 w-full cursor-pointer rounded border border-gray-300 bg-white"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Preview</p>
+                  <div
+                    className="mt-2 inline-block max-w-full rounded-lg px-3 py-2 text-sm font-semibold break-words"
+                    style={{
+                      backgroundColor: overlayBackgroundColor,
+                      color: overlayTextColor,
+                    }}
+                  >
+                    {overlayText.trim() || "Xem trước nội dung overlay"}
+                  </div>
                 </div>
               </div>
             </div>
+
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -2010,10 +1919,151 @@ export default function TiptapEditor({
         </div>
       )}
 
+      {openColorPicker &&
+        createPortal(
+          <div
+            ref={colorPopoverRef}
+            className="fixed z-[120] w-[312px] rounded-xl border border-gray-300 bg-white p-3 shadow-2xl"
+            style={{ top: pickerPosition.top, left: pickerPosition.left }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-700">{currentPickerLabel}</p>
+              <button
+                type="button"
+                onClick={() => setOpenColorPicker(null)}
+                className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid-cols-8 gap-2">
+              {currentPickerPalette.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyPickerColor(color)}
+                  className={`h-7 w-7 rounded border-2 transition-colors ${color.toLowerCase() === currentPickerColor.toLowerCase()
+                    ? "border-blue-500"
+                    : "border-gray-200 hover:border-gray-400"
+                    }`}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+
+            <div className="mt-3 border-t border-gray-200 pt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={currentPickerColor}
+                  onChange={(event) => applyPickerColor(event.target.value, false)}
+                  className="h-10 w-12 cursor-pointer rounded border border-gray-300"
+                  title="Custom color"
+                />
+                <div className="h-10 flex-1 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                  {currentPickerColor}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={resetPickerColor}
+                className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-gray-700 hover:bg-gray-200"
+              >
+                {openColorPicker === "highlight"
+                  ? "Clear Highlight"
+                  : openColorPicker === "cellBg"
+                    ? "Clear Background"
+                    : "Reset Color"}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+
       <ImageSelector
         isOpen={showImageSelector}
         onClose={() => setShowImageSelector(false)}
         onSelect={(image) => handleImageSelect(image._id, image)}
+      />
+
+      <RelatedSelectionModal
+        isOpen={relatedModal.isOpen}
+        onClose={() => setRelatedModal(prev => ({ ...prev, isOpen: false }))}
+        type={relatedModal.type}
+        initialIds={relatedModal.ids}
+        initialLimit={relatedModal.limit}
+        initialStyle={relatedModal.style}
+        defaultCategoryId={defaultCategoryId}
+        onConfirm={({ ids, limit, style }) => {
+          if (!editor) return;
+
+          const nodeType = relatedModal.type === "products" ? "relatedProducts" : "relatedArticles";
+          const attrs = relatedModal.type === "products"
+            ? { productIds: ids, displayLimit: limit, style }
+            : { articleIds: ids, displayLimit: limit, style };
+
+          if (relatedModal.pos !== null) {
+            // Update existing node
+            editor.chain()
+              .focus()
+              .setNodeSelection(relatedModal.pos)
+              .insertContent({
+                type: nodeType,
+                attrs
+              })
+              .run();
+          } else {
+            // Insert new node
+            editor.chain()
+              .focus()
+              .insertContent({
+                type: nodeType,
+                attrs
+              })
+              .run();
+          }
+          setRelatedModal(prev => ({ ...prev, isOpen: false }));
+        }}
+      />
+
+      <ImageSliderModal
+        isOpen={imageSliderModal.isOpen}
+        onClose={() => setImageSliderModal(prev => ({ ...prev, isOpen: false }))}
+        initialImages={imageSliderModal.images}
+        initialAutoplay={imageSliderModal.autoplay}
+        initialShowPagination={imageSliderModal.showPagination}
+        onConfirm={({ images, autoplay, showPagination }) => {
+          if (!editor) return;
+
+          const attrs = {
+            images: images || [],
+            autoplay: autoplay || false,
+            showPagination: showPagination !== undefined ? showPagination : true
+          };
+
+          if (imageSliderModal.pos !== null) {
+            editor.chain()
+              .focus()
+              .setNodeSelection(imageSliderModal.pos)
+              .insertContent({
+                type: "imageSlider",
+                attrs
+              })
+              .run();
+          } else {
+            editor.chain()
+              .focus()
+              .insertContent({
+                type: "imageSlider",
+                attrs
+              })
+              .run();
+          }
+          setImageSliderModal(prev => ({ ...prev, isOpen: false }));
+        }}
       />
     </div>
   );

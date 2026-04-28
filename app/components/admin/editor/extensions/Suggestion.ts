@@ -111,7 +111,7 @@ export default {
           editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
         },
       },
-      ...layoutSlashItems,
+      // ...layoutSlashItems,
       {
         title: 'Divider',
         description: 'Đường kẻ phân cách.',
@@ -135,12 +135,11 @@ export default {
         description: 'Nhúng danh sách sản phẩm cùng danh mục.',
         keywords: ['related', 'products', 'san pham'],
         command: ({ editor, range }: any) => {
-          editor
-            .chain()
-            .focus()
-            .deleteRange(range)
-            .insertContent('<p>[[RELATED_PRODUCTS]]</p>')
-            .run();
+          editor.chain().focus().deleteRange(range).run();
+          const event = new CustomEvent("editor:open-related-modal", {
+            detail: { type: "products" }
+          });
+          window.dispatchEvent(event);
         },
       },
       {
@@ -148,12 +147,28 @@ export default {
         description: 'Nhúng danh sách bài viết cùng danh mục.',
         keywords: ['related', 'articles', 'bai viet'],
         command: ({ editor, range }: any) => {
-          editor
-            .chain()
-            .focus()
-            .deleteRange(range)
-            .insertContent('<p>[[RELATED_ARTICLES]]</p>')
-            .run();
+          editor.chain().focus().deleteRange(range).run();
+          const event = new CustomEvent("editor:open-related-modal", {
+            detail: { type: "articles" }
+          });
+          window.dispatchEvent(event);
+        },
+      },
+      {
+        title: 'Image Slider',
+        description: 'Tạo slide trình chiếu nhiều hình ảnh.',
+        keywords: ['slider', 'carousel', 'slide', 'anh'],
+        command: ({ editor, range }: any) => {
+          editor.chain().focus().deleteRange(range).run();
+          const event = new CustomEvent("editor:open-image-slider-modal", {
+            detail: { 
+              images: [], 
+              autoplay: false, 
+              showPagination: true,
+              pos: null 
+            }
+          });
+          window.dispatchEvent(event);
         },
       },
     ];

@@ -1,44 +1,44 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface SlashCommandItem {
-  title: string;
-  description: string;
-  keywords?: string[];
-  command: ({ editor, range }: any) => void;
+    title: string;
+    description: string;
+    keywords?: string[];
+    command: ({ editor, range }: any) => void;
 }
 
 interface LayoutTemplateDefinition {
-  key: string;
-  title: string;
-  description: string;
-  keywords: string[];
-  html: string;
+    key: string;
+    title: string;
+    description: string;
+    keywords: string[];
+    html: string;
 }
 
 const createInsertHtmlCommand =
-  (html: string) =>
-  ({ editor, range }: any) => {
-    if (editor.isActive("table")) {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .deleteTable()
-        .insertContent(html)
-        .run();
-      return;
-    }
+    (html: string) =>
+        ({ editor, range }: any) => {
+            if (editor.isActive("table")) {
+                editor
+                    .chain()
+                    .focus()
+                    .deleteRange(range)
+                    .deleteTable()
+                    .insertContent(html)
+                    .run();
+                return;
+            }
 
-    editor.chain().focus().deleteRange(range).insertContent(html).run();
-  };
+            editor.chain().focus().deleteRange(range).insertContent(html).run();
+        };
 
 const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
-  {
-    key: "image-image",
-    title: "Layout: Hình + Hình",
-    description: "Hai cột hình song song, có chỗ điền chú thích.",
-    keywords: ["layout", "hinh hinh", "image image", "2 cot", "gallery"],
-    html: `
+    {
+        key: "image-image",
+        title: "Layout: Hình + Hình",
+        description: "Hai cột hình song song, có chỗ điền chú thích.",
+        keywords: ["layout", "hinh hinh", "image image", "2 cot", "gallery"],
+        html: `
       <table>
         <tbody>
           <tr>
@@ -57,13 +57,13 @@ const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
       </table>
       <p></p>
     `.trim(),
-  },
-  {
-    key: "image-text",
-    title: "Layout: Hình + Chữ",
-    description: "Một cột ảnh và một cột nội dung mô tả.",
-    keywords: ["layout", "hinh chu", "image text", "story"],
-    html: `
+    },
+    {
+        key: "image-text",
+        title: "Layout: Hình + Chữ",
+        description: "Một cột ảnh và một cột nội dung mô tả.",
+        keywords: ["layout", "hinh chu", "image text", "story"],
+        html: `
       <table>
         <tbody>
           <tr>
@@ -80,13 +80,13 @@ const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
       </table>
       <p></p>
     `.trim(),
-  },
-  {
-    key: "text-image",
-    title: "Layout: Chữ + Hình",
-    description: "Cột nội dung bên trái và ảnh bên phải.",
-    keywords: ["layout", "chu hinh", "text image", "reverse"],
-    html: `
+    },
+    {
+        key: "text-image",
+        title: "Layout: Chữ + Hình",
+        description: "Cột nội dung bên trái và ảnh bên phải.",
+        keywords: ["layout", "chu hinh", "text image", "reverse"],
+        html: `
       <table>
         <tbody>
           <tr>
@@ -103,13 +103,13 @@ const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
       </table>
       <p></p>
     `.trim(),
-  },
-  {
-    key: "text-text",
-    title: "Layout: Chữ + Chữ",
-    description: "Hai cột văn bản để so sánh hoặc kể song song.",
-    keywords: ["layout", "chu chu", "text text", "compare"],
-    html: `
+    },
+    {
+        key: "text-text",
+        title: "Layout: Chữ + Chữ",
+        description: "Hai cột văn bản để so sánh hoặc kể song song.",
+        keywords: ["layout", "chu chu", "text text", "compare"],
+        html: `
       <table>
         <tbody>
           <tr>
@@ -126,13 +126,13 @@ const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
       </table>
       <p></p>
     `.trim(),
-  },
-  {
-    key: "triple-image",
-    title: "Layout: 3 Hình Ngang",
-    description: "Ba hình trên cùng một hàng để tạo gallery nhanh.",
-    keywords: ["layout", "3 hinh", "three image", "gallery"],
-    html: `
+    },
+    {
+        key: "triple-image",
+        title: "Layout: 3 Hình Ngang",
+        description: "Ba hình trên cùng một hàng để tạo gallery nhanh.",
+        keywords: ["layout", "3 hinh", "three image", "gallery"],
+        html: `
       <table>
         <tbody>
           <tr>
@@ -156,13 +156,13 @@ const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
       </table>
       <p></p>
     `.trim(),
-  },
-  {
-    key: "quote-image",
-    title: "Layout: Trích Dẫn + Hình",
-    description: "Khối quote nổi bật đi cùng ảnh minh họa.",
-    keywords: ["layout", "quote", "trich dan", "testimonial"],
-    html: `
+    },
+    {
+        key: "quote-image",
+        title: "Layout: Trích Dẫn + Hình",
+        description: "Khối quote nổi bật đi cùng ảnh minh họa.",
+        keywords: ["layout", "quote", "trich dan", "testimonial"],
+        html: `
       <table>
         <tbody>
           <tr>
@@ -181,14 +181,14 @@ const layoutTemplateDefinitions: LayoutTemplateDefinition[] = [
       </table>
       <p></p>
     `.trim(),
-  },
+    },
 ];
 
 export const layoutSlashItems: SlashCommandItem[] = layoutTemplateDefinitions.map(
-  (template) => ({
-    title: template.title,
-    description: template.description,
-    keywords: template.keywords,
-    command: createInsertHtmlCommand(template.html),
-  })
+    (template) => ({
+        title: template.title,
+        description: template.description,
+        keywords: template.keywords,
+        command: createInsertHtmlCommand(template.html),
+    })
 );
