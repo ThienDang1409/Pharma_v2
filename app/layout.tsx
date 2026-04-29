@@ -40,12 +40,29 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const language = await getCurrentLanguageFromRequest();
+  const googleTagId = "G-L2V5M26ZWZ";
   const organizationJsonLd = JSON.stringify(
     buildOrganizationJsonLd(language)
   ).replace(/</g, "\\u003c");
 
   return (
     <html lang={language}>
+      <head>
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${googleTagId}`}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${googleTagId}');
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
