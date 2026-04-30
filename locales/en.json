@@ -22,7 +22,7 @@
     "home": "Home"
   },
   "header": {
-    "company": "VietAnh Instruments",
+    "company": "VietAnh Instruments - From PharmaTest",
     "search": "Search..."
   },
   "navigation": {
@@ -34,7 +34,7 @@
     "services": "Services"
   },
   "footer": {
-    "copyright": "© 2024 VietAnh Instruments. All rights reserved.",
+    "copyright": "© 2024 VietAnh Instruments - From PharmaTest. All rights reserved.",
     "followUs": "Follow Us",
     "address": "Address",
     "phone": "Phone",
@@ -43,7 +43,7 @@
     "privacy": "Privacy",
     "terms": "Terms of Use",
     "warranty": "Warranty Registration",
-    "memberOfPharmaGroup": "MEMBER OF THE VietAnh Instruments GROUP"
+    "memberOfPharmaGroup": "MEMBER OF THE VietAnh Instruments - From PharmaTest GROUP"
   },
   "errors": {
     "notFound": "Page not found",

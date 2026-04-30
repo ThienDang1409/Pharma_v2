@@ -3,8 +3,8 @@
  */
 
 export const siteConfig = {
-  name: "VietAnh Instruments",
-  description: "Tập đoàn Dược phẩm VietAnh Instruments - Chất lượng là trách nhiệm",
+  name: "VietAnh Instruments - Từ PharmaTest",
+  description: "Tập đoàn Dược phẩm VietAnh Instruments - Từ PharmaTest - Chất lượng là trách nhiệm",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   
   // Social links
@@ -31,7 +31,7 @@ export const siteConfig = {
 
   // Default meta tags
   defaultMeta: {
-    title: "VietAnh Instruments - Tập đoàn Dược phẩm",
+    title: "VietAnh Instruments - Tập đoàn Dược phẩm - Từ PharmaTest",
     description: "Chuyên cung cấp dược phẩm chất lượng cao",
     keywords: ["dược phẩm", "pharma", "thuốc", "y tế", "sức khỏe"],
   },
