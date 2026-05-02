@@ -23,6 +23,7 @@ const translations = {
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
+import { getLocalizedText } from "@/lib/utils/string/i18n";
 
 export default function BlogSlider() {
   const { language } = useLanguage();
@@ -144,13 +145,13 @@ export default function BlogSlider() {
                   <div className="max-w-[550px] md:ml-12 md:bg-white/80 md:p-10 md:shadow-sm">
                     {/* Title */}
                     <h2 className="text-3xl md:text-4xl font-bold text-black mb-4 md:mb-6 leading-tight">
-                      {blog.title}
+                      {getLocalizedText(blog.title, blog.title_en ,language)}
                     </h2>
 
                     {/* Excerpt from first section */}
                     {blog.sections && blog.sections.length > 0 && (
                       <p className="hidden md:block text-gray-700 text-base md:text-lg mb-6 md:mb-8 line-clamp-2">
-                        {blog.sections[0].content
+                        {getLocalizedText(blog.sections[0].content, blog.sections[0].content_en, language)
                           ?.replace(/<[^>]*>/g, "")
                           .substring(0, 150)}
                         ...
