@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/app/context/LanguageContext";
 import { AuthProvider } from "@/app/context/AuthContext";
@@ -11,11 +10,6 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 import { getCurrentLanguageFromRequest } from "@/lib/seo/language";
 import { getSeoRouteCopy } from "@/lib/seo/copy";
 import { buildOrganizationJsonLd } from "@/lib/seo/schema";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const language = await getCurrentLanguageFromRequest();
@@ -63,9 +57,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${inter.variable} font-sans antialiased`}
-      >
+      <body className="font-sans antialiased">
         <SmoothScroll />
         <ToastProvider>
           <AuthProvider>

@@ -1,18 +1,40 @@
 import React, { useEffect, useState } from "react";
-import { NodeViewWrapper } from "@tiptap/react";
+import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
 import { Package, FileText, Trash2, Edit2 } from "lucide-react";
 import { blogApi } from "@/lib/api";
 import ProductCard from "@/app/components/cards/ProductCard";
 import NewsCard from "@/app/components/cards/NewsCard";
+import type { Blog } from "@/lib/types";
 
-export default function RelatedNodeView(props: any) {
+interface RelatedNodeAttrs {
+  productIds?: string[];
+  articleIds?: string[];
+  displayLimit?: number;
+  style?: string;
+}
+
+interface RelatedNode {
+  type: {
+    name: "relatedProducts" | "relatedArticles";
+  };
+  attrs: RelatedNodeAttrs;
+}
+
+interface RelatedNodeViewProps {
+  node: RelatedNode;
+}
+
+export default function RelatedNodeView(props: ReactNodeViewProps) {
   const { node, deleteNode, getPos } = props;
-  const isProducts = node.type.name === 'relatedProducts';
-  const ids = isProducts ? node.attrs.productIds : node.attrs.articleIds;
-  const limit = node.attrs.displayLimit;
-  const style = node.attrs.style;
+  const typedNode = node as typeof node & RelatedNodeViewProps["node"];
+  const isProducts = typedNode.type.name === "relatedProducts";
+  const ids = isProducts
+    ? (typedNode.attrs.productIds ?? [])
+    : (typedNode.attrs.articleIds ?? []);
+  const limit = typedNode.attrs.displayLimit;
+  const style = typedNode.attrs.style;
 
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -29,12 +51,12 @@ export default function RelatedNodeView(props: any) {
             try {
               const response = await blogApi.getById(id);
               return response.data?.blog;
-            } catch (e) {
+            } catch {
               return null;
             }
           })
         );
-        setItems(fetchedItems.filter(Boolean));
+        setItems(fetchedItems.filter((item): item is Blog => item !== null));
       } catch (error) {
         console.error("Error fetching related items preview:", error);
       } finally {

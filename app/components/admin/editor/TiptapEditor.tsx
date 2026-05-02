@@ -87,6 +87,36 @@ interface RelatedModalState {
 
 type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
 type PickerType = "text" | "highlight" | "cellBg" | null;
+type RelatedModalType = RelatedModalState["type"];
+
+interface ImageSliderItem {
+  id: string;
+  url: string;
+  caption: string;
+}
+
+interface ImageSliderModalState {
+  isOpen: boolean;
+  images: ImageSliderItem[];
+  autoplay: boolean;
+  showPagination: boolean;
+  pos: number | null;
+}
+
+interface RelatedModalEventDetail {
+  type: RelatedModalType;
+  ids?: string[];
+  limit?: number;
+  style?: string;
+  pos?: number | null;
+}
+
+interface ImageSliderModalEventDetail {
+  images?: ImageSliderItem[];
+  autoplay?: boolean;
+  showPagination?: boolean;
+  pos?: number | null;
+}
 
 const DEFAULT_TEXT_COLOR = "#111827";
 const DEFAULT_HIGHLIGHT_COLOR = "#fef08a";
@@ -316,12 +346,12 @@ export default function TiptapEditor({
     style: "slide",
     pos: null,
   });
-  const [imageSliderModal, setImageSliderModal] = useState({
+  const [imageSliderModal, setImageSliderModal] = useState<ImageSliderModalState>({
     isOpen: false,
-    images: [] as any[],
+    images: [],
     autoplay: false,
     showPagination: true,
-    pos: null as number | null,
+    pos: null,
   });
   const [showCellMenu, setShowCellMenu] = useState(false);
   const [cellMenuPosition, setCellMenuPosition] = useState({ x: 0, y: 0 });
@@ -385,7 +415,7 @@ export default function TiptapEditor({
     };
 
     const openRelatedModal = (event: Event) => {
-      const customEvent = event as CustomEvent<any>;
+      const customEvent = event as CustomEvent<RelatedModalEventDetail>;
       const { type, ids, limit, style, pos } = customEvent.detail;
       setRelatedModal({
         isOpen: true,
@@ -398,7 +428,7 @@ export default function TiptapEditor({
     };
 
     const openImageSliderModal = (event: Event) => {
-      const customEvent = event as CustomEvent<any>;
+      const customEvent = event as CustomEvent<ImageSliderModalEventDetail>;
       const { images, autoplay, showPagination, pos } = customEvent.detail;
       setImageSliderModal({
         isOpen: true,
@@ -2030,6 +2060,7 @@ export default function TiptapEditor({
       />
 
       <ImageSliderModal
+        key={`${imageSliderModal.pos ?? "new"}-${imageSliderModal.images.length}-${imageSliderModal.isOpen ? "open" : "closed"}`}
         isOpen={imageSliderModal.isOpen}
         onClose={() => setImageSliderModal(prev => ({ ...prev, isOpen: false }))}
         initialImages={imageSliderModal.images}

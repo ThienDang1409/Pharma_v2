@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import RelatedProductsCarousel from "./RelatedProductsCarousel";
 import RelatedArticlesList from "./RelatedArticlesList";
@@ -9,6 +10,22 @@ import type { Blog } from "@/lib/types";
 
 interface BlogContentRendererProps {
   html: string;
+  language: "vi" | "en";
+}
+
+type RelatedType = "related-products" | "related-articles";
+
+interface ImageSliderItem {
+  id: string;
+  url: string;
+  caption: string;
+}
+
+interface RelatedComponentProps {
+  type: RelatedType;
+  ids: string[];
+  limit: number;
+  style: string;
   language: "vi" | "en";
 }
 
@@ -58,7 +75,9 @@ export default function BlogContentRenderer({ html, language }: BlogContentRende
             const autoplay = fullTag.match(/data-autoplay="true"/);
             const pagination = fullTag.match(/data-pagination="false"/) === null;
 
-            const imageData = images ? JSON.parse(images[1].replace(/&quot;/g, '"')) : [];
+            const imageData = images
+              ? (JSON.parse(images[1].replace(/&quot;/g, '"')) as ImageSliderItem[])
+              : [];
 
             if (imageData.length > 0) {
               newContent.push(
@@ -75,7 +94,7 @@ export default function BlogContentRenderer({ html, language }: BlogContentRende
             newContent.push(
               <div key={`comp-${i}`} className="my-12">
                 <RelatedComponent
-                  type={type as any}
+                  type={type as RelatedType}
                   ids={ids}
                   limit={limit}
                   style={style}
@@ -96,7 +115,7 @@ export default function BlogContentRenderer({ html, language }: BlogContentRende
   return <div className="rendered-blog-content">{renderedContent}</div>;
 }
 
-function RelatedComponent({ type, ids, limit, style, language }: any) {
+function RelatedComponent({ type, ids, limit, style, language }: RelatedComponentProps) {
   const [data, setData] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -109,7 +128,7 @@ function RelatedComponent({ type, ids, limit, style, language }: any) {
             try {
               const res = await blogApi.getById(id);
               return res.data?.blog;
-            } catch (e) {
+            } catch {
               return null;
             }
           })
@@ -156,5 +175,3 @@ function RelatedComponent({ type, ids, limit, style, language }: any) {
 
   return <RelatedArticlesList articles={data} language={language} />;
 }
-
-import Link from "next/link";

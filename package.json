@@ -6,13 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@studio-freight/lenis": "^1.0.42",
+    "@swc/helpers": "^0.5.21",
     "@tiptap/extension-bubble-menu": "^3.22.2",
     "@tiptap/extension-character-count": "^3.22.2",
     "@tiptap/extension-code-block-lowlight": "^3.22.2",

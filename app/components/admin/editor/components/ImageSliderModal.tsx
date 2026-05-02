@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   X,
   Plus,
@@ -11,7 +11,7 @@ import {
   Settings2,
   Type
 } from "lucide-react";
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ImageSelector from "../../image/ImageSelector";
@@ -106,14 +106,6 @@ export default function ImageSliderModal({
     })
   );
 
-  useEffect(() => {
-    if (isOpen) {
-      setImages(initialImages);
-      setAutoplay(initialAutoplay);
-      setShowPagination(initialShowPagination);
-    }
-  }, [isOpen, initialImages, initialAutoplay, initialShowPagination]);
-
   const handleAddImage = (image: ImageResponse) => {
     const newItem: ImageItem = {
       id: `slide-${image._id}-${Math.random().toString(36).substring(2, 11)}`,
@@ -124,16 +116,18 @@ export default function ImageSliderModal({
   };
 
   const handleRemoveImage = (id: string) => {
-    setImages(images.filter((img) => img.id !== id));
+    setImages((currentImages) => currentImages.filter((img) => img.id !== id));
   };
 
   const handleUpdateCaption = (id: string, caption: string) => {
-    setImages(images.map((img) => img.id === id ? { ...img, caption } : img));
+    setImages((currentImages) =>
+      currentImages.map((img) => (img.id === id ? { ...img, caption } : img))
+    );
   };
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
+    if (over && active.id !== over.id) {
       setImages((items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);

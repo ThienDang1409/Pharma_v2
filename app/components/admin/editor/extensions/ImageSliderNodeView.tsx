@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { NodeViewWrapper } from "@tiptap/react";
+import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
 import { Images, Trash2, Edit2, ChevronLeft, ChevronRight, Type } from "lucide-react";
 
 interface ImageItem {
@@ -10,9 +10,24 @@ interface ImageItem {
   caption: string;
 }
 
-export default function ImageSliderNodeView(props: any) {
+interface ImageSliderNodeAttrs {
+  images?: ImageItem[];
+  autoplay?: boolean;
+  showPagination?: boolean;
+}
+
+interface ImageSliderNode {
+  attrs: ImageSliderNodeAttrs;
+}
+
+interface ImageSliderNodeViewProps {
+  node: ImageSliderNode;
+}
+
+export default function ImageSliderNodeView(props: ReactNodeViewProps) {
   const { node, deleteNode, getPos } = props;
-  const images = (node.attrs.images || []) as ImageItem[];
+  const typedNode = node as typeof node & ImageSliderNodeViewProps["node"];
+  const images = typedNode.attrs.images || [];
   const [activeIndex, setActiveIndex] = useState(0);
 
   const handleEdit = () => {
@@ -20,8 +35,8 @@ export default function ImageSliderNodeView(props: any) {
       detail: {
         images,
         pos: getPos(),
-        autoplay: node.attrs.autoplay,
-        showPagination: node.attrs.showPagination,
+        autoplay: typedNode.attrs.autoplay,
+        showPagination: typedNode.attrs.showPagination,
       }
     });
     window.dispatchEvent(event);
