@@ -62,3 +62,4 @@ Luu y:
 3. Them image scanning
 4. Cau hinh deploy staging khi san sang lam CD
 5. Chuan bi rollback flow
+6. test
