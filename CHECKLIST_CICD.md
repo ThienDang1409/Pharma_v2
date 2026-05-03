@@ -5,12 +5,17 @@ Checklist nay dung de theo doi cac buoc thiet lap `CI/CD` cho app `Next.js` tron
 ## 1. Chuan bi flow
 
 - [x] Xac dinh flow branch
-  - `feature/*`: chiem tra code va build
-  - `develop`: dung cho staging
-  - `main`: dung cho production
-- [ ] Xac dinh quy uoc merge
-  - PR vao `develop`
-  - PR hoac release tu `develop` sang `main`
+  - `main`: production branch
+  - `develop`: staging/integration branch
+  - `feature/*`: tinh nang moi, tach tu `develop`, merge ve `develop`
+  - `fix/*`: sua loi thuong, tach tu `develop`, merge ve `develop`
+  - `release/*`: chot ban phat hanh, tach tu `develop`, merge vao `main` va merge nguoc lai `develop`
+  - `hotfix/*`: sua loi khan cap production, tach tu `main`, merge vao `main` va merge nguoc lai `develop`
+- [x] Xac dinh quy uoc merge
+  - PR `feature/*` va `fix/*` vao `develop`
+  - PR `release/*` tu `develop` vao `main`
+  - merge nguoc `main` hoac `release/*` tro lai `develop` sau moi release
+  - PR `hotfix/*` vao `main`, sau do merge nguoc lai `develop`
 - [x] Chon noi luu image
   - Docker Hub
   - GHCR
@@ -62,6 +67,10 @@ Checklist nay dung de theo doi cac buoc thiet lap `CI/CD` cho app `Next.js` tron
   - PR
   - `develop`
   - `main`
+  - `feature/*`
+  - `fix/*`
+  - `release/*`
+  - `hotfix/*`
 
 ## 5. Build va quan ly Docker image
 
@@ -126,6 +135,11 @@ Checklist nay dung de theo doi cac buoc thiet lap `CI/CD` cho app `Next.js` tron
   - `staging`
   - `production`
   - `latest` neu can
+- [x] Chot mapping branch -> image tag
+  - `develop` -> `develop`, `staging`, `sha-*`
+  - `main` -> `latest`, `production`, `sha-*`
+  - `release/*` -> tag theo ten release
+  - `feature/*`, `fix/*`, `hotfix/*`, `chore/*` -> tag theo ten branch
 - [ ] Viet huong dan ngan trong README
   - workflow chay khi nao
   - image duoc push di dau

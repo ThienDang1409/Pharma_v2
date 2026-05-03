@@ -8,6 +8,7 @@
 - Da xac minh `npm run build` thanh cong
 - Da xac minh duoc `docker build` va `docker run` local
 - Da cau hinh Docker Hub cho buoc build/push image tu GitHub Actions
+- Da chot branch convention theo huong `main / develop / feature / fix / release / hotfix`
 
 ## Da hoan thanh
 
@@ -23,6 +24,7 @@
   - `npm run build`
   - `docker build` trong pipeline
   - `docker push` len Docker Hub khi co `push`
+  - tag image theo branch strategy cho `develop`, `release/*`, `main`
 - Loai bo phu thuoc build vao Google Fonts de tranh fail trong moi truong khong co internet
 - Sua cac loi typing/lint trong editor components
 - Dong bo lockfile va bo sung `@swc/helpers` de `npm ci` chay duoc trong Docker
@@ -55,8 +57,8 @@ Luu y:
 
 ## Goi y buoc tiep theo
 
-1. Them GitHub secrets cho Docker Hub
-2. Test push image tu workflow tren branch nay
-3. Cau hinh deploy staging
-4. Them smoke test sau deploy voi `/api/health`
-5. Them image scanning va rollback flow
+1. Khoa branch protection cho `main` va `develop`
+2. Test image tags cho `develop`, `release/*`, `main`
+3. Them image scanning
+4. Cau hinh deploy staging khi san sang lam CD
+5. Chuan bi rollback flow
