@@ -21,6 +21,8 @@ const OPEN_GRAPH_ALTERNATE_LOCALE: Record<SupportedLanguage, string[]> = {
   en: ["vi_VN"],
 };
 
+const DEFAULT_OPEN_GRAPH_IMAGE = "/images/pharma-test-world.png";
+
 type OpenGraphType = "website" | "article";
 
 interface PageMetadataOptions {
@@ -99,7 +101,9 @@ export function buildPageMetadata({
   modifiedTime,
 }: PageMetadataOptions): Metadata {
   const normalizedDescription = normalizeDescription(description, language);
-  const images = image ? [resolveImageUrl(image)].filter(Boolean) as string[] : undefined;
+  const images = [resolveImageUrl(image || DEFAULT_OPEN_GRAPH_IMAGE)].filter(
+    Boolean
+  ) as string[];
   const openGraphLocale = OPEN_GRAPH_LOCALE[language];
   const alternateLocale = OPEN_GRAPH_ALTERNATE_LOCALE[language];
   const canonicalPath = path.startsWith("/") ? path : `/${path}`;
@@ -110,10 +114,6 @@ export function buildPageMetadata({
     keywords,
     alternates: {
       canonical: canonicalPath,
-      languages: {
-        "vi-VN": canonicalPath,
-        "en-US": canonicalPath,
-      },
     },
     robots: noIndex
       ? {
@@ -141,7 +141,7 @@ export function buildPageMetadata({
         : {}),
     },
     twitter: {
-      card: images?.length ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description: normalizedDescription,
       images,
