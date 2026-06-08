@@ -347,6 +347,11 @@
   overflow: hidden;
 }
 
+.ProseMirror table[data-layout-template],
+.ProseMirror table:has(td img, th img) {
+  table-layout: fixed;
+}
+
 .ProseMirror .tableWrapper table {
   width: 100% !important;
   /* min-width: 100% !important; */
@@ -379,12 +384,48 @@
   overflow-wrap: break-word;
 }
 
+.ProseMirror table[data-layout-template] td,
+.ProseMirror table[data-layout-template] th,
+.ProseMirror table:has(td img, th img) td,
+.ProseMirror table:has(td img, th img) th {
+  width: auto !important;
+  max-width: none;
+}
+
+.ProseMirror table[data-layout-template] tr > td:nth-last-child(2):first-child,
+.ProseMirror table[data-layout-template] tr > td:nth-last-child(2):first-child ~ td,
+.ProseMirror table:has(td img, th img) tr > td:nth-last-child(2):first-child,
+.ProseMirror table:has(td img, th img) tr > td:nth-last-child(2):first-child ~ td {
+  width: 50% !important;
+}
+
+.ProseMirror table[data-layout-template] tr > td:nth-last-child(3):first-child,
+.ProseMirror table[data-layout-template] tr > td:nth-last-child(3):first-child ~ td,
+.ProseMirror table:has(td img, th img) tr > td:nth-last-child(3):first-child,
+.ProseMirror table:has(td img, th img) tr > td:nth-last-child(3):first-child ~ td {
+  width: 33.3333% !important;
+}
+
 /* Cells that hold only an image — center and tighten padding */
-.ProseMirror table td:has(> img:only-child),
-.ProseMirror table th:has(> img:only-child) {
+.ProseMirror table td:has(img),
+.ProseMirror table th:has(img),
+.ProseMirror table td[data-layout-cell="image"],
+.ProseMirror table th[data-layout-cell="image"] {
   padding: 0.5em;
   vertical-align: middle;
   text-align: center;
+}
+
+.ProseMirror table td:has(img) img,
+.ProseMirror table th:has(img) img,
+.ProseMirror table td[data-layout-cell="image"] img,
+.ProseMirror table th[data-layout-cell="image"] img {
+  width: 100% !important;
+  aspect-ratio: 1 / 1;
+  max-height: none;
+  height: auto !important;
+  object-fit: contain;
+  background: #f9fafb;
 }
 
 /* Image cells — equal width distribution (50% each for 2-column image tables) */
