@@ -5,6 +5,7 @@ import { AuthProvider } from "@/app/context/AuthContext";
 import { ToastProvider } from "@/app/context/ToastContext";
 import ToastContainer from "@/app/components/common/ToastContainer";
 import SmoothScroll from "@/app/components/common/SmoothScroll";
+import GoogleAnalytics from "@/app/components/analytics/GoogleAnalytics";
 import { siteMetadataBase } from "@/lib/seo/site";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { getCurrentLanguageFromRequest } from "@/lib/seo/language";
@@ -34,34 +35,20 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const language = await getCurrentLanguageFromRequest();
-  const googleTagId = "G-L2V5M26ZWZ";
+  const googleTagId =
+    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-L2V5M26ZWZ";
   const organizationJsonLd = JSON.stringify(
     buildOrganizationJsonLd(language)
   ).replace(/</g, "\\u003c");
 
   return (
     <html lang={language}>
-      <head>
-        <script
-          async
-          src={`https://www.googletagmanager.com/gtag/js?id=${googleTagId}`}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${googleTagId}');
-            `,
-          }}
-        />
-      </head>
       <body className="font-sans antialiased">
         <SmoothScroll />
         <ToastProvider>
           <AuthProvider>
             <LanguageProvider initialLanguage={language}>
+              <GoogleAnalytics measurementId={googleTagId} />
               {children}
               <ToastContainer />
             </LanguageProvider>

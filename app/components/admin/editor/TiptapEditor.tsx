@@ -475,7 +475,21 @@ export default function TiptapEditor({
       ResizableImage,
       ImageCaption,
       ImageOverlayText,
-      TiptapTable.configure({
+      TiptapTable.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            layoutTemplate: {
+              default: null,
+              parseHTML: (element) => element.getAttribute("data-layout-template"),
+              renderHTML: (attributes) => {
+                if (!attributes.layoutTemplate) return {};
+                return { "data-layout-template": attributes.layoutTemplate };
+              },
+            },
+          };
+        },
+      }).configure({
         resizable: true,
       }),
       TableRow,
@@ -498,6 +512,14 @@ export default function TiptapEditor({
               renderHTML: (attributes) => {
                 if (!attributes.borderStyle) return {};
                 return { "data-border-style": attributes.borderStyle };
+              },
+            },
+            layoutCell: {
+              default: null,
+              parseHTML: (element) => element.getAttribute("data-layout-cell"),
+              renderHTML: (attributes) => {
+                if (!attributes.layoutCell) return {};
+                return { "data-layout-cell": attributes.layoutCell };
               },
             },
           };
@@ -536,6 +558,14 @@ export default function TiptapEditor({
               renderHTML: (attributes) => {
                 if (!attributes.borderStyle) return {};
                 return { "data-border-style": attributes.borderStyle };
+              },
+            },
+            layoutCell: {
+              default: null,
+              parseHTML: (element) => element.getAttribute("data-layout-cell"),
+              renderHTML: (attributes) => {
+                if (!attributes.layoutCell) return {};
+                return { "data-layout-cell": attributes.layoutCell };
               },
             },
           };

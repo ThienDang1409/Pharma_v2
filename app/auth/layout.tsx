@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import AdminLayoutShell from "@/app/components/admin/AdminLayoutShell";
 
 export const metadata: Metadata = {
-  title: "Admin | VietAnh Instruments",
+  title: "Authentication | VietAnh Instruments",
   robots: {
     index: false,
     follow: false,
@@ -10,10 +9,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AdminLayout({
+export default function AuthLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AdminLayoutShell>{children}</AdminLayoutShell>;
+  return children;
 }
