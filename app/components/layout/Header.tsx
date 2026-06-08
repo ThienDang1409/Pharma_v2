@@ -18,6 +18,47 @@ const translations = {
   vi: viTranslations,
 };
 
+function LogoLockup({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={`flex items-center ${compact ? "gap-2" : "gap-3 lg:gap-4"}`}
+    >
+      <Image
+        src="/images/logo_pharma_test.svg"
+        alt="Pharma Test Logo"
+        width={452}
+        height={78}
+        priority
+        className={
+          compact
+            ? "h-auto w-[112px] max-[360px]:w-[98px]"
+            : "h-auto w-[190px] lg:w-[210px]"
+        }
+      />
+      <span
+        aria-hidden="true"
+        className={
+          compact
+            ? "h-7 w-px shrink-0 bg-gray-300"
+            : "h-10 w-px shrink-0 bg-gray-300"
+        }
+      />
+      <Image
+        src="/images/logo_pharma_test_1.svg"
+        alt="PharmaTest"
+        width={119}
+        height={68}
+        priority
+        className={
+          compact
+            ? "h-auto w-[42px] max-[360px]:w-[36px]"
+            : "h-auto w-[76px] lg:w-[84px]"
+        }
+      />
+    </div>
+  );
+}
+
 export default function Header() {
   const router = useRouter();
   const { language, toggleLanguage } = useLanguage();
@@ -314,13 +355,12 @@ export default function Header() {
         </button>
 
         {/* Logo - Center */}
-        <Link href="/" className="absolute left-1/2 transform -translate-x-1/2">
-          <Image
-            src="/images/logo_pharma_test.svg"
-            alt="Pharma Test Logo"
-            width={120}
-            height={100}
-          />
+        <Link
+          href="/"
+          className="absolute left-1/2 flex max-w-[calc(100%-112px)] -translate-x-1/2 items-center justify-center"
+          aria-label="Pharma Test homepage"
+        >
+          <LogoLockup compact />
         </Link>
 
         {/* Hamburger Menu - Right */}
@@ -499,14 +539,12 @@ export default function Header() {
       <div className="container w-[70%] mx-auto">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/images/logo_pharma_test.svg"
-              alt="Pharma Test Logo"
-              width={200}
-              height={180}
-              className=""
-            />
+          <Link
+            href="/"
+            className="flex shrink-0 items-center"
+            aria-label="Pharma Test homepage"
+          >
+            <LogoLockup />
           </Link>
 
 
